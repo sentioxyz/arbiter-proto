@@ -1,0 +1,164 @@
+syntax = "proto3";
+
+// raftlog — the Arbiter replicated-FSM command alphabet (design §4.1). One
+// RaftCommand per Raft log entry; the leader's orchestrator makes every
+// timing decision and proposes it as a command at a fixed log index; Apply
+// performs only the deterministic state mutation.
+//
+// Proto is safe as the LOG TRANSPORT because Raft replicates the encoded
+// bytes verbatim — every node decodes identical bytes, so non-canonical
+// proto serialization cannot fork replicas. Canonical HASHING never runs
+// over proto bytes: the FSM converts to the mirrored Go types and hashes
+// through replay.CanonicalDigest (§4.3 red lines).
+//
+// Cluster membership changes (adding/removing Raft nodes) use
+// hashicorp/raft's native configuration-change mechanism and are NOT
+// commands here (§4.1).
+package arbiter;
+option go_package = "github.com/sentioxyz/arbiter-proto/gen/pb;pb";
+
+import "arbiter.proto";
+import "replay.proto";
+
+// SubmitStatementCmd → Sequenced. Deterministic admission in Apply: verify
+// envelope signature, verify the carried non-membership proof against the
+// accumulator (proof VERIFIED in Apply, GENERATED leader-side outside Apply
+// — §4.3 red line 4), check schema/kind allowlists, assign statement_seq,
+// advance accumulator + high-water mark, buffer into the open block.
+message SubmitStatementCmd {
+  StatementEnvelopeV2 envelope = 1;
+  // Opaque accumulator non-membership proof, present only on the
+  // out-of-order gap-fill path (client_seq <= hi, §6.3). Byte encoding is
+  // frozen by the P0b accumulator plan; this field is the frozen slot.
+  bytes non_membership_proof = 2;
+}
+
+// SealL3BlockCmd seals the open buffer into an L3 block (§5.1). All header
+// content (prev hash, seq range, spent_ids_root_after) derives
+// deterministically from FSM state at this log index; the command carries
+// nothing.
+message SealL3BlockCmd {}
+
+// MarkReplayingCmd records that the leader dispatched the first ReplayJob
+// for a block (§4.4 lifecycle). The verifier SET is not carried — it is
+// deterministically selected in the FSM from the committed Active set
+// (sorted by NodeID, excluding source_node, §7.1).
+message MarkReplayingCmd {
+  uint64 block_seq = 1;
+}
+
+// RegisterRCCmd → UnsafeRegistered (late binding by statement_id, §5.5).
+message RegisterRCCmd {
+  RCRecord rc = 1;
+}
+
+// RecordAttestationCmd: verify ed25519 signature, recompute receipt_hash
+// over the receipt verbatim, record, re-evaluate the three-way predicate →
+// QuorumVerified on success (§4.1, §7.3).
+message RecordAttestationCmd {
+  ReplayAttestation attestation = 1;
+}
+
+// RecordByteSideScanCmd records the attested per-part scan scalars for
+// check 3 (the FSM compares; it never re-runs the scan, §3.2).
+message RecordByteSideScanCmd {
+  ByteSideScanMsg scan = 1;
+}
+
+// RecordAnchorFinalityCmd: QuorumVerified + finality + last_mergeable →
+// promotable (§4.1, §4.4).
+message RecordAnchorFinalityCmd {
+  uint64 l3_block_seq = 1;
+  AnchorRef anchor = 2;
+  bool finality_reached = 3;
+  bool last_mergeable_reached = 4;
+}
+
+// RecordPromotionIssuedCmd records the signed promotion for audit — the
+// leader's signature is its only privileged act and even that is logged
+// (§3.2, §8.1).
+message RecordPromotionIssuedCmd {
+  PromoteSafePartition promote = 1;
+  string authority_jws = 2;
+}
+
+// RecordPromotionAckCmd records SNode's REPLACE PARTITION ack; the FSM
+// checks the closure equality before advancing the watermark (§7.3, §8.4).
+message RecordPromotionAckCmd {
+  PromotionAck ack = 1;
+}
+
+// PublishSafeSnapshotCmd: validated via pkg/replay Seal/Validate in Apply,
+// then recorded as the new safe watermark (§8.5).
+message PublishSafeSnapshotCmd {
+  SafeSnapshotManifest manifest = 1;
+}
+
+// ScheduleUnsafeCleanupCmd marks promoted hg_unsafe parts for cleanup in
+// the PromotedUnsafe registry that unsafe_latest filters against (§8.5).
+message ScheduleUnsafeCleanupCmd {
+  UnsafeCleanup cleanup = 1;
+  string authority_jws = 2;
+}
+
+// RecordCleanupAckCmd clears PromotedUnsafe entries (idempotent, §10.3).
+message RecordCleanupAckCmd {
+  CleanupAck ack = 1;
+}
+
+message OpenChallengeCmd {
+  uint64 block_seq = 1;
+  string reason = 2;
+  // Who triggered it: a verifier's replica_id or "timeout" (§7.5).
+  string opened_by = 3;
+}
+
+enum ChallengeVerdict {
+  CHALLENGE_VERDICT_UNSPECIFIED = 0;
+  CHALLENGE_VERDICT_SAFE = 1;
+  CHALLENGE_VERDICT_REJECTED = 2;
+}
+
+// ResolveChallengeCmd drives ChallengeReplay → Safe | Rejected using the
+// SAME three-way predicate (§7.5).
+message ResolveChallengeCmd {
+  uint64 block_seq = 1;
+  ChallengeVerdict verdict = 2;
+}
+
+message RegisterNodeCmd {
+  NodeRegistration registration = 1;
+}
+
+message MarkActiveCmd {
+  string node_id = 1;
+}
+
+message EvictNodeCmd {
+  string node_id = 1;
+  string reason = 2;
+}
+
+// RaftCommand is the single log-entry envelope. Field numbers are frozen;
+// new commands append new numbers (never renumber/reuse).
+message RaftCommand {
+  oneof cmd {
+    SubmitStatementCmd submit_statement = 1;
+    SealL3BlockCmd seal_l3_block = 2;
+    MarkReplayingCmd mark_replaying = 3;
+    RegisterRCCmd register_rc = 4;
+    RecordAttestationCmd record_attestation = 5;
+    RecordByteSideScanCmd record_byte_side_scan = 6;
+    RecordAnchorFinalityCmd record_anchor_finality = 7;
+    RecordPromotionIssuedCmd record_promotion_issued = 8;
+    RecordPromotionAckCmd record_promotion_ack = 9;
+    PublishSafeSnapshotCmd publish_safe_snapshot = 10;
+    ScheduleUnsafeCleanupCmd schedule_unsafe_cleanup = 11;
+    RecordCleanupAckCmd record_cleanup_ack = 12;
+    OpenChallengeCmd open_challenge = 13;
+    ResolveChallengeCmd resolve_challenge = 14;
+    RegisterNodeCmd register_node = 15;
+    MarkActiveCmd mark_active = 16;
+    EvictNodeCmd evict_node = 17;
+  }
+}
