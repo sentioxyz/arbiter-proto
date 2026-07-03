@@ -2282,7 +2282,29 @@ const file_arbiter_proto_rawDesc = "" +
 	"\bNodeRole\x12\x19\n" +
 	"\x15NODE_ROLE_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12NODE_ROLE_VERIFIER\x10\x01\x12\x13\n" +
-	"\x0fNODE_ROLE_SNODE\x10\x02B.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
+	"\x0fNODE_ROLE_SNODE\x10\x022Z\n" +
+	"\x0eArbiterIngress\x12H\n" +
+	"\x0fSubmitStatement\x12\x1c.arbiter.StatementEnvelopeV2\x1a\x15.arbiter.SequencedAck\"\x002H\n" +
+	"\fSourceClaims\x128\n" +
+	"\x13RegisterResultClaim\x12\x11.arbiter.RCRecord\x1a\f.arbiter.Ack\"\x002\xe6\x01\n" +
+	"\x0fVerifierGateway\x12R\n" +
+	"\x19SubscribeVerifierDispatch\x12\x16.arbiter.VerifierHello\x1a\x19.arbiter.VerifierDispatch\"\x000\x01\x12?\n" +
+	"\x11SubmitAttestation\x12\x1a.arbiter.ReplayAttestation\x1a\f.arbiter.Ack\"\x00\x12>\n" +
+	"\x12SubmitByteSideScan\x12\x18.arbiter.ByteSideScanMsg\x1a\f.arbiter.Ack\"\x002\xc7\x01\n" +
+	"\x10PromotionGateway\x12I\n" +
+	"\x13SubscribePromotions\x12\x13.arbiter.SNodeHello\x1a\x19.arbiter.PromotionCommand\"\x000\x01\x125\n" +
+	"\fAckPromotion\x12\x15.arbiter.PromotionAck\x1a\f.arbiter.Ack\"\x00\x121\n" +
+	"\n" +
+	"AckCleanup\x12\x13.arbiter.CleanupAck\x1a\f.arbiter.Ack\"\x002\xeb\x01\n" +
+	"\tSafeState\x12N\n" +
+	"\x10GetSafeWatermark\x12 .arbiter.GetSafeWatermarkRequest\x1a\x16.arbiter.SafeWatermark\"\x00\x12D\n" +
+	"\vGetManifest\x12\x14.arbiter.SnapshotRef\x1a\x1d.arbiter.SafeSnapshotManifest\"\x00\x12H\n" +
+	"\x12GetManifestByBlock\x12\x11.arbiter.BlockRef\x1a\x1d.arbiter.SafeSnapshotManifest\"\x002w\n" +
+	"\n" +
+	"Membership\x129\n" +
+	"\fRegisterNode\x12\x19.arbiter.NodeRegistration\x1a\f.arbiter.Ack\"\x00\x12.\n" +
+	"\n" +
+	"MarkActive\x12\x10.arbiter.NodeRef\x1a\f.arbiter.Ack\"\x00B.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
 
 var (
 	file_arbiter_proto_rawDescOnce sync.Once
@@ -2331,6 +2353,8 @@ var file_arbiter_proto_goTypes = []any{
 	(*Ack)(nil),                     // 29: arbiter.Ack
 	(*NotLeader)(nil),               // 30: arbiter.NotLeader
 	(*ReplayJob)(nil),               // 31: arbiter.ReplayJob
+	(*ReplayAttestation)(nil),       // 32: arbiter.ReplayAttestation
+	(*SafeSnapshotManifest)(nil),    // 33: arbiter.SafeSnapshotManifest
 }
 var file_arbiter_proto_depIdxs = []int32{
 	3,  // 0: arbiter.StatementEnvelopeV2.statement_id:type_name -> arbiter.StatementID
@@ -2349,8 +2373,34 @@ var file_arbiter_proto_depIdxs = []int32{
 	16, // 13: arbiter.PromotionCommand.cleanup:type_name -> arbiter.UnsafeCleanup
 	19, // 14: arbiter.PromotionAck.parts:type_name -> arbiter.SafePartMapping
 	2,  // 15: arbiter.NodeRegistration.roles:type_name -> arbiter.NodeRole
-	16, // [16:16] is the sub-list for method output_type
-	16, // [16:16] is the sub-list for method input_type
+	4,  // 16: arbiter.ArbiterIngress.SubmitStatement:input_type -> arbiter.StatementEnvelopeV2
+	8,  // 17: arbiter.SourceClaims.RegisterResultClaim:input_type -> arbiter.RCRecord
+	9,  // 18: arbiter.VerifierGateway.SubscribeVerifierDispatch:input_type -> arbiter.VerifierHello
+	32, // 19: arbiter.VerifierGateway.SubmitAttestation:input_type -> arbiter.ReplayAttestation
+	13, // 20: arbiter.VerifierGateway.SubmitByteSideScan:input_type -> arbiter.ByteSideScanMsg
+	18, // 21: arbiter.PromotionGateway.SubscribePromotions:input_type -> arbiter.SNodeHello
+	20, // 22: arbiter.PromotionGateway.AckPromotion:input_type -> arbiter.PromotionAck
+	21, // 23: arbiter.PromotionGateway.AckCleanup:input_type -> arbiter.CleanupAck
+	23, // 24: arbiter.SafeState.GetSafeWatermark:input_type -> arbiter.GetSafeWatermarkRequest
+	25, // 25: arbiter.SafeState.GetManifest:input_type -> arbiter.SnapshotRef
+	26, // 26: arbiter.SafeState.GetManifestByBlock:input_type -> arbiter.BlockRef
+	27, // 27: arbiter.Membership.RegisterNode:input_type -> arbiter.NodeRegistration
+	28, // 28: arbiter.Membership.MarkActive:input_type -> arbiter.NodeRef
+	5,  // 29: arbiter.ArbiterIngress.SubmitStatement:output_type -> arbiter.SequencedAck
+	29, // 30: arbiter.SourceClaims.RegisterResultClaim:output_type -> arbiter.Ack
+	10, // 31: arbiter.VerifierGateway.SubscribeVerifierDispatch:output_type -> arbiter.VerifierDispatch
+	29, // 32: arbiter.VerifierGateway.SubmitAttestation:output_type -> arbiter.Ack
+	29, // 33: arbiter.VerifierGateway.SubmitByteSideScan:output_type -> arbiter.Ack
+	17, // 34: arbiter.PromotionGateway.SubscribePromotions:output_type -> arbiter.PromotionCommand
+	29, // 35: arbiter.PromotionGateway.AckPromotion:output_type -> arbiter.Ack
+	29, // 36: arbiter.PromotionGateway.AckCleanup:output_type -> arbiter.Ack
+	24, // 37: arbiter.SafeState.GetSafeWatermark:output_type -> arbiter.SafeWatermark
+	33, // 38: arbiter.SafeState.GetManifest:output_type -> arbiter.SafeSnapshotManifest
+	33, // 39: arbiter.SafeState.GetManifestByBlock:output_type -> arbiter.SafeSnapshotManifest
+	29, // 40: arbiter.Membership.RegisterNode:output_type -> arbiter.Ack
+	29, // 41: arbiter.Membership.MarkActive:output_type -> arbiter.Ack
+	29, // [29:42] is the sub-list for method output_type
+	16, // [16:29] is the sub-list for method input_type
 	16, // [16:16] is the sub-list for extension type_name
 	16, // [16:16] is the sub-list for extension extendee
 	0,  // [0:16] is the sub-list for field type_name
@@ -2378,7 +2428,7 @@ func file_arbiter_proto_init() {
 			NumEnums:      3,
 			NumMessages:   28,
 			NumExtensions: 0,
-			NumServices:   0,
+			NumServices:   6,
 		},
 		GoTypes:           file_arbiter_proto_goTypes,
 		DependencyIndexes: file_arbiter_proto_depIdxs,

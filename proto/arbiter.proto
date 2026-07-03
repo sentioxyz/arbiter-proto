@@ -341,3 +341,58 @@ message Ack {}
 message NotLeader {
   string leader_addr = 1;
 }
+
+// ============================================================
+// Services (§11.2). Leader-only for all write/dispatch RPCs; SafeState
+// reads may be served by followers with bounded staleness or routed via
+// read-index for linearizability (§11.3).
+// ============================================================
+
+// ArbiterIngress is called by HouseGate.
+service ArbiterIngress {
+  // Idempotency key: (statement_id.client_account, statement_id.client_seq).
+  rpc SubmitStatement (StatementEnvelopeV2) returns (SequencedAck) {}
+}
+
+// SourceClaims is called by the source SNode.
+service SourceClaims {
+  // Idempotency key: statement_id (same statement, same RC → same Ack).
+  rpc RegisterResultClaim (RCRecord) returns (Ack) {}
+}
+
+// VerifierGateway is called by Verifiers (data plane dials in).
+service VerifierGateway {
+  // Leader dispatch stream: ReplayJob round, then ByteSideScanRequest round
+  // (§7.1). A leader change breaks the stream; the verifier reconnects to
+  // the new leader and the orchestrator re-dispatches from FSM state (§10.2).
+  rpc SubscribeVerifierDispatch (VerifierHello) returns (stream VerifierDispatch) {}
+  // Idempotency key: (replica_id, receipt.block_seq) — one vote per replica
+  // per block (§10.3).
+  rpc SubmitAttestation (ReplayAttestation) returns (Ack) {}
+  // Idempotency key: (replica_id, block_seq).
+  rpc SubmitByteSideScan (ByteSideScanMsg) returns (Ack) {}
+}
+
+// PromotionGateway is called by SNodes (data plane dials in).
+service PromotionGateway {
+  rpc SubscribePromotions (SNodeHello) returns (stream PromotionCommand) {}
+  // Idempotency key: promotion_seq (per table/partition, §10.3).
+  rpc AckPromotion (PromotionAck) returns (Ack) {}
+  rpc AckCleanup (CleanupAck) returns (Ack) {}
+}
+
+// SafeState serves read-only safe-state queries to HouseGate and clients.
+service SafeState {
+  rpc GetSafeWatermark (GetSafeWatermarkRequest) returns (SafeWatermark) {}
+  rpc GetManifest (SnapshotRef) returns (SafeSnapshotManifest) {}
+  // as_of_safe time-travel by SafeBlockSeq (§8.5).
+  rpc GetManifestByBlock (BlockRef) returns (SafeSnapshotManifest) {}
+}
+
+// Membership is called by SNodes / Verifiers.
+service Membership {
+  rpc RegisterNode (NodeRegistration) returns (Ack) {}
+  // MarkActive is accepted only after snapshot sync; Active nodes enter the
+  // deterministic selection pools (§4.1, §7.4).
+  rpc MarkActive (NodeRef) returns (Ack) {}
+}
