@@ -1,0 +1,10 @@
+version: v2
+modules:
+  - path: proto
+lint:
+  use: [BASIC]
+  # Files live flat at proto/*.proto with bare package `arbiter`, mirroring
+  # rewriter-go's layout (single gen/pb output imported as `pb`).
+  except: [PACKAGE_DIRECTORY_MATCH]
+breaking:
+  use: [FILE]

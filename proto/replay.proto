@@ -1,0 +1,144 @@
+syntax = "proto3";
+
+// replay — wire mirror of the housegate pkg/replay types the Arbiter reuses
+// verbatim (arbiter design §3.3 "reuse from pkg/replay", §11.2).
+//
+// FREEZE RULE: every field name below MUST equal the JSON tag of the
+// corresponding Go type in housegate pkg/replay/types.go. The Arbiter FSM
+// recomputes receipt_hash and manifest roots over those Go types via
+// replay.CanonicalDigest after converting from proto, so the conversion must
+// be lossless and name-stable. A conformance test in the arbiter repo
+// (conformance/replay_wire_test.go) asserts field-set equality; changing a
+// name here without changing pkg/replay is a build-breaking contract bug.
+//
+// Deliberately NOT mirrored: PreparedStatement, ExecutionRequest,
+// ExecutionResult (executor-local, never on the Arbiter wire).
+package arbiter;
+option go_package = "github.com/sentioxyz/arbiter-proto/gen/pb;pb";
+
+// Statement is the replay-relevant projection of a signed statement envelope
+// (pkg/replay.Statement). The full signed envelope (StatementEnvelopeV2,
+// arbiter.proto) stays Arbiter-side; verifiers receive only this projection.
+message Statement {
+  // Flat statement id: "<lowercase client_account>:<decimal client_seq>:<client_nonce>".
+  string statement_id = 1;
+  uint64 statement_seq = 2;
+  string sql = 3;
+  // DigestString(sql) — "0x" + hex(SHA-256), the pkg/replay hash profile.
+  string sql_hash = 4;
+  string settings_hash = 5;
+  // Payload-store / DA reference; payload bytes are fetched by the verifier
+  // and validated against payload_hash + payload_length BEFORE any executor
+  // runs (pkg/replay verifier invariant).
+  string payload_ref = 6;
+  string payload_hash = 7;
+  uint64 payload_length = 8;
+  string target_table_id = 9;
+  string user_jws = 10;
+}
+
+// ReplayJob is the verifier input for one sequenced L3 block
+// (pkg/replay.ReplayJob). Dispatched leader → verifier on the
+// VerifierGateway subscribe stream.
+message ReplayJob {
+  uint64 block_seq = 1;
+  string prev_safe_snapshot_id = 2;
+  string prev_state_root = 3;
+  string schema_snapshot_id = 4;
+  string executor_profile_id = 5;
+  // The source's claimed post-state root; check 1 of the three-way predicate
+  // compares each verifier's computed_state_root against this (§7.3).
+  string source_claim_root = 6;
+  repeated Statement statements = 7;
+}
+
+// PartitionCommitment is the post-replay commitment for one table partition
+// (pkg/replay.PartitionCommitment). root is "0x" + hex of the raw 2048-byte
+// LtHash accumulator so deltas stay additive.
+message PartitionCommitment {
+  string table_id = 1;
+  string partition_id = 2;
+  string root = 3;
+}
+
+// PartManifestEntry identifies an immutable safe part by content, not by a
+// trusted storage location (pkg/replay.PartManifestEntry).
+message PartManifestEntry {
+  string table_id = 1;
+  string partition_id = 2;
+  string part_name = 3;
+  string part_phys_hash = 4;
+  // Content commitment of the part's rows: "0x" + hex of the raw 2048-byte
+  // LtHash accumulator. This is the part identity used across RCRecord /
+  // PromoteSafePartition / byte-side scans.
+  string part_row_lthash = 5;
+  uint64 row_count = 6;
+  uint64 bytes = 7;
+  repeated string storage_refs = 8;
+}
+
+// ExecutionReceipt is what a verifier signs (pkg/replay.ExecutionReceipt).
+// Mismatches are signed too — a signed mismatch is non-repudiable challenge
+// evidence, not an error (§base-spec C.4).
+message ExecutionReceipt {
+  uint64 block_seq = 1;
+  string prev_safe_snapshot_id = 2;
+  string prev_state_root = 3;
+  string schema_snapshot_id = 4;
+  string executor_profile_id = 5;
+  string statement_root = 6;
+  string payload_root = 7;
+  string source_claim_root = 8;
+  string computed_state_root = 9;
+  // Advisory only — the FSM recomputes check 1 as
+  // computed_state_root == RCRecord.source_claim_root (§7.3, §13).
+  bool match_source_root = 10;
+  // ABSOLUTE post-state commitments (not deltas); check 2 is phrased
+  // additively: base + Σ claimed new-part lthash == this value.
+  repeated PartitionCommitment partition_commitments_after = 11;
+  repeated PartManifestEntry affected_parts = 12;
+  string replay_log_hash = 13;
+}
+
+// ReplayAttestation is the verifier output the Arbiter records
+// (pkg/replay.ReplayAttestation). receipt_hash =
+// CanonicalDigest("replay-execution-receipt", receipt) over the Go type;
+// signature = ed25519 over the receipt_hash string bytes, hex-encoded
+// (payloadexec.Ed25519Signer convention). The FSM verifies the signature
+// against the replica's RegisterNode pubkey and recomputes receipt_hash over
+// the received receipt verbatim (§4.3 red line 2).
+message ReplayAttestation {
+  string replica_id = 1;
+  ExecutionReceipt receipt = 2;
+  string receipt_hash = 3;
+  string signature = 4;
+  bool match_source_root = 5;
+}
+
+// TableManifest records the data root for one verified table
+// (pkg/replay.TableManifest).
+message TableManifest {
+  string table_id = 1;
+  string schema_hash = 2;
+  repeated PartitionCommitment partition_roots = 3;
+  repeated PartManifestEntry active_parts = 4;
+}
+
+// SafeSnapshotManifest is the published safe watermark
+// (pkg/replay.SafeSnapshotManifest). The FSM validates it via pkg/replay
+// Seal/Validate before recording (§8.5); ordering is normalized (tables by
+// table_id, partition_roots by (table_id, partition_id), active_parts by
+// (table_id, partition_id, part_name)) so independent nodes derive the same
+// roots.
+message SafeSnapshotManifest {
+  string snapshot_id = 1;
+  string parent_snapshot_id = 2;
+  uint64 safe_block_seq = 3;
+  string state_root = 4;
+  string schema_snapshot_id = 5;
+  string schema_root = 6;
+  string executor_profile_id = 7;
+  string data_root = 8;
+  string manifest_root = 9;
+  repeated TableManifest tables = 10;
+}
