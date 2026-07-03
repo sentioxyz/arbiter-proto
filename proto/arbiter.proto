@@ -1,0 +1,343 @@
+syntax = "proto3";
+
+// arbiter — gRPC contract for the Sentio Arbiter (design §11): statement
+// ingress, source result claims, verifier dispatch/attestation, promotion
+// dispatch/ack, safe-state reads, and membership.
+//
+// Direction convention (§11.1): the data plane always dials the Arbiter.
+// Unary calls go client → Arbiter; Arbiter-initiated dispatch rides
+// node-initiated server-streaming subscriptions. Write-class RPCs on a
+// non-leader fail with gRPC FAILED_PRECONDITION carrying a NotLeader detail;
+// subscribe streams are only established against the leader (§11.3).
+//
+// Idempotency keys (§10.3, §11.3): SubmitStatement (client_account,
+// client_seq); RegisterResultClaim statement_id; SubmitAttestation
+// (replica_id, block_seq); SubmitByteSideScan (replica_id, block_seq);
+// AckPromotion promotion_seq. Duplicate submissions return the original
+// result, never an error.
+package arbiter;
+option go_package = "github.com/sentioxyz/arbiter-proto/gen/pb;pb";
+
+import "replay.proto";
+
+// ============================================================
+// Ingress: HouseGate → Arbiter (§5.5 route A / optimistic-forward)
+// ============================================================
+
+// StatementID is the structured client-assigned statement identity.
+// Uniqueness key is (client_account, client_seq) — client_nonce contributes
+// entropy to _hg_row_id but is NOT part of the uniqueness key (§6.1).
+// Flat string form (replay projection, RCRecord linkage, row-id derivation):
+// "<lowercase client_account>:<decimal client_seq>:<client_nonce>".
+message StatementID {
+  // Lowercase 0x-prefixed Ethereum address of the signing account.
+  string client_account = 1;
+  uint64 client_seq = 2;
+  string client_nonce = 3;
+}
+
+// StatementKind gates admission (§4.1 SubmitStatement). v1 admits INSERT
+// only; DDL/mutation kinds arrive with P2+ and extend this enum.
+enum StatementKind {
+  STATEMENT_KIND_UNSPECIFIED = 0;
+  STATEMENT_KIND_INSERT = 1;
+}
+
+// StatementEnvelopeV2 is the signed write-statement envelope HouseGate
+// submits after validating the user signature and spooling the payload to
+// the payload store at ingest (§3.5 step 1-2). The Arbiter re-verifies
+// user_jws deterministically in Apply (§4.1).
+message StatementEnvelopeV2 {
+  StatementID statement_id = 1;
+  StatementKind statement_kind = 2;
+  string sql = 3;
+  // DigestString(sql) under the housegate-replay-mvp-v0 profile.
+  string sql_hash = 4;
+  string settings_hash = 5;
+  string payload_ref = 6;
+  string payload_hash = 7;
+  uint64 payload_length = 8;
+  string target_table_id = 9;
+  // The user's signature binding the statement (JWS compact form).
+  string user_jws = 10;
+}
+
+// AdmissionCode is the application-level admission taxonomy. Transport
+// failures are gRPC errors; admission rejections return OK + a code, the
+// rewriter-go RewriteCode pattern.
+enum AdmissionCode {
+  ADMISSION_CODE_UNSPECIFIED = 0;
+  ADMISSION_CODE_ACCEPTED = 1;
+  // Reused (client_account, client_seq): a CLIENT BUG the SDK must surface,
+  // never silently drop (§6.1). Do not retry with the same client_seq.
+  ADMISSION_CODE_DUPLICATE_CLIENT_SEQ = 2;
+  ADMISSION_CODE_SCHEMA_NOT_ALLOWED = 3;
+  ADMISSION_CODE_KIND_NOT_ADMITTED = 4;
+  ADMISSION_CODE_INVALID_SIGNATURE = 5;
+  // The carried non-membership proof failed verification against
+  // spent_ids_root (gap-fill path only, §6.3).
+  ADMISSION_CODE_INVALID_PROOF = 6;
+  ADMISSION_CODE_MALFORMED = 7;
+}
+
+message SequencedAck {
+  AdmissionCode code = 1;
+  // Human-readable rejection detail; empty on ACCEPTED.
+  string message = 2;
+  // Assigned global statement sequence; set only when code == ACCEPTED.
+  uint64 statement_seq = 3;
+}
+
+// ============================================================
+// Source result claims: source SNode → Arbiter (§4.1 RegisterRC)
+// ============================================================
+
+// CandidatePart is one hg_unsafe part the source claims a statement
+// produced. part_row_lthash is the part's content commitment and its
+// identity everywhere downstream (part names are unstable after
+// attach/replace, base-spec §12.2).
+message CandidatePart {
+  string table_id = 1;
+  string partition_id = 2;
+  // Advisory: the hg_unsafe part name at claim time.
+  string part_name = 3;
+  string part_row_lthash = 4;
+  string part_phys_hash = 5;
+  uint64 row_count = 6;
+  uint64 bytes = 7;
+}
+
+// PartitionLtHashSum is the source's claimed per-partition sum of new-part
+// LtHash contributions — the "claimed" side of check 2's additive equation
+// base + claimed == post (§7.3).
+message PartitionLtHashSum {
+  string table_id = 1;
+  string partition_id = 2;
+  // "0x" + hex of the raw 2048-byte LtHash accumulator sum.
+  string new_parts_lthash_sum = 3;
+}
+
+// RCRecord is the source's result claim (§4.1, §7.3). Late binding: an
+// RCRecord may arrive before its statement_seq exists; the FSM parks it
+// under statement_id and binds when SubmitStatement assigns the seq (§5.5).
+// v1 trusts the gRPC channel for source identity; a source signature slot
+// can be added compatibly when P5+ decentralizes.
+message RCRecord {
+  StatementID statement_id = 1;
+  // NodeID of the claiming source SNode; must match the FSM's deterministic
+  // source selection for this statement (§5.4).
+  string source_node = 2;
+  repeated CandidatePart candidate_parts = 3;
+  // The source's claimed post-state root (check 1's right-hand side).
+  string source_claim_root = 4;
+  repeated PartitionLtHashSum partition_new_part_sums = 5;
+}
+
+// ============================================================
+// Verifier dispatch + evidence: Arbiter ⇄ Verifier (§7.1 two rounds)
+// ============================================================
+
+message VerifierHello {
+  string replica_id = 1;
+}
+
+// VerifierDispatch is the leader→verifier dispatch stream payload. Two
+// rounds per block (§7.1): the replay job first, then — after the replay
+// attestation lands — the byte-side scan request. Kept as distinct kinds
+// for auditability; they may be pipelined.
+message VerifierDispatch {
+  oneof dispatch {
+    ReplayJob replay_job = 1;
+    ByteSideScanRequest byte_side_scan = 2;
+  }
+}
+
+// ByteSideScanRequest asks a verifier to recompute part_row_lthash from the
+// real on-disk bytes of the candidate parts (check 3, §7.2). Parts are
+// identified by content commitment, never by name — the verifier maps
+// commitments to live _part names locally before SELECT ... WHERE _part IN.
+message ByteSideScanRequest {
+  uint64 block_seq = 1;
+  repeated PartRef parts = 2;
+}
+
+// PartScan is one scanned part's result.
+message PartScan {
+  string table_id = 1;
+  string partition_id = 2;
+  // Identity: the source-claimed content commitment being checked.
+  string claimed_part_row_lthash = 3;
+  // The verifier's recomputation from on-disk bytes; check 3 compares this
+  // recorded scalar against RCRecord.candidate_parts in the FSM (§7.3).
+  string scanned_part_row_lthash = 4;
+  // Advisory: the live _part name the verifier resolved locally.
+  string live_part_name = 5;
+}
+
+// ByteSideScanMsg is the verifier's attested byte-side scan (§4.1
+// RecordByteSideScan). scan_hash = CanonicalDigest over the canonical Go
+// form (domain "arbiter-byte-side-scan-v1", frozen in the arbiter repo);
+// signature = ed25519 over the scan_hash string bytes, hex-encoded — the
+// same convention as ReplayAttestation.
+message ByteSideScanMsg {
+  string replica_id = 1;
+  uint64 block_seq = 2;
+  repeated PartScan parts = 3;
+  string scan_hash = 4;
+  string signature = 5;
+}
+
+// ============================================================
+// Promotion: Arbiter → SNode (§8)
+// ============================================================
+
+// PartRef identifies a verified part by content commitment (§8.1).
+message PartRef {
+  string table_id = 1;
+  string partition_id = 2;
+  string part_row_lthash = 3;
+  // Advisory name hint; never authoritative.
+  string part_name = 4;
+}
+
+// PromoteSafePartition is the authority-signed promotion command (§8.1).
+// candidate_parts lists EXACTLY the parts that passed the three-way check —
+// SNode builds hg_promote from base + these only (the §7.3 closure rule).
+message PromoteSafePartition {
+  string table_id = 1;
+  string partition_id = 2;
+  // Monotonic per Arbiter; SNode persists a last-applied watermark per
+  // (table, partition) and rejects seq <= watermark (§8.3 exactly-once).
+  uint64 promotion_seq = 3;
+  string base_safe_snapshot_id = 4;
+  // Base partition's raw LtHash accumulator ("0x" + hex of 2048 bytes) for
+  // the SNode-side CAS check (§8.3).
+  string base_partition_root = 5;
+  repeated PartRef candidate_parts = 6;
+}
+
+// UnsafeCleanup schedules the drop of promoted hg_unsafe parts (§8.5).
+message UnsafeCleanup {
+  string table_id = 1;
+  string partition_id = 2;
+  uint64 promotion_seq = 3;
+  repeated PartRef parts = 4;
+}
+
+// PromotionCommand is the leader→SNode dispatch stream payload. authority_jws
+// is the Arbiter authority's secp256k1 JWS (compact form) whose payload
+// carries purpose "arbiter-promotion" and a CanonicalDigest of the command
+// (domains "arbiter-promote-command-v1" / "arbiter-cleanup-command-v1");
+// SNode authorizes by address recovery against the authority allowlist
+// (§8.1). SNode never promotes without a valid signature (§13).
+message PromotionCommand {
+  oneof cmd {
+    PromoteSafePartition promote = 1;
+    UnsafeCleanup cleanup = 2;
+  }
+  string authority_jws = 15;
+}
+
+message SNodeHello {
+  string node_id = 1;
+}
+
+// SafePartMapping records where a promoted part landed in hg_safe — part
+// names change across attach/replace, so the mapping is keyed by content
+// commitment (§8.2).
+message SafePartMapping {
+  string part_row_lthash = 1;
+  string safe_part_name = 2;
+  string part_phys_hash = 3;
+}
+
+// PromotionAck reports REPLACE PARTITION completion. The FSM checks the
+// closure equality post_partition_commitment == base + Σ verified new-part
+// lthash before advancing the safe watermark (§7.3 closure, §8.4).
+message PromotionAck {
+  string node_id = 1;
+  uint64 promotion_seq = 2;
+  string table_id = 3;
+  string partition_id = 4;
+  // The absolute partition LtHash root SNode observed after promotion.
+  string post_partition_commitment = 5;
+  repeated SafePartMapping parts = 6;
+  // applied=false signals a dropped shadow (base CAS failed); detail says
+  // why. The Arbiter rebases and re-issues (§8.3).
+  bool applied = 7;
+  string detail = 8;
+}
+
+message CleanupAck {
+  string node_id = 1;
+  uint64 promotion_seq = 2;
+  string table_id = 3;
+  string partition_id = 4;
+}
+
+// ============================================================
+// Anchoring, safe-state reads, membership
+// ============================================================
+
+// AnchorRef references the L2 anchor of one L3 block (§5.2). v1 posts
+// commitment only; da_ref is reserved so the decentralized phase can switch
+// to commitment + DA reference as configuration, not protocol change.
+message AnchorRef {
+  string l3_block_hash = 1;
+  string state_root = 2;
+  // Chain-specific transaction reference of the anchor.
+  string l2_tx_ref = 3;
+  uint64 l2_block_number = 4;
+  string da_ref = 5;
+}
+
+message GetSafeWatermarkRequest {}
+
+message SafeWatermark {
+  string snapshot_id = 1;
+  uint64 safe_block_seq = 2;
+  string manifest_root = 3;
+}
+
+message SnapshotRef {
+  string snapshot_id = 1;
+}
+
+// BlockRef selects a manifest by SafeBlockSeq — the as_of_safe time-travel
+// read (§8.5; time-travel is manifest-indexed, never a per-row column, §13).
+message BlockRef {
+  uint64 safe_block_seq = 1;
+}
+
+enum NodeRole {
+  NODE_ROLE_UNSPECIFIED = 0;
+  NODE_ROLE_VERIFIER = 1;
+  NODE_ROLE_SNODE = 2;
+}
+
+// NodeRegistration enters a data-plane node into FSM membership (§4.1
+// RegisterNode). Only MarkActive (snapshot-synced) nodes join the
+// deterministic verifier-selection pool (§7.4).
+message NodeRegistration {
+  string node_id = 1;
+  repeated NodeRole roles = 2;
+  // ed25519 verify key for attestation/scan signatures (verifier role).
+  bytes ed25519_pubkey = 3;
+  // Advisory dial address, observability only — dispatch always rides
+  // node-initiated subscribe streams (§11.1).
+  string dial_addr = 4;
+}
+
+message NodeRef {
+  string node_id = 1;
+}
+
+// Ack acknowledges an idempotent write; duplicates ack identically.
+message Ack {}
+
+// NotLeader is attached as a gRPC error detail (FAILED_PRECONDITION) by
+// non-leader nodes on write-class RPCs; the client retries against
+// leader_addr (§11.3).
+message NotLeader {
+  string leader_addr = 1;
+}
