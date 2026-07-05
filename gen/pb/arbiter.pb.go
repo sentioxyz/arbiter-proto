@@ -103,6 +103,13 @@ const (
 	// spent_ids_root (gap-fill path only, §6.3).
 	AdmissionCode_ADMISSION_CODE_INVALID_PROOF AdmissionCode = 6
 	AdmissionCode_ADMISSION_CODE_MALFORMED     AdmissionCode = 7
+	// The account's open gap-range budget (K = 64, frozen in the
+	// sentio-spent-ids-v1 profile) would be exceeded. A jump adds one open
+	// range; a mid-range fill splits one into two. Remedy: fill from a
+	// range's EDGES (never increases the count), or continue from the
+	// high-water mark. Distinct from DUPLICATE_CLIENT_SEQ: the coordinate is
+	// unspent, the account's gap state is what rejects it.
+	AdmissionCode_ADMISSION_CODE_GAP_BUDGET_EXCEEDED AdmissionCode = 8
 )
 
 // Enum value maps for AdmissionCode.
@@ -116,6 +123,7 @@ var (
 		5: "ADMISSION_CODE_INVALID_SIGNATURE",
 		6: "ADMISSION_CODE_INVALID_PROOF",
 		7: "ADMISSION_CODE_MALFORMED",
+		8: "ADMISSION_CODE_GAP_BUDGET_EXCEEDED",
 	}
 	AdmissionCode_value = map[string]int32{
 		"ADMISSION_CODE_UNSPECIFIED":          0,
@@ -126,6 +134,7 @@ var (
 		"ADMISSION_CODE_INVALID_SIGNATURE":    5,
 		"ADMISSION_CODE_INVALID_PROOF":        6,
 		"ADMISSION_CODE_MALFORMED":            7,
+		"ADMISSION_CODE_GAP_BUDGET_EXCEEDED":  8,
 	}
 )
 
@@ -2269,7 +2278,7 @@ const file_arbiter_proto_rawDesc = "" +
 	"leaderAddr*J\n" +
 	"\rStatementKind\x12\x1e\n" +
 	"\x1aSTATEMENT_KIND_UNSPECIFIED\x10\x00\x12\x19\n" +
-	"\x15STATEMENT_KIND_INSERT\x10\x01*\xa8\x02\n" +
+	"\x15STATEMENT_KIND_INSERT\x10\x01*\xd0\x02\n" +
 	"\rAdmissionCode\x12\x1e\n" +
 	"\x1aADMISSION_CODE_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17ADMISSION_CODE_ACCEPTED\x10\x01\x12'\n" +
@@ -2278,7 +2287,8 @@ const file_arbiter_proto_rawDesc = "" +
 	" ADMISSION_CODE_KIND_NOT_ADMITTED\x10\x04\x12$\n" +
 	" ADMISSION_CODE_INVALID_SIGNATURE\x10\x05\x12 \n" +
 	"\x1cADMISSION_CODE_INVALID_PROOF\x10\x06\x12\x1c\n" +
-	"\x18ADMISSION_CODE_MALFORMED\x10\a*R\n" +
+	"\x18ADMISSION_CODE_MALFORMED\x10\a\x12&\n" +
+	"\"ADMISSION_CODE_GAP_BUDGET_EXCEEDED\x10\b*R\n" +
 	"\bNodeRole\x12\x19\n" +
 	"\x15NODE_ROLE_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12NODE_ROLE_VERIFIER\x10\x01\x12\x13\n" +

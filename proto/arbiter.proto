@@ -78,6 +78,13 @@ enum AdmissionCode {
   // spent_ids_root (gap-fill path only, §6.3).
   ADMISSION_CODE_INVALID_PROOF = 6;
   ADMISSION_CODE_MALFORMED = 7;
+  // The account's open gap-range budget (K = 64, frozen in the
+  // sentio-spent-ids-v1 profile) would be exceeded. A jump adds one open
+  // range; a mid-range fill splits one into two. Remedy: fill from a
+  // range's EDGES (never increases the count), or continue from the
+  // high-water mark. Distinct from DUPLICATE_CLIENT_SEQ: the coordinate is
+  // unspent, the account's gap state is what rejects it.
+  ADMISSION_CODE_GAP_BUDGET_EXCEEDED = 8;
 }
 
 message SequencedAck {
