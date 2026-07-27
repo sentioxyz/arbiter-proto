@@ -22,3 +22,18 @@ make proto    # regenerate gen/pb (buf)
 make lint     # buf lint
 make test     # go build + go vet over generated code
 ```
+
+## Releases
+
+Run the **cut-release** workflow (Actions → cut-release → Run workflow) on `main`. It re-runs the CI gates, then pushes an annotated `vX.Y.Z` tag and publishes a GitHub release with generated notes.
+
+The version is derived from the last `vX.Y.Z` tag:
+
+| | |
+|---|---|
+| `X` | stays where the last tag left it — bump it with the `version` input |
+| `Y` | +1 on the first cut of a new UTC calendar day, `Z` back to `0` |
+| `Z` | +1 on every further cut within the same UTC day |
+
+The last hand-cut tag is `v0.2.0`, so the first workflow run yields `v0.3.0`. The `version` input overrides the whole calculation; `dry_run` runs the checks and prints the version without tagging.
+

@@ -1,0 +1,148 @@
+name: cut-release
+
+# Version scheme: vX.Y.Z, cut by hand from the default branch.
+#   X  stays where the last tag left it (0 today); bump it via the `version` input.
+#   Y  +1 on the first cut of a new UTC calendar day, Z back to 0.
+#   Z  +1 on every further cut within the same UTC day.
+# The last hand-cut tag is v0.2.0, so the first run of this workflow yields v0.3.0.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Explicit version to cut, e.g. v1.0.0. Empty derives it from the last tag."
+        required: false
+        type: string
+      dry_run:
+        description: "Run the checks and print the version, but do not tag or publish."
+        required: false
+        type: boolean
+        default: false
+
+# Two cuts racing would both read the same last tag and compute the same version.
+concurrency:
+  group: cut-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  cut:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: cut from the default branch only
+        if: github.ref_name != github.event.repository.default_branch
+        run: |
+          echo "::error::ran on '${{ github.ref_name }}'; cut releases from '${{ github.event.repository.default_branch }}'"
+          exit 1
+
+      # Same gates as ci.yml — a tag must never point at a tree whose gen/ is stale.
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: bufbuild/buf-action@v1
+        with:
+          setup_only: true
+      - run: buf lint
+      - name: generated code is current
+        run: |
+          make tools
+          make proto
+          git diff --exit-code -- gen/
+      - run: make test
+
+      - name: compute version
+        id: version
+        env:
+          OVERRIDE: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          # Highest vX.Y.Z tag. Pre-release and non-conforming tags are ignored.
+          mapfile -t tags < <(git tag --list --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' || true)
+          last="${tags[0]-}"
+
+          if [[ -n "$OVERRIDE" ]]; then
+            next="$OVERRIDE"
+            if [[ ! "$next" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::version input '$next' is not vX.Y.Z"
+              exit 1
+            fi
+            reason="explicit \`version\` input"
+          elif [[ -z "$last" ]]; then
+            next="v0.3.0"
+            reason="no vX.Y.Z tag to derive from; the scheme starts here"
+          else
+            [[ "$last" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]
+            major=$((10#${BASH_REMATCH[1]}))
+            minor=$((10#${BASH_REMATCH[2]}))
+            patch=$((10#${BASH_REMATCH[3]}))
+
+            # creatordate is the tagger date on annotated tags, the commit date on lightweight ones.
+            epoch="$(git for-each-ref --format='%(creatordate:raw)' "refs/tags/$last" | cut -d' ' -f1)"
+            last_day="$(date -u -d "@$epoch" +%F)"
+            today="$(date -u +%F)"
+
+            if [[ "$today" != "$last_day" ]]; then
+              minor=$((minor + 1))
+              patch=0
+              reason="first cut of UTC day $today; $last was cut on $last_day"
+            else
+              patch=$((patch + 1))
+              reason="same UTC day ($today) as $last"
+            fi
+            next="v${major}.${minor}.${patch}"
+          fi
+
+          if git rev-parse -q --verify "refs/tags/$next" >/dev/null; then
+            echo "::error::tag $next already exists"
+            exit 1
+          fi
+
+          {
+            echo "version=$next"
+            echo "previous=${last:-none}"
+            echo "reason=$reason"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: tag and push
+        if: ${{ !inputs.dry_run }}
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # Annotated on purpose: the tagger date is what the next cut reads back as "the last cut's UTC day".
+          git tag -a "$VERSION" -m "$VERSION"
+          git push origin "refs/tags/$VERSION"
+
+      - name: publish release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: gh release create "$VERSION" --title "$VERSION" --generate-notes --verify-tag
+
+      - name: summary
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          PREVIOUS: ${{ steps.version.outputs.previous }}
+          REASON: ${{ steps.version.outputs.reason }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          {
+            echo "## $VERSION"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| previous | \`$PREVIOUS\` |"
+            echo "| rule | $REASON |"
+            echo "| commit | \`$GITHUB_SHA\` |"
+            echo "| dry run | $DRY_RUN |"
+          } >> "$GITHUB_STEP_SUMMARY"
