@@ -35,7 +35,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ArbiterIngress_SubmitStatement_FullMethodName = "/arbiter.ArbiterIngress/SubmitStatement"
+	ArbiterIngress_SubmitStatement_FullMethodName    = "/arbiter.ArbiterIngress/SubmitStatement"
+	ArbiterIngress_GetStatementStatus_FullMethodName = "/arbiter.ArbiterIngress/GetStatementStatus"
 )
 
 // ArbiterIngressClient is the client API for ArbiterIngress service.
@@ -46,6 +47,8 @@ const (
 type ArbiterIngressClient interface {
 	// Idempotency key: (statement_id.client_account, statement_id.client_seq).
 	SubmitStatement(ctx context.Context, in *StatementEnvelopeV2, opts ...grpc.CallOption) (*SequencedAck, error)
+	// Read-only status probe for staged-intake convergence (housegate P1e).
+	GetStatementStatus(ctx context.Context, in *GetStatementStatusRequest, opts ...grpc.CallOption) (*StatementStatus, error)
 }
 
 type arbiterIngressClient struct {
@@ -66,6 +69,16 @@ func (c *arbiterIngressClient) SubmitStatement(ctx context.Context, in *Statemen
 	return out, nil
 }
 
+func (c *arbiterIngressClient) GetStatementStatus(ctx context.Context, in *GetStatementStatusRequest, opts ...grpc.CallOption) (*StatementStatus, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StatementStatus)
+	err := c.cc.Invoke(ctx, ArbiterIngress_GetStatementStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ArbiterIngressServer is the server API for ArbiterIngress service.
 // All implementations must embed UnimplementedArbiterIngressServer
 // for forward compatibility.
@@ -74,6 +87,8 @@ func (c *arbiterIngressClient) SubmitStatement(ctx context.Context, in *Statemen
 type ArbiterIngressServer interface {
 	// Idempotency key: (statement_id.client_account, statement_id.client_seq).
 	SubmitStatement(context.Context, *StatementEnvelopeV2) (*SequencedAck, error)
+	// Read-only status probe for staged-intake convergence (housegate P1e).
+	GetStatementStatus(context.Context, *GetStatementStatusRequest) (*StatementStatus, error)
 	mustEmbedUnimplementedArbiterIngressServer()
 }
 
@@ -86,6 +101,9 @@ type UnimplementedArbiterIngressServer struct{}
 
 func (UnimplementedArbiterIngressServer) SubmitStatement(context.Context, *StatementEnvelopeV2) (*SequencedAck, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SubmitStatement not implemented")
+}
+func (UnimplementedArbiterIngressServer) GetStatementStatus(context.Context, *GetStatementStatusRequest) (*StatementStatus, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStatementStatus not implemented")
 }
 func (UnimplementedArbiterIngressServer) mustEmbedUnimplementedArbiterIngressServer() {}
 func (UnimplementedArbiterIngressServer) testEmbeddedByValue()                        {}
@@ -126,6 +144,24 @@ func _ArbiterIngress_SubmitStatement_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ArbiterIngress_GetStatementStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetStatementStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ArbiterIngressServer).GetStatementStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ArbiterIngress_GetStatementStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ArbiterIngressServer).GetStatementStatus(ctx, req.(*GetStatementStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ArbiterIngress_ServiceDesc is the grpc.ServiceDesc for ArbiterIngress service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -136,6 +172,10 @@ var ArbiterIngress_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SubmitStatement",
 			Handler:    _ArbiterIngress_SubmitStatement_Handler,
+		},
+		{
+			MethodName: "GetStatementStatus",
+			Handler:    _ArbiterIngress_GetStatementStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

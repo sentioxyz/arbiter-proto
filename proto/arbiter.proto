@@ -349,6 +349,26 @@ message NotLeader {
   string leader_addr = 1;
 }
 
+// GetStatementStatusRequest queries one statement's local FSM view by flat
+// statement_id ("account:seq:nonce"). Any node may serve it with bounded
+// staleness under the SafeState read posture (§11.3).
+message GetStatementStatusRequest {
+  string statement_id = 1;
+}
+
+// StatementStatus is a point-in-time local FSM view. found=false means the
+// statement was never sequenced on this cluster; it is not evidence of a
+// terminal rejection. Callers converge by resending SubmitStatement.
+message StatementStatus {
+  bool found = 1;
+  uint64 statement_seq = 2;
+  // FSM status string: "Sequenced".."Safe" / "Rejected".
+  string status = 3;
+  bool rc_bound = 4;
+  // The statement's assigned source when rc_bound.
+  string bound_source = 5;
+}
+
 // ============================================================
 // Services (§11.2). Leader-only for all write/dispatch RPCs; SafeState
 // reads may be served by followers with bounded staleness or routed via
@@ -359,6 +379,8 @@ message NotLeader {
 service ArbiterIngress {
   // Idempotency key: (statement_id.client_account, statement_id.client_seq).
   rpc SubmitStatement (StatementEnvelopeV2) returns (SequencedAck) {}
+  // Read-only status probe for staged-intake convergence (housegate P1e).
+  rpc GetStatementStatus (GetStatementStatusRequest) returns (StatementStatus) {}
 }
 
 // SourceClaims is called by the source SNode.
