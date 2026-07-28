@@ -2132,6 +2132,134 @@ func (x *NotLeader) GetLeaderAddr() string {
 	return ""
 }
 
+// GetStatementStatusRequest queries one statement's local FSM view by flat
+// statement_id ("account:seq:nonce"). Any node may serve it with bounded
+// staleness under the SafeState read posture (§11.3).
+type GetStatementStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StatementId   string                 `protobuf:"bytes,1,opt,name=statement_id,json=statementId,proto3" json:"statement_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetStatementStatusRequest) Reset() {
+	*x = GetStatementStatusRequest{}
+	mi := &file_arbiter_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetStatementStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetStatementStatusRequest) ProtoMessage() {}
+
+func (x *GetStatementStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_arbiter_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetStatementStatusRequest.ProtoReflect.Descriptor instead.
+func (*GetStatementStatusRequest) Descriptor() ([]byte, []int) {
+	return file_arbiter_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *GetStatementStatusRequest) GetStatementId() string {
+	if x != nil {
+		return x.StatementId
+	}
+	return ""
+}
+
+// StatementStatus is a point-in-time local FSM view. found=false means the
+// statement was never sequenced on this cluster; it is not evidence of a
+// terminal rejection. Callers converge by resending SubmitStatement.
+type StatementStatus struct {
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Found        bool                   `protobuf:"varint,1,opt,name=found,proto3" json:"found,omitempty"`
+	StatementSeq uint64                 `protobuf:"varint,2,opt,name=statement_seq,json=statementSeq,proto3" json:"statement_seq,omitempty"`
+	// FSM status string: "Sequenced".."Safe" / "Rejected".
+	Status  string `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
+	RcBound bool   `protobuf:"varint,4,opt,name=rc_bound,json=rcBound,proto3" json:"rc_bound,omitempty"`
+	// The statement's assigned source when rc_bound.
+	BoundSource   string `protobuf:"bytes,5,opt,name=bound_source,json=boundSource,proto3" json:"bound_source,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StatementStatus) Reset() {
+	*x = StatementStatus{}
+	mi := &file_arbiter_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StatementStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StatementStatus) ProtoMessage() {}
+
+func (x *StatementStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_arbiter_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StatementStatus.ProtoReflect.Descriptor instead.
+func (*StatementStatus) Descriptor() ([]byte, []int) {
+	return file_arbiter_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *StatementStatus) GetFound() bool {
+	if x != nil {
+		return x.Found
+	}
+	return false
+}
+
+func (x *StatementStatus) GetStatementSeq() uint64 {
+	if x != nil {
+		return x.StatementSeq
+	}
+	return 0
+}
+
+func (x *StatementStatus) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *StatementStatus) GetRcBound() bool {
+	if x != nil {
+		return x.RcBound
+	}
+	return false
+}
+
+func (x *StatementStatus) GetBoundSource() string {
+	if x != nil {
+		return x.BoundSource
+	}
+	return ""
+}
+
 var File_arbiter_proto protoreflect.FileDescriptor
 
 const file_arbiter_proto_rawDesc = "" +
@@ -2275,7 +2403,15 @@ const file_arbiter_proto_rawDesc = "" +
 	"\x03Ack\",\n" +
 	"\tNotLeader\x12\x1f\n" +
 	"\vleader_addr\x18\x01 \x01(\tR\n" +
-	"leaderAddr*J\n" +
+	"leaderAddr\">\n" +
+	"\x19GetStatementStatusRequest\x12!\n" +
+	"\fstatement_id\x18\x01 \x01(\tR\vstatementId\"\xa2\x01\n" +
+	"\x0fStatementStatus\x12\x14\n" +
+	"\x05found\x18\x01 \x01(\bR\x05found\x12#\n" +
+	"\rstatement_seq\x18\x02 \x01(\x04R\fstatementSeq\x12\x16\n" +
+	"\x06status\x18\x03 \x01(\tR\x06status\x12\x19\n" +
+	"\brc_bound\x18\x04 \x01(\bR\arcBound\x12!\n" +
+	"\fbound_source\x18\x05 \x01(\tR\vboundSource*J\n" +
 	"\rStatementKind\x12\x1e\n" +
 	"\x1aSTATEMENT_KIND_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15STATEMENT_KIND_INSERT\x10\x01*\xd0\x02\n" +
@@ -2292,9 +2428,10 @@ const file_arbiter_proto_rawDesc = "" +
 	"\bNodeRole\x12\x19\n" +
 	"\x15NODE_ROLE_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12NODE_ROLE_VERIFIER\x10\x01\x12\x13\n" +
-	"\x0fNODE_ROLE_SNODE\x10\x022Z\n" +
+	"\x0fNODE_ROLE_SNODE\x10\x022\xb0\x01\n" +
 	"\x0eArbiterIngress\x12H\n" +
-	"\x0fSubmitStatement\x12\x1c.arbiter.StatementEnvelopeV2\x1a\x15.arbiter.SequencedAck\"\x002H\n" +
+	"\x0fSubmitStatement\x12\x1c.arbiter.StatementEnvelopeV2\x1a\x15.arbiter.SequencedAck\"\x00\x12T\n" +
+	"\x12GetStatementStatus\x12\".arbiter.GetStatementStatusRequest\x1a\x18.arbiter.StatementStatus\"\x002H\n" +
 	"\fSourceClaims\x128\n" +
 	"\x13RegisterResultClaim\x12\x11.arbiter.RCRecord\x1a\f.arbiter.Ack\"\x002\xe6\x01\n" +
 	"\x0fVerifierGateway\x12R\n" +
@@ -2329,42 +2466,44 @@ func file_arbiter_proto_rawDescGZIP() []byte {
 }
 
 var file_arbiter_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_arbiter_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_arbiter_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
 var file_arbiter_proto_goTypes = []any{
-	(StatementKind)(0),              // 0: arbiter.StatementKind
-	(AdmissionCode)(0),              // 1: arbiter.AdmissionCode
-	(NodeRole)(0),                   // 2: arbiter.NodeRole
-	(*StatementID)(nil),             // 3: arbiter.StatementID
-	(*StatementEnvelopeV2)(nil),     // 4: arbiter.StatementEnvelopeV2
-	(*SequencedAck)(nil),            // 5: arbiter.SequencedAck
-	(*CandidatePart)(nil),           // 6: arbiter.CandidatePart
-	(*PartitionLtHashSum)(nil),      // 7: arbiter.PartitionLtHashSum
-	(*RCRecord)(nil),                // 8: arbiter.RCRecord
-	(*VerifierHello)(nil),           // 9: arbiter.VerifierHello
-	(*VerifierDispatch)(nil),        // 10: arbiter.VerifierDispatch
-	(*ByteSideScanRequest)(nil),     // 11: arbiter.ByteSideScanRequest
-	(*PartScan)(nil),                // 12: arbiter.PartScan
-	(*ByteSideScanMsg)(nil),         // 13: arbiter.ByteSideScanMsg
-	(*PartRef)(nil),                 // 14: arbiter.PartRef
-	(*PromoteSafePartition)(nil),    // 15: arbiter.PromoteSafePartition
-	(*UnsafeCleanup)(nil),           // 16: arbiter.UnsafeCleanup
-	(*PromotionCommand)(nil),        // 17: arbiter.PromotionCommand
-	(*SNodeHello)(nil),              // 18: arbiter.SNodeHello
-	(*SafePartMapping)(nil),         // 19: arbiter.SafePartMapping
-	(*PromotionAck)(nil),            // 20: arbiter.PromotionAck
-	(*CleanupAck)(nil),              // 21: arbiter.CleanupAck
-	(*AnchorRef)(nil),               // 22: arbiter.AnchorRef
-	(*GetSafeWatermarkRequest)(nil), // 23: arbiter.GetSafeWatermarkRequest
-	(*SafeWatermark)(nil),           // 24: arbiter.SafeWatermark
-	(*SnapshotRef)(nil),             // 25: arbiter.SnapshotRef
-	(*BlockRef)(nil),                // 26: arbiter.BlockRef
-	(*NodeRegistration)(nil),        // 27: arbiter.NodeRegistration
-	(*NodeRef)(nil),                 // 28: arbiter.NodeRef
-	(*Ack)(nil),                     // 29: arbiter.Ack
-	(*NotLeader)(nil),               // 30: arbiter.NotLeader
-	(*ReplayJob)(nil),               // 31: arbiter.ReplayJob
-	(*ReplayAttestation)(nil),       // 32: arbiter.ReplayAttestation
-	(*SafeSnapshotManifest)(nil),    // 33: arbiter.SafeSnapshotManifest
+	(StatementKind)(0),                // 0: arbiter.StatementKind
+	(AdmissionCode)(0),                // 1: arbiter.AdmissionCode
+	(NodeRole)(0),                     // 2: arbiter.NodeRole
+	(*StatementID)(nil),               // 3: arbiter.StatementID
+	(*StatementEnvelopeV2)(nil),       // 4: arbiter.StatementEnvelopeV2
+	(*SequencedAck)(nil),              // 5: arbiter.SequencedAck
+	(*CandidatePart)(nil),             // 6: arbiter.CandidatePart
+	(*PartitionLtHashSum)(nil),        // 7: arbiter.PartitionLtHashSum
+	(*RCRecord)(nil),                  // 8: arbiter.RCRecord
+	(*VerifierHello)(nil),             // 9: arbiter.VerifierHello
+	(*VerifierDispatch)(nil),          // 10: arbiter.VerifierDispatch
+	(*ByteSideScanRequest)(nil),       // 11: arbiter.ByteSideScanRequest
+	(*PartScan)(nil),                  // 12: arbiter.PartScan
+	(*ByteSideScanMsg)(nil),           // 13: arbiter.ByteSideScanMsg
+	(*PartRef)(nil),                   // 14: arbiter.PartRef
+	(*PromoteSafePartition)(nil),      // 15: arbiter.PromoteSafePartition
+	(*UnsafeCleanup)(nil),             // 16: arbiter.UnsafeCleanup
+	(*PromotionCommand)(nil),          // 17: arbiter.PromotionCommand
+	(*SNodeHello)(nil),                // 18: arbiter.SNodeHello
+	(*SafePartMapping)(nil),           // 19: arbiter.SafePartMapping
+	(*PromotionAck)(nil),              // 20: arbiter.PromotionAck
+	(*CleanupAck)(nil),                // 21: arbiter.CleanupAck
+	(*AnchorRef)(nil),                 // 22: arbiter.AnchorRef
+	(*GetSafeWatermarkRequest)(nil),   // 23: arbiter.GetSafeWatermarkRequest
+	(*SafeWatermark)(nil),             // 24: arbiter.SafeWatermark
+	(*SnapshotRef)(nil),               // 25: arbiter.SnapshotRef
+	(*BlockRef)(nil),                  // 26: arbiter.BlockRef
+	(*NodeRegistration)(nil),          // 27: arbiter.NodeRegistration
+	(*NodeRef)(nil),                   // 28: arbiter.NodeRef
+	(*Ack)(nil),                       // 29: arbiter.Ack
+	(*NotLeader)(nil),                 // 30: arbiter.NotLeader
+	(*GetStatementStatusRequest)(nil), // 31: arbiter.GetStatementStatusRequest
+	(*StatementStatus)(nil),           // 32: arbiter.StatementStatus
+	(*ReplayJob)(nil),                 // 33: arbiter.ReplayJob
+	(*ReplayAttestation)(nil),         // 34: arbiter.ReplayAttestation
+	(*SafeSnapshotManifest)(nil),      // 35: arbiter.SafeSnapshotManifest
 }
 var file_arbiter_proto_depIdxs = []int32{
 	3,  // 0: arbiter.StatementEnvelopeV2.statement_id:type_name -> arbiter.StatementID
@@ -2373,7 +2512,7 @@ var file_arbiter_proto_depIdxs = []int32{
 	3,  // 3: arbiter.RCRecord.statement_id:type_name -> arbiter.StatementID
 	6,  // 4: arbiter.RCRecord.candidate_parts:type_name -> arbiter.CandidatePart
 	7,  // 5: arbiter.RCRecord.partition_new_part_sums:type_name -> arbiter.PartitionLtHashSum
-	31, // 6: arbiter.VerifierDispatch.replay_job:type_name -> arbiter.ReplayJob
+	33, // 6: arbiter.VerifierDispatch.replay_job:type_name -> arbiter.ReplayJob
 	11, // 7: arbiter.VerifierDispatch.byte_side_scan:type_name -> arbiter.ByteSideScanRequest
 	14, // 8: arbiter.ByteSideScanRequest.parts:type_name -> arbiter.PartRef
 	12, // 9: arbiter.ByteSideScanMsg.parts:type_name -> arbiter.PartScan
@@ -2384,33 +2523,35 @@ var file_arbiter_proto_depIdxs = []int32{
 	19, // 14: arbiter.PromotionAck.parts:type_name -> arbiter.SafePartMapping
 	2,  // 15: arbiter.NodeRegistration.roles:type_name -> arbiter.NodeRole
 	4,  // 16: arbiter.ArbiterIngress.SubmitStatement:input_type -> arbiter.StatementEnvelopeV2
-	8,  // 17: arbiter.SourceClaims.RegisterResultClaim:input_type -> arbiter.RCRecord
-	9,  // 18: arbiter.VerifierGateway.SubscribeVerifierDispatch:input_type -> arbiter.VerifierHello
-	32, // 19: arbiter.VerifierGateway.SubmitAttestation:input_type -> arbiter.ReplayAttestation
-	13, // 20: arbiter.VerifierGateway.SubmitByteSideScan:input_type -> arbiter.ByteSideScanMsg
-	18, // 21: arbiter.PromotionGateway.SubscribePromotions:input_type -> arbiter.SNodeHello
-	20, // 22: arbiter.PromotionGateway.AckPromotion:input_type -> arbiter.PromotionAck
-	21, // 23: arbiter.PromotionGateway.AckCleanup:input_type -> arbiter.CleanupAck
-	23, // 24: arbiter.SafeState.GetSafeWatermark:input_type -> arbiter.GetSafeWatermarkRequest
-	25, // 25: arbiter.SafeState.GetManifest:input_type -> arbiter.SnapshotRef
-	26, // 26: arbiter.SafeState.GetManifestByBlock:input_type -> arbiter.BlockRef
-	27, // 27: arbiter.Membership.RegisterNode:input_type -> arbiter.NodeRegistration
-	28, // 28: arbiter.Membership.MarkActive:input_type -> arbiter.NodeRef
-	5,  // 29: arbiter.ArbiterIngress.SubmitStatement:output_type -> arbiter.SequencedAck
-	29, // 30: arbiter.SourceClaims.RegisterResultClaim:output_type -> arbiter.Ack
-	10, // 31: arbiter.VerifierGateway.SubscribeVerifierDispatch:output_type -> arbiter.VerifierDispatch
-	29, // 32: arbiter.VerifierGateway.SubmitAttestation:output_type -> arbiter.Ack
-	29, // 33: arbiter.VerifierGateway.SubmitByteSideScan:output_type -> arbiter.Ack
-	17, // 34: arbiter.PromotionGateway.SubscribePromotions:output_type -> arbiter.PromotionCommand
-	29, // 35: arbiter.PromotionGateway.AckPromotion:output_type -> arbiter.Ack
-	29, // 36: arbiter.PromotionGateway.AckCleanup:output_type -> arbiter.Ack
-	24, // 37: arbiter.SafeState.GetSafeWatermark:output_type -> arbiter.SafeWatermark
-	33, // 38: arbiter.SafeState.GetManifest:output_type -> arbiter.SafeSnapshotManifest
-	33, // 39: arbiter.SafeState.GetManifestByBlock:output_type -> arbiter.SafeSnapshotManifest
-	29, // 40: arbiter.Membership.RegisterNode:output_type -> arbiter.Ack
-	29, // 41: arbiter.Membership.MarkActive:output_type -> arbiter.Ack
-	29, // [29:42] is the sub-list for method output_type
-	16, // [16:29] is the sub-list for method input_type
+	31, // 17: arbiter.ArbiterIngress.GetStatementStatus:input_type -> arbiter.GetStatementStatusRequest
+	8,  // 18: arbiter.SourceClaims.RegisterResultClaim:input_type -> arbiter.RCRecord
+	9,  // 19: arbiter.VerifierGateway.SubscribeVerifierDispatch:input_type -> arbiter.VerifierHello
+	34, // 20: arbiter.VerifierGateway.SubmitAttestation:input_type -> arbiter.ReplayAttestation
+	13, // 21: arbiter.VerifierGateway.SubmitByteSideScan:input_type -> arbiter.ByteSideScanMsg
+	18, // 22: arbiter.PromotionGateway.SubscribePromotions:input_type -> arbiter.SNodeHello
+	20, // 23: arbiter.PromotionGateway.AckPromotion:input_type -> arbiter.PromotionAck
+	21, // 24: arbiter.PromotionGateway.AckCleanup:input_type -> arbiter.CleanupAck
+	23, // 25: arbiter.SafeState.GetSafeWatermark:input_type -> arbiter.GetSafeWatermarkRequest
+	25, // 26: arbiter.SafeState.GetManifest:input_type -> arbiter.SnapshotRef
+	26, // 27: arbiter.SafeState.GetManifestByBlock:input_type -> arbiter.BlockRef
+	27, // 28: arbiter.Membership.RegisterNode:input_type -> arbiter.NodeRegistration
+	28, // 29: arbiter.Membership.MarkActive:input_type -> arbiter.NodeRef
+	5,  // 30: arbiter.ArbiterIngress.SubmitStatement:output_type -> arbiter.SequencedAck
+	32, // 31: arbiter.ArbiterIngress.GetStatementStatus:output_type -> arbiter.StatementStatus
+	29, // 32: arbiter.SourceClaims.RegisterResultClaim:output_type -> arbiter.Ack
+	10, // 33: arbiter.VerifierGateway.SubscribeVerifierDispatch:output_type -> arbiter.VerifierDispatch
+	29, // 34: arbiter.VerifierGateway.SubmitAttestation:output_type -> arbiter.Ack
+	29, // 35: arbiter.VerifierGateway.SubmitByteSideScan:output_type -> arbiter.Ack
+	17, // 36: arbiter.PromotionGateway.SubscribePromotions:output_type -> arbiter.PromotionCommand
+	29, // 37: arbiter.PromotionGateway.AckPromotion:output_type -> arbiter.Ack
+	29, // 38: arbiter.PromotionGateway.AckCleanup:output_type -> arbiter.Ack
+	24, // 39: arbiter.SafeState.GetSafeWatermark:output_type -> arbiter.SafeWatermark
+	35, // 40: arbiter.SafeState.GetManifest:output_type -> arbiter.SafeSnapshotManifest
+	35, // 41: arbiter.SafeState.GetManifestByBlock:output_type -> arbiter.SafeSnapshotManifest
+	29, // 42: arbiter.Membership.RegisterNode:output_type -> arbiter.Ack
+	29, // 43: arbiter.Membership.MarkActive:output_type -> arbiter.Ack
+	30, // [30:44] is the sub-list for method output_type
+	16, // [16:30] is the sub-list for method input_type
 	16, // [16:16] is the sub-list for extension type_name
 	16, // [16:16] is the sub-list for extension extendee
 	0,  // [0:16] is the sub-list for field type_name
@@ -2436,7 +2577,7 @@ func file_arbiter_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_arbiter_proto_rawDesc), len(file_arbiter_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   28,
+			NumMessages:   30,
 			NumExtensions: 0,
 			NumServices:   6,
 		},
