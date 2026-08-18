@@ -55,8 +55,12 @@ type Statement struct {
 	PayloadLength uint64 `protobuf:"varint,8,opt,name=payload_length,json=payloadLength,proto3" json:"payload_length,omitempty"`
 	TargetTableId string `protobuf:"bytes,9,opt,name=target_table_id,json=targetTableId,proto3" json:"target_table_id,omitempty"`
 	UserJws       string `protobuf:"bytes,10,opt,name=user_jws,json=userJws,proto3" json:"user_jws,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// v2 additions — additive, JSON-tag frozen against pkg/replay.Statement.
+	PayloadFormat  string `protobuf:"bytes,11,opt,name=payload_format,json=payloadFormat,proto3" json:"payload_format,omitempty"`
+	ClientRevision uint32 `protobuf:"varint,12,opt,name=client_revision,json=clientRevision,proto3" json:"client_revision,omitempty"`
+	SchemaHash     string `protobuf:"bytes,13,opt,name=schema_hash,json=schemaHash,proto3" json:"schema_hash,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *Statement) Reset() {
@@ -155,6 +159,27 @@ func (x *Statement) GetTargetTableId() string {
 func (x *Statement) GetUserJws() string {
 	if x != nil {
 		return x.UserJws
+	}
+	return ""
+}
+
+func (x *Statement) GetPayloadFormat() string {
+	if x != nil {
+		return x.PayloadFormat
+	}
+	return ""
+}
+
+func (x *Statement) GetClientRevision() uint32 {
+	if x != nil {
+		return x.ClientRevision
+	}
+	return 0
+}
+
+func (x *Statement) GetSchemaHash() string {
+	if x != nil {
+		return x.SchemaHash
 	}
 	return ""
 }
@@ -850,7 +875,7 @@ var File_replay_proto protoreflect.FileDescriptor
 
 const file_replay_proto_rawDesc = "" +
 	"\n" +
-	"\freplay.proto\x12\aarbiter\"\xd3\x02\n" +
+	"\freplay.proto\x12\aarbiter\"\xc4\x03\n" +
 	"\tStatement\x12!\n" +
 	"\fstatement_id\x18\x01 \x01(\tR\vstatementId\x12#\n" +
 	"\rstatement_seq\x18\x02 \x01(\x04R\fstatementSeq\x12\x10\n" +
@@ -863,7 +888,11 @@ const file_replay_proto_rawDesc = "" +
 	"\x0epayload_length\x18\b \x01(\x04R\rpayloadLength\x12&\n" +
 	"\x0ftarget_table_id\x18\t \x01(\tR\rtargetTableId\x12\x19\n" +
 	"\buser_jws\x18\n" +
-	" \x01(\tR\auserJws\"\xc1\x02\n" +
+	" \x01(\tR\auserJws\x12%\n" +
+	"\x0epayload_format\x18\v \x01(\tR\rpayloadFormat\x12'\n" +
+	"\x0fclient_revision\x18\f \x01(\rR\x0eclientRevision\x12\x1f\n" +
+	"\vschema_hash\x18\r \x01(\tR\n" +
+	"schemaHash\"\xc1\x02\n" +
 	"\tReplayJob\x12\x1b\n" +
 	"\tblock_seq\x18\x01 \x01(\x04R\bblockSeq\x121\n" +
 	"\x15prev_safe_snapshot_id\x18\x02 \x01(\tR\x12prevSafeSnapshotId\x12&\n" +

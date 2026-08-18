@@ -290,16 +290,27 @@ type StatementEnvelopeV2 struct {
 	StatementKind StatementKind          `protobuf:"varint,2,opt,name=statement_kind,json=statementKind,proto3,enum=arbiter.StatementKind" json:"statement_kind,omitempty"`
 	Sql           string                 `protobuf:"bytes,3,opt,name=sql,proto3" json:"sql,omitempty"`
 	// DigestString(sql) under the housegate-replay-mvp-v0 profile.
-	SqlHash       string `protobuf:"bytes,4,opt,name=sql_hash,json=sqlHash,proto3" json:"sql_hash,omitempty"`
+	SqlHash string `protobuf:"bytes,4,opt,name=sql_hash,json=sqlHash,proto3" json:"sql_hash,omitempty"`
+	// v2: CanonicalDigest("housegate-settings-v1", []) — the constant empty
+	// user-settings digest; the SI lane admits no client settings in v1.
 	SettingsHash  string `protobuf:"bytes,5,opt,name=settings_hash,json=settingsHash,proto3" json:"settings_hash,omitempty"`
 	PayloadRef    string `protobuf:"bytes,6,opt,name=payload_ref,json=payloadRef,proto3" json:"payload_ref,omitempty"`
 	PayloadHash   string `protobuf:"bytes,7,opt,name=payload_hash,json=payloadHash,proto3" json:"payload_hash,omitempty"`
 	PayloadLength uint64 `protobuf:"varint,8,opt,name=payload_length,json=payloadLength,proto3" json:"payload_length,omitempty"`
 	TargetTableId string `protobuf:"bytes,9,opt,name=target_table_id,json=targetTableId,proto3" json:"target_table_id,omitempty"`
-	// The user's signature binding the statement (JWS compact form).
-	UserJws       string `protobuf:"bytes,10,opt,name=user_jws,json=userJws,proto3" json:"user_jws,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// The user's signature binding the statement (JWS compact form). v2:
+	// purpose "housegate-statement-v2" over every signed field below.
+	UserJws string `protobuf:"bytes,10,opt,name=user_jws,json=userJws,proto3" json:"user_jws,omitempty"`
+	// ---- v2 additions (all signed by user_jws) ----
+	EnvelopeVersion uint32 `protobuf:"varint,11,opt,name=envelope_version,json=envelopeVersion,proto3" json:"envelope_version,omitempty"` // must be 2
+	NetworkId       string `protobuf:"bytes,12,opt,name=network_id,json=networkId,proto3" json:"network_id,omitempty"`                    // must equal the Arbiter genesis network id
+	KeeperShardId   uint32 `protobuf:"varint,13,opt,name=keeper_shard_id,json=keeperShardId,proto3" json:"keeper_shard_id,omitempty"`     // must be 0 in v1 (Sharder returns group 0)
+	PayloadFormat   string `protobuf:"bytes,14,opt,name=payload_format,json=payloadFormat,proto3" json:"payload_format,omitempty"`        // "clickhouse-native-data-v1"
+	ClientRevision  uint32 `protobuf:"varint,15,opt,name=client_revision,json=clientRevision,proto3" json:"client_revision,omitempty"`    // ClickHouse client protocol revision the Native blocks were encoded for
+	SchemaHash      string `protobuf:"bytes,16,opt,name=schema_hash,json=schemaHash,proto3" json:"schema_hash,omitempty"`                 // Phase-B TableSchemaHash the payload was encoded against
+	RowIdProfileId  string `protobuf:"bytes,17,opt,name=row_id_profile_id,json=rowIdProfileId,proto3" json:"row_id_profile_id,omitempty"` // "housegate-row-id-v1"
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *StatementEnvelopeV2) Reset() {
@@ -398,6 +409,55 @@ func (x *StatementEnvelopeV2) GetTargetTableId() string {
 func (x *StatementEnvelopeV2) GetUserJws() string {
 	if x != nil {
 		return x.UserJws
+	}
+	return ""
+}
+
+func (x *StatementEnvelopeV2) GetEnvelopeVersion() uint32 {
+	if x != nil {
+		return x.EnvelopeVersion
+	}
+	return 0
+}
+
+func (x *StatementEnvelopeV2) GetNetworkId() string {
+	if x != nil {
+		return x.NetworkId
+	}
+	return ""
+}
+
+func (x *StatementEnvelopeV2) GetKeeperShardId() uint32 {
+	if x != nil {
+		return x.KeeperShardId
+	}
+	return 0
+}
+
+func (x *StatementEnvelopeV2) GetPayloadFormat() string {
+	if x != nil {
+		return x.PayloadFormat
+	}
+	return ""
+}
+
+func (x *StatementEnvelopeV2) GetClientRevision() uint32 {
+	if x != nil {
+		return x.ClientRevision
+	}
+	return 0
+}
+
+func (x *StatementEnvelopeV2) GetSchemaHash() string {
+	if x != nil {
+		return x.SchemaHash
+	}
+	return ""
+}
+
+func (x *StatementEnvelopeV2) GetRowIdProfileId() string {
+	if x != nil {
+		return x.RowIdProfileId
 	}
 	return ""
 }
@@ -1930,6 +1990,239 @@ func (x *BlockRef) GetSafeBlockSeq() uint64 {
 	return 0
 }
 
+// L3BlockHeader mirrors arbiter fsm.L3BlockHeader (json tags == field
+// names) so auditors can recompute ChainHash / statements_root.
+type L3BlockHeader struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	L3BlockSeq         uint64                 `protobuf:"varint,1,opt,name=l3_block_seq,json=l3BlockSeq,proto3" json:"l3_block_seq,omitempty"`
+	PrevL3Hash         string                 `protobuf:"bytes,2,opt,name=prev_l3_hash,json=prevL3Hash,proto3" json:"prev_l3_hash,omitempty"`
+	StatementSeqStart  uint64                 `protobuf:"varint,3,opt,name=statement_seq_start,json=statementSeqStart,proto3" json:"statement_seq_start,omitempty"`
+	StatementCount     uint32                 `protobuf:"varint,4,opt,name=statement_count,json=statementCount,proto3" json:"statement_count,omitempty"`
+	SchemaSnapshotId   string                 `protobuf:"bytes,5,opt,name=schema_snapshot_id,json=schemaSnapshotId,proto3" json:"schema_snapshot_id,omitempty"`
+	ExecutorProfileId  string                 `protobuf:"bytes,6,opt,name=executor_profile_id,json=executorProfileId,proto3" json:"executor_profile_id,omitempty"`
+	PrevSafeSnapshotId string                 `protobuf:"bytes,7,opt,name=prev_safe_snapshot_id,json=prevSafeSnapshotId,proto3" json:"prev_safe_snapshot_id,omitempty"`
+	PrevStateRoot      string                 `protobuf:"bytes,8,opt,name=prev_state_root,json=prevStateRoot,proto3" json:"prev_state_root,omitempty"`
+	SpentIdsRootAfter  string                 `protobuf:"bytes,9,opt,name=spent_ids_root_after,json=spentIdsRootAfter,proto3" json:"spent_ids_root_after,omitempty"`
+	// CanonicalDigest("arbiter-l3-statements-v1", []StatementEnvelope) over the
+	// sealed block's envelopes in statement_seq order.
+	StatementsRoot string     `protobuf:"bytes,10,opt,name=statements_root,json=statementsRoot,proto3" json:"statements_root,omitempty"`
+	L2AnchorRef    *AnchorRef `protobuf:"bytes,11,opt,name=l2_anchor_ref,json=l2AnchorRef,proto3" json:"l2_anchor_ref,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *L3BlockHeader) Reset() {
+	*x = L3BlockHeader{}
+	mi := &file_arbiter_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *L3BlockHeader) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*L3BlockHeader) ProtoMessage() {}
+
+func (x *L3BlockHeader) ProtoReflect() protoreflect.Message {
+	mi := &file_arbiter_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use L3BlockHeader.ProtoReflect.Descriptor instead.
+func (*L3BlockHeader) Descriptor() ([]byte, []int) {
+	return file_arbiter_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *L3BlockHeader) GetL3BlockSeq() uint64 {
+	if x != nil {
+		return x.L3BlockSeq
+	}
+	return 0
+}
+
+func (x *L3BlockHeader) GetPrevL3Hash() string {
+	if x != nil {
+		return x.PrevL3Hash
+	}
+	return ""
+}
+
+func (x *L3BlockHeader) GetStatementSeqStart() uint64 {
+	if x != nil {
+		return x.StatementSeqStart
+	}
+	return 0
+}
+
+func (x *L3BlockHeader) GetStatementCount() uint32 {
+	if x != nil {
+		return x.StatementCount
+	}
+	return 0
+}
+
+func (x *L3BlockHeader) GetSchemaSnapshotId() string {
+	if x != nil {
+		return x.SchemaSnapshotId
+	}
+	return ""
+}
+
+func (x *L3BlockHeader) GetExecutorProfileId() string {
+	if x != nil {
+		return x.ExecutorProfileId
+	}
+	return ""
+}
+
+func (x *L3BlockHeader) GetPrevSafeSnapshotId() string {
+	if x != nil {
+		return x.PrevSafeSnapshotId
+	}
+	return ""
+}
+
+func (x *L3BlockHeader) GetPrevStateRoot() string {
+	if x != nil {
+		return x.PrevStateRoot
+	}
+	return ""
+}
+
+func (x *L3BlockHeader) GetSpentIdsRootAfter() string {
+	if x != nil {
+		return x.SpentIdsRootAfter
+	}
+	return ""
+}
+
+func (x *L3BlockHeader) GetStatementsRoot() string {
+	if x != nil {
+		return x.StatementsRoot
+	}
+	return ""
+}
+
+func (x *L3BlockHeader) GetL2AnchorRef() *AnchorRef {
+	if x != nil {
+		return x.L2AnchorRef
+	}
+	return nil
+}
+
+type L3BlockRef struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	L3BlockSeq    uint64                 `protobuf:"varint,1,opt,name=l3_block_seq,json=l3BlockSeq,proto3" json:"l3_block_seq,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *L3BlockRef) Reset() {
+	*x = L3BlockRef{}
+	mi := &file_arbiter_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *L3BlockRef) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*L3BlockRef) ProtoMessage() {}
+
+func (x *L3BlockRef) ProtoReflect() protoreflect.Message {
+	mi := &file_arbiter_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use L3BlockRef.ProtoReflect.Descriptor instead.
+func (*L3BlockRef) Descriptor() ([]byte, []int) {
+	return file_arbiter_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *L3BlockRef) GetL3BlockSeq() uint64 {
+	if x != nil {
+		return x.L3BlockSeq
+	}
+	return 0
+}
+
+type L3Block struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Header    *L3BlockHeader         `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
+	ChainHash string                 `protobuf:"bytes,2,opt,name=chain_hash,json=chainHash,proto3" json:"chain_hash,omitempty"`
+	// Envelopes in statement_seq order (statement_seq_start .. +statement_count).
+	Statements    []*StatementEnvelopeV2 `protobuf:"bytes,3,rep,name=statements,proto3" json:"statements,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *L3Block) Reset() {
+	*x = L3Block{}
+	mi := &file_arbiter_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *L3Block) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*L3Block) ProtoMessage() {}
+
+func (x *L3Block) ProtoReflect() protoreflect.Message {
+	mi := &file_arbiter_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use L3Block.ProtoReflect.Descriptor instead.
+func (*L3Block) Descriptor() ([]byte, []int) {
+	return file_arbiter_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *L3Block) GetHeader() *L3BlockHeader {
+	if x != nil {
+		return x.Header
+	}
+	return nil
+}
+
+func (x *L3Block) GetChainHash() string {
+	if x != nil {
+		return x.ChainHash
+	}
+	return ""
+}
+
+func (x *L3Block) GetStatements() []*StatementEnvelopeV2 {
+	if x != nil {
+		return x.Statements
+	}
+	return nil
+}
+
 // NodeRegistration enters a data-plane node into FSM membership (§4.1
 // RegisterNode). Only MarkActive (snapshot-synced) nodes join the
 // deterministic verifier-selection pool (§7.4).
@@ -1948,7 +2241,7 @@ type NodeRegistration struct {
 
 func (x *NodeRegistration) Reset() {
 	*x = NodeRegistration{}
-	mi := &file_arbiter_proto_msgTypes[24]
+	mi := &file_arbiter_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1960,7 +2253,7 @@ func (x *NodeRegistration) String() string {
 func (*NodeRegistration) ProtoMessage() {}
 
 func (x *NodeRegistration) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[24]
+	mi := &file_arbiter_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1973,7 +2266,7 @@ func (x *NodeRegistration) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeRegistration.ProtoReflect.Descriptor instead.
 func (*NodeRegistration) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{24}
+	return file_arbiter_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *NodeRegistration) GetNodeId() string {
@@ -2013,7 +2306,7 @@ type NodeRef struct {
 
 func (x *NodeRef) Reset() {
 	*x = NodeRef{}
-	mi := &file_arbiter_proto_msgTypes[25]
+	mi := &file_arbiter_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2025,7 +2318,7 @@ func (x *NodeRef) String() string {
 func (*NodeRef) ProtoMessage() {}
 
 func (x *NodeRef) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[25]
+	mi := &file_arbiter_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2038,7 +2331,7 @@ func (x *NodeRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeRef.ProtoReflect.Descriptor instead.
 func (*NodeRef) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{25}
+	return file_arbiter_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *NodeRef) GetNodeId() string {
@@ -2057,7 +2350,7 @@ type Ack struct {
 
 func (x *Ack) Reset() {
 	*x = Ack{}
-	mi := &file_arbiter_proto_msgTypes[26]
+	mi := &file_arbiter_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2069,7 +2362,7 @@ func (x *Ack) String() string {
 func (*Ack) ProtoMessage() {}
 
 func (x *Ack) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[26]
+	mi := &file_arbiter_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2082,7 +2375,7 @@ func (x *Ack) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Ack.ProtoReflect.Descriptor instead.
 func (*Ack) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{26}
+	return file_arbiter_proto_rawDescGZIP(), []int{29}
 }
 
 // NotLeader is attached as a gRPC error detail (FAILED_PRECONDITION) by
@@ -2097,7 +2390,7 @@ type NotLeader struct {
 
 func (x *NotLeader) Reset() {
 	*x = NotLeader{}
-	mi := &file_arbiter_proto_msgTypes[27]
+	mi := &file_arbiter_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2109,7 +2402,7 @@ func (x *NotLeader) String() string {
 func (*NotLeader) ProtoMessage() {}
 
 func (x *NotLeader) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[27]
+	mi := &file_arbiter_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2122,7 +2415,7 @@ func (x *NotLeader) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NotLeader.ProtoReflect.Descriptor instead.
 func (*NotLeader) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{27}
+	return file_arbiter_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *NotLeader) GetLeaderAddr() string {
@@ -2144,7 +2437,7 @@ type GetStatementStatusRequest struct {
 
 func (x *GetStatementStatusRequest) Reset() {
 	*x = GetStatementStatusRequest{}
-	mi := &file_arbiter_proto_msgTypes[28]
+	mi := &file_arbiter_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2156,7 +2449,7 @@ func (x *GetStatementStatusRequest) String() string {
 func (*GetStatementStatusRequest) ProtoMessage() {}
 
 func (x *GetStatementStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[28]
+	mi := &file_arbiter_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2169,7 +2462,7 @@ func (x *GetStatementStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStatementStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetStatementStatusRequest) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{28}
+	return file_arbiter_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *GetStatementStatusRequest) GetStatementId() string {
@@ -2197,7 +2490,7 @@ type StatementStatus struct {
 
 func (x *StatementStatus) Reset() {
 	*x = StatementStatus{}
-	mi := &file_arbiter_proto_msgTypes[29]
+	mi := &file_arbiter_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2209,7 +2502,7 @@ func (x *StatementStatus) String() string {
 func (*StatementStatus) ProtoMessage() {}
 
 func (x *StatementStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[29]
+	mi := &file_arbiter_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2222,7 +2515,7 @@ func (x *StatementStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatementStatus.ProtoReflect.Descriptor instead.
 func (*StatementStatus) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{29}
+	return file_arbiter_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *StatementStatus) GetFound() bool {
@@ -2269,7 +2562,7 @@ const file_arbiter_proto_rawDesc = "" +
 	"\x0eclient_account\x18\x01 \x01(\tR\rclientAccount\x12\x1d\n" +
 	"\n" +
 	"client_seq\x18\x02 \x01(\x04R\tclientSeq\x12!\n" +
-	"\fclient_nonce\x18\x03 \x01(\tR\vclientNonce\"\x8d\x03\n" +
+	"\fclient_nonce\x18\x03 \x01(\tR\vclientNonce\"\x9b\x05\n" +
 	"\x13StatementEnvelopeV2\x127\n" +
 	"\fstatement_id\x18\x01 \x01(\v2\x14.arbiter.StatementIDR\vstatementId\x12=\n" +
 	"\x0estatement_kind\x18\x02 \x01(\x0e2\x16.arbiter.StatementKindR\rstatementKind\x12\x10\n" +
@@ -2282,7 +2575,16 @@ const file_arbiter_proto_rawDesc = "" +
 	"\x0epayload_length\x18\b \x01(\x04R\rpayloadLength\x12&\n" +
 	"\x0ftarget_table_id\x18\t \x01(\tR\rtargetTableId\x12\x19\n" +
 	"\buser_jws\x18\n" +
-	" \x01(\tR\auserJws\"y\n" +
+	" \x01(\tR\auserJws\x12)\n" +
+	"\x10envelope_version\x18\v \x01(\rR\x0fenvelopeVersion\x12\x1d\n" +
+	"\n" +
+	"network_id\x18\f \x01(\tR\tnetworkId\x12&\n" +
+	"\x0fkeeper_shard_id\x18\r \x01(\rR\rkeeperShardId\x12%\n" +
+	"\x0epayload_format\x18\x0e \x01(\tR\rpayloadFormat\x12'\n" +
+	"\x0fclient_revision\x18\x0f \x01(\rR\x0eclientRevision\x12\x1f\n" +
+	"\vschema_hash\x18\x10 \x01(\tR\n" +
+	"schemaHash\x12)\n" +
+	"\x11row_id_profile_id\x18\x11 \x01(\tR\x0erowIdProfileId\"y\n" +
 	"\fSequencedAck\x12*\n" +
 	"\x04code\x18\x01 \x01(\x0e2\x16.arbiter.AdmissionCodeR\x04code\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12#\n" +
@@ -2392,7 +2694,33 @@ const file_arbiter_proto_rawDesc = "" +
 	"\vsnapshot_id\x18\x01 \x01(\tR\n" +
 	"snapshotId\"0\n" +
 	"\bBlockRef\x12$\n" +
-	"\x0esafe_block_seq\x18\x01 \x01(\x04R\fsafeBlockSeq\"\x98\x01\n" +
+	"\x0esafe_block_seq\x18\x01 \x01(\x04R\fsafeBlockSeq\"\xf7\x03\n" +
+	"\rL3BlockHeader\x12 \n" +
+	"\fl3_block_seq\x18\x01 \x01(\x04R\n" +
+	"l3BlockSeq\x12 \n" +
+	"\fprev_l3_hash\x18\x02 \x01(\tR\n" +
+	"prevL3Hash\x12.\n" +
+	"\x13statement_seq_start\x18\x03 \x01(\x04R\x11statementSeqStart\x12'\n" +
+	"\x0fstatement_count\x18\x04 \x01(\rR\x0estatementCount\x12,\n" +
+	"\x12schema_snapshot_id\x18\x05 \x01(\tR\x10schemaSnapshotId\x12.\n" +
+	"\x13executor_profile_id\x18\x06 \x01(\tR\x11executorProfileId\x121\n" +
+	"\x15prev_safe_snapshot_id\x18\a \x01(\tR\x12prevSafeSnapshotId\x12&\n" +
+	"\x0fprev_state_root\x18\b \x01(\tR\rprevStateRoot\x12/\n" +
+	"\x14spent_ids_root_after\x18\t \x01(\tR\x11spentIdsRootAfter\x12'\n" +
+	"\x0fstatements_root\x18\n" +
+	" \x01(\tR\x0estatementsRoot\x126\n" +
+	"\rl2_anchor_ref\x18\v \x01(\v2\x12.arbiter.AnchorRefR\vl2AnchorRef\".\n" +
+	"\n" +
+	"L3BlockRef\x12 \n" +
+	"\fl3_block_seq\x18\x01 \x01(\x04R\n" +
+	"l3BlockSeq\"\x96\x01\n" +
+	"\aL3Block\x12.\n" +
+	"\x06header\x18\x01 \x01(\v2\x16.arbiter.L3BlockHeaderR\x06header\x12\x1d\n" +
+	"\n" +
+	"chain_hash\x18\x02 \x01(\tR\tchainHash\x12<\n" +
+	"\n" +
+	"statements\x18\x03 \x03(\v2\x1c.arbiter.StatementEnvelopeV2R\n" +
+	"statements\"\x98\x01\n" +
 	"\x10NodeRegistration\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12'\n" +
 	"\x05roles\x18\x02 \x03(\x0e2\x11.arbiter.NodeRoleR\x05roles\x12%\n" +
@@ -2442,11 +2770,13 @@ const file_arbiter_proto_rawDesc = "" +
 	"\x13SubscribePromotions\x12\x13.arbiter.SNodeHello\x1a\x19.arbiter.PromotionCommand\"\x000\x01\x125\n" +
 	"\fAckPromotion\x12\x15.arbiter.PromotionAck\x1a\f.arbiter.Ack\"\x00\x121\n" +
 	"\n" +
-	"AckCleanup\x12\x13.arbiter.CleanupAck\x1a\f.arbiter.Ack\"\x002\xeb\x01\n" +
+	"AckCleanup\x12\x13.arbiter.CleanupAck\x1a\f.arbiter.Ack\"\x002\xa2\x02\n" +
 	"\tSafeState\x12N\n" +
 	"\x10GetSafeWatermark\x12 .arbiter.GetSafeWatermarkRequest\x1a\x16.arbiter.SafeWatermark\"\x00\x12D\n" +
 	"\vGetManifest\x12\x14.arbiter.SnapshotRef\x1a\x1d.arbiter.SafeSnapshotManifest\"\x00\x12H\n" +
-	"\x12GetManifestByBlock\x12\x11.arbiter.BlockRef\x1a\x1d.arbiter.SafeSnapshotManifest\"\x002w\n" +
+	"\x12GetManifestByBlock\x12\x11.arbiter.BlockRef\x1a\x1d.arbiter.SafeSnapshotManifest\"\x00\x125\n" +
+	"\n" +
+	"GetL3Block\x12\x13.arbiter.L3BlockRef\x1a\x10.arbiter.L3Block\"\x002w\n" +
 	"\n" +
 	"Membership\x129\n" +
 	"\fRegisterNode\x12\x19.arbiter.NodeRegistration\x1a\f.arbiter.Ack\"\x00\x12.\n" +
@@ -2466,7 +2796,7 @@ func file_arbiter_proto_rawDescGZIP() []byte {
 }
 
 var file_arbiter_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_arbiter_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
+var file_arbiter_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_arbiter_proto_goTypes = []any{
 	(StatementKind)(0),                // 0: arbiter.StatementKind
 	(AdmissionCode)(0),                // 1: arbiter.AdmissionCode
@@ -2495,15 +2825,18 @@ var file_arbiter_proto_goTypes = []any{
 	(*SafeWatermark)(nil),             // 24: arbiter.SafeWatermark
 	(*SnapshotRef)(nil),               // 25: arbiter.SnapshotRef
 	(*BlockRef)(nil),                  // 26: arbiter.BlockRef
-	(*NodeRegistration)(nil),          // 27: arbiter.NodeRegistration
-	(*NodeRef)(nil),                   // 28: arbiter.NodeRef
-	(*Ack)(nil),                       // 29: arbiter.Ack
-	(*NotLeader)(nil),                 // 30: arbiter.NotLeader
-	(*GetStatementStatusRequest)(nil), // 31: arbiter.GetStatementStatusRequest
-	(*StatementStatus)(nil),           // 32: arbiter.StatementStatus
-	(*ReplayJob)(nil),                 // 33: arbiter.ReplayJob
-	(*ReplayAttestation)(nil),         // 34: arbiter.ReplayAttestation
-	(*SafeSnapshotManifest)(nil),      // 35: arbiter.SafeSnapshotManifest
+	(*L3BlockHeader)(nil),             // 27: arbiter.L3BlockHeader
+	(*L3BlockRef)(nil),                // 28: arbiter.L3BlockRef
+	(*L3Block)(nil),                   // 29: arbiter.L3Block
+	(*NodeRegistration)(nil),          // 30: arbiter.NodeRegistration
+	(*NodeRef)(nil),                   // 31: arbiter.NodeRef
+	(*Ack)(nil),                       // 32: arbiter.Ack
+	(*NotLeader)(nil),                 // 33: arbiter.NotLeader
+	(*GetStatementStatusRequest)(nil), // 34: arbiter.GetStatementStatusRequest
+	(*StatementStatus)(nil),           // 35: arbiter.StatementStatus
+	(*ReplayJob)(nil),                 // 36: arbiter.ReplayJob
+	(*ReplayAttestation)(nil),         // 37: arbiter.ReplayAttestation
+	(*SafeSnapshotManifest)(nil),      // 38: arbiter.SafeSnapshotManifest
 }
 var file_arbiter_proto_depIdxs = []int32{
 	3,  // 0: arbiter.StatementEnvelopeV2.statement_id:type_name -> arbiter.StatementID
@@ -2512,7 +2845,7 @@ var file_arbiter_proto_depIdxs = []int32{
 	3,  // 3: arbiter.RCRecord.statement_id:type_name -> arbiter.StatementID
 	6,  // 4: arbiter.RCRecord.candidate_parts:type_name -> arbiter.CandidatePart
 	7,  // 5: arbiter.RCRecord.partition_new_part_sums:type_name -> arbiter.PartitionLtHashSum
-	33, // 6: arbiter.VerifierDispatch.replay_job:type_name -> arbiter.ReplayJob
+	36, // 6: arbiter.VerifierDispatch.replay_job:type_name -> arbiter.ReplayJob
 	11, // 7: arbiter.VerifierDispatch.byte_side_scan:type_name -> arbiter.ByteSideScanRequest
 	14, // 8: arbiter.ByteSideScanRequest.parts:type_name -> arbiter.PartRef
 	12, // 9: arbiter.ByteSideScanMsg.parts:type_name -> arbiter.PartScan
@@ -2521,40 +2854,45 @@ var file_arbiter_proto_depIdxs = []int32{
 	15, // 12: arbiter.PromotionCommand.promote:type_name -> arbiter.PromoteSafePartition
 	16, // 13: arbiter.PromotionCommand.cleanup:type_name -> arbiter.UnsafeCleanup
 	19, // 14: arbiter.PromotionAck.parts:type_name -> arbiter.SafePartMapping
-	2,  // 15: arbiter.NodeRegistration.roles:type_name -> arbiter.NodeRole
-	4,  // 16: arbiter.ArbiterIngress.SubmitStatement:input_type -> arbiter.StatementEnvelopeV2
-	31, // 17: arbiter.ArbiterIngress.GetStatementStatus:input_type -> arbiter.GetStatementStatusRequest
-	8,  // 18: arbiter.SourceClaims.RegisterResultClaim:input_type -> arbiter.RCRecord
-	9,  // 19: arbiter.VerifierGateway.SubscribeVerifierDispatch:input_type -> arbiter.VerifierHello
-	34, // 20: arbiter.VerifierGateway.SubmitAttestation:input_type -> arbiter.ReplayAttestation
-	13, // 21: arbiter.VerifierGateway.SubmitByteSideScan:input_type -> arbiter.ByteSideScanMsg
-	18, // 22: arbiter.PromotionGateway.SubscribePromotions:input_type -> arbiter.SNodeHello
-	20, // 23: arbiter.PromotionGateway.AckPromotion:input_type -> arbiter.PromotionAck
-	21, // 24: arbiter.PromotionGateway.AckCleanup:input_type -> arbiter.CleanupAck
-	23, // 25: arbiter.SafeState.GetSafeWatermark:input_type -> arbiter.GetSafeWatermarkRequest
-	25, // 26: arbiter.SafeState.GetManifest:input_type -> arbiter.SnapshotRef
-	26, // 27: arbiter.SafeState.GetManifestByBlock:input_type -> arbiter.BlockRef
-	27, // 28: arbiter.Membership.RegisterNode:input_type -> arbiter.NodeRegistration
-	28, // 29: arbiter.Membership.MarkActive:input_type -> arbiter.NodeRef
-	5,  // 30: arbiter.ArbiterIngress.SubmitStatement:output_type -> arbiter.SequencedAck
-	32, // 31: arbiter.ArbiterIngress.GetStatementStatus:output_type -> arbiter.StatementStatus
-	29, // 32: arbiter.SourceClaims.RegisterResultClaim:output_type -> arbiter.Ack
-	10, // 33: arbiter.VerifierGateway.SubscribeVerifierDispatch:output_type -> arbiter.VerifierDispatch
-	29, // 34: arbiter.VerifierGateway.SubmitAttestation:output_type -> arbiter.Ack
-	29, // 35: arbiter.VerifierGateway.SubmitByteSideScan:output_type -> arbiter.Ack
-	17, // 36: arbiter.PromotionGateway.SubscribePromotions:output_type -> arbiter.PromotionCommand
-	29, // 37: arbiter.PromotionGateway.AckPromotion:output_type -> arbiter.Ack
-	29, // 38: arbiter.PromotionGateway.AckCleanup:output_type -> arbiter.Ack
-	24, // 39: arbiter.SafeState.GetSafeWatermark:output_type -> arbiter.SafeWatermark
-	35, // 40: arbiter.SafeState.GetManifest:output_type -> arbiter.SafeSnapshotManifest
-	35, // 41: arbiter.SafeState.GetManifestByBlock:output_type -> arbiter.SafeSnapshotManifest
-	29, // 42: arbiter.Membership.RegisterNode:output_type -> arbiter.Ack
-	29, // 43: arbiter.Membership.MarkActive:output_type -> arbiter.Ack
-	30, // [30:44] is the sub-list for method output_type
-	16, // [16:30] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	22, // 15: arbiter.L3BlockHeader.l2_anchor_ref:type_name -> arbiter.AnchorRef
+	27, // 16: arbiter.L3Block.header:type_name -> arbiter.L3BlockHeader
+	4,  // 17: arbiter.L3Block.statements:type_name -> arbiter.StatementEnvelopeV2
+	2,  // 18: arbiter.NodeRegistration.roles:type_name -> arbiter.NodeRole
+	4,  // 19: arbiter.ArbiterIngress.SubmitStatement:input_type -> arbiter.StatementEnvelopeV2
+	34, // 20: arbiter.ArbiterIngress.GetStatementStatus:input_type -> arbiter.GetStatementStatusRequest
+	8,  // 21: arbiter.SourceClaims.RegisterResultClaim:input_type -> arbiter.RCRecord
+	9,  // 22: arbiter.VerifierGateway.SubscribeVerifierDispatch:input_type -> arbiter.VerifierHello
+	37, // 23: arbiter.VerifierGateway.SubmitAttestation:input_type -> arbiter.ReplayAttestation
+	13, // 24: arbiter.VerifierGateway.SubmitByteSideScan:input_type -> arbiter.ByteSideScanMsg
+	18, // 25: arbiter.PromotionGateway.SubscribePromotions:input_type -> arbiter.SNodeHello
+	20, // 26: arbiter.PromotionGateway.AckPromotion:input_type -> arbiter.PromotionAck
+	21, // 27: arbiter.PromotionGateway.AckCleanup:input_type -> arbiter.CleanupAck
+	23, // 28: arbiter.SafeState.GetSafeWatermark:input_type -> arbiter.GetSafeWatermarkRequest
+	25, // 29: arbiter.SafeState.GetManifest:input_type -> arbiter.SnapshotRef
+	26, // 30: arbiter.SafeState.GetManifestByBlock:input_type -> arbiter.BlockRef
+	28, // 31: arbiter.SafeState.GetL3Block:input_type -> arbiter.L3BlockRef
+	30, // 32: arbiter.Membership.RegisterNode:input_type -> arbiter.NodeRegistration
+	31, // 33: arbiter.Membership.MarkActive:input_type -> arbiter.NodeRef
+	5,  // 34: arbiter.ArbiterIngress.SubmitStatement:output_type -> arbiter.SequencedAck
+	35, // 35: arbiter.ArbiterIngress.GetStatementStatus:output_type -> arbiter.StatementStatus
+	32, // 36: arbiter.SourceClaims.RegisterResultClaim:output_type -> arbiter.Ack
+	10, // 37: arbiter.VerifierGateway.SubscribeVerifierDispatch:output_type -> arbiter.VerifierDispatch
+	32, // 38: arbiter.VerifierGateway.SubmitAttestation:output_type -> arbiter.Ack
+	32, // 39: arbiter.VerifierGateway.SubmitByteSideScan:output_type -> arbiter.Ack
+	17, // 40: arbiter.PromotionGateway.SubscribePromotions:output_type -> arbiter.PromotionCommand
+	32, // 41: arbiter.PromotionGateway.AckPromotion:output_type -> arbiter.Ack
+	32, // 42: arbiter.PromotionGateway.AckCleanup:output_type -> arbiter.Ack
+	24, // 43: arbiter.SafeState.GetSafeWatermark:output_type -> arbiter.SafeWatermark
+	38, // 44: arbiter.SafeState.GetManifest:output_type -> arbiter.SafeSnapshotManifest
+	38, // 45: arbiter.SafeState.GetManifestByBlock:output_type -> arbiter.SafeSnapshotManifest
+	29, // 46: arbiter.SafeState.GetL3Block:output_type -> arbiter.L3Block
+	32, // 47: arbiter.Membership.RegisterNode:output_type -> arbiter.Ack
+	32, // 48: arbiter.Membership.MarkActive:output_type -> arbiter.Ack
+	34, // [34:49] is the sub-list for method output_type
+	19, // [19:34] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_arbiter_proto_init() }
@@ -2577,7 +2915,7 @@ func file_arbiter_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_arbiter_proto_rawDesc), len(file_arbiter_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   30,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   6,
 		},
