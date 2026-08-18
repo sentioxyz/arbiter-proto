@@ -680,6 +680,7 @@ const (
 	SafeState_GetSafeWatermark_FullMethodName   = "/arbiter.SafeState/GetSafeWatermark"
 	SafeState_GetManifest_FullMethodName        = "/arbiter.SafeState/GetManifest"
 	SafeState_GetManifestByBlock_FullMethodName = "/arbiter.SafeState/GetManifestByBlock"
+	SafeState_GetL3Block_FullMethodName         = "/arbiter.SafeState/GetL3Block"
 )
 
 // SafeStateClient is the client API for SafeState service.
@@ -692,6 +693,8 @@ type SafeStateClient interface {
 	GetManifest(ctx context.Context, in *SnapshotRef, opts ...grpc.CallOption) (*SafeSnapshotManifest, error)
 	// as_of_safe time-travel by SafeBlockSeq (§8.5).
 	GetManifestByBlock(ctx context.Context, in *BlockRef, opts ...grpc.CallOption) (*SafeSnapshotManifest, error)
+	// Sealed L3 block header + envelopes for auditing statements_root / ChainHash.
+	GetL3Block(ctx context.Context, in *L3BlockRef, opts ...grpc.CallOption) (*L3Block, error)
 }
 
 type safeStateClient struct {
@@ -732,6 +735,16 @@ func (c *safeStateClient) GetManifestByBlock(ctx context.Context, in *BlockRef, 
 	return out, nil
 }
 
+func (c *safeStateClient) GetL3Block(ctx context.Context, in *L3BlockRef, opts ...grpc.CallOption) (*L3Block, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(L3Block)
+	err := c.cc.Invoke(ctx, SafeState_GetL3Block_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SafeStateServer is the server API for SafeState service.
 // All implementations must embed UnimplementedSafeStateServer
 // for forward compatibility.
@@ -742,6 +755,8 @@ type SafeStateServer interface {
 	GetManifest(context.Context, *SnapshotRef) (*SafeSnapshotManifest, error)
 	// as_of_safe time-travel by SafeBlockSeq (§8.5).
 	GetManifestByBlock(context.Context, *BlockRef) (*SafeSnapshotManifest, error)
+	// Sealed L3 block header + envelopes for auditing statements_root / ChainHash.
+	GetL3Block(context.Context, *L3BlockRef) (*L3Block, error)
 	mustEmbedUnimplementedSafeStateServer()
 }
 
@@ -760,6 +775,9 @@ func (UnimplementedSafeStateServer) GetManifest(context.Context, *SnapshotRef) (
 }
 func (UnimplementedSafeStateServer) GetManifestByBlock(context.Context, *BlockRef) (*SafeSnapshotManifest, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetManifestByBlock not implemented")
+}
+func (UnimplementedSafeStateServer) GetL3Block(context.Context, *L3BlockRef) (*L3Block, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetL3Block not implemented")
 }
 func (UnimplementedSafeStateServer) mustEmbedUnimplementedSafeStateServer() {}
 func (UnimplementedSafeStateServer) testEmbeddedByValue()                   {}
@@ -836,6 +854,24 @@ func _SafeState_GetManifestByBlock_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SafeState_GetL3Block_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(L3BlockRef)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SafeStateServer).GetL3Block(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SafeState_GetL3Block_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SafeStateServer).GetL3Block(ctx, req.(*L3BlockRef))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SafeState_ServiceDesc is the grpc.ServiceDesc for SafeState service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -854,6 +890,10 @@ var SafeState_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetManifestByBlock",
 			Handler:    _SafeState_GetManifestByBlock_Handler,
+		},
+		{
+			MethodName: "GetL3Block",
+			Handler:    _SafeState_GetL3Block_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -35,6 +35,10 @@ message Statement {
   uint64 payload_length = 8;
   string target_table_id = 9;
   string user_jws = 10;
+  // v2 additions — additive, JSON-tag frozen against pkg/replay.Statement.
+  string payload_format = 11;
+  uint32 client_revision = 12;
+  string schema_hash = 13;
 }
 
 // ReplayJob is the verifier input for one sequenced L3 block

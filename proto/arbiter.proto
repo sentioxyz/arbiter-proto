@@ -53,13 +53,24 @@ message StatementEnvelopeV2 {
   string sql = 3;
   // DigestString(sql) under the housegate-replay-mvp-v0 profile.
   string sql_hash = 4;
+  // v2: CanonicalDigest("housegate-settings-v1", []) — the constant empty
+  // user-settings digest; the SI lane admits no client settings in v1.
   string settings_hash = 5;
   string payload_ref = 6;
   string payload_hash = 7;
   uint64 payload_length = 8;
   string target_table_id = 9;
-  // The user's signature binding the statement (JWS compact form).
+  // The user's signature binding the statement (JWS compact form). v2:
+  // purpose "housegate-statement-v2" over every signed field below.
   string user_jws = 10;
+  // ---- v2 additions (all signed by user_jws) ----
+  uint32 envelope_version = 11;   // must be 2
+  string network_id = 12;         // must equal the Arbiter genesis network id
+  uint32 keeper_shard_id = 13;    // must be 0 in v1 (Sharder returns group 0)
+  string payload_format = 14;     // "clickhouse-native-data-v1"
+  uint32 client_revision = 15;    // ClickHouse client protocol revision the Native blocks were encoded for
+  string schema_hash = 16;        // Phase-B TableSchemaHash the payload was encoded against
+  string row_id_profile_id = 17;  // "housegate-row-id-v1"
 }
 
 // AdmissionCode is the application-level admission taxonomy. Transport
@@ -316,6 +327,35 @@ message BlockRef {
   uint64 safe_block_seq = 1;
 }
 
+// L3BlockHeader mirrors arbiter fsm.L3BlockHeader (json tags == field
+// names) so auditors can recompute ChainHash / statements_root.
+message L3BlockHeader {
+  uint64 l3_block_seq = 1;
+  string prev_l3_hash = 2;
+  uint64 statement_seq_start = 3;
+  uint32 statement_count = 4;
+  string schema_snapshot_id = 5;
+  string executor_profile_id = 6;
+  string prev_safe_snapshot_id = 7;
+  string prev_state_root = 8;
+  string spent_ids_root_after = 9;
+  // CanonicalDigest("arbiter-l3-statements-v1", []StatementEnvelope) over the
+  // sealed block's envelopes in statement_seq order.
+  string statements_root = 10;
+  AnchorRef l2_anchor_ref = 11;
+}
+
+message L3BlockRef {
+  uint64 l3_block_seq = 1;
+}
+
+message L3Block {
+  L3BlockHeader header = 1;
+  string chain_hash = 2;
+  // Envelopes in statement_seq order (statement_seq_start .. +statement_count).
+  repeated StatementEnvelopeV2 statements = 3;
+}
+
 enum NodeRole {
   NODE_ROLE_UNSPECIFIED = 0;
   NODE_ROLE_VERIFIER = 1;
@@ -416,6 +456,8 @@ service SafeState {
   rpc GetManifest (SnapshotRef) returns (SafeSnapshotManifest) {}
   // as_of_safe time-travel by SafeBlockSeq (§8.5).
   rpc GetManifestByBlock (BlockRef) returns (SafeSnapshotManifest) {}
+  // Sealed L3 block header + envelopes for auditing statements_root / ChainHash.
+  rpc GetL3Block (L3BlockRef) returns (L3Block) {}
 }
 
 // Membership is called by SNodes / Verifiers.
