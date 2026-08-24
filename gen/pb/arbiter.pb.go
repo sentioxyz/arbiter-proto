@@ -285,10 +285,14 @@ func (x *StatementID) GetClientNonce() string {
 // the payload store at ingest (§3.5 step 1-2). The Arbiter re-verifies
 // user_jws deterministically in Apply (§4.1).
 type StatementEnvelopeV2 struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	StatementId   *StatementID           `protobuf:"bytes,1,opt,name=statement_id,json=statementId,proto3" json:"statement_id,omitempty"`
-	StatementKind StatementKind          `protobuf:"varint,2,opt,name=statement_kind,json=statementKind,proto3,enum=arbiter.StatementKind" json:"statement_kind,omitempty"`
-	Sql           string                 `protobuf:"bytes,3,opt,name=sql,proto3" json:"sql,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	StatementId *StatementID           `protobuf:"bytes,1,opt,name=statement_id,json=statementId,proto3" json:"statement_id,omitempty"`
+	// Bound by user_jws from envelope v2.1 (arbiter-proto v0.6.0) onward: the
+	// signed payload carries "statement_kind" as this enum's numeric value, so
+	// an operator cannot re-label an INSERT as another kind once the mutation
+	// lane ships. v1 still admits INSERT only.
+	StatementKind StatementKind `protobuf:"varint,2,opt,name=statement_kind,json=statementKind,proto3,enum=arbiter.StatementKind" json:"statement_kind,omitempty"`
+	Sql           string        `protobuf:"bytes,3,opt,name=sql,proto3" json:"sql,omitempty"`
 	// DigestString(sql) under the housegate-replay-mvp-v0 profile.
 	SqlHash string `protobuf:"bytes,4,opt,name=sql_hash,json=sqlHash,proto3" json:"sql_hash,omitempty"`
 	// v2: CanonicalDigest("housegate-settings-v1", []) — the constant empty

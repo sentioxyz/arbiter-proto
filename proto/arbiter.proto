@@ -49,6 +49,10 @@ enum StatementKind {
 // user_jws deterministically in Apply (§4.1).
 message StatementEnvelopeV2 {
   StatementID statement_id = 1;
+  // Bound by user_jws from envelope v2.1 (arbiter-proto v0.6.0) onward: the
+  // signed payload carries "statement_kind" as this enum's numeric value, so
+  // an operator cannot re-label an INSERT as another kind once the mutation
+  // lane ships. v1 still admits INSERT only.
   StatementKind statement_kind = 2;
   string sql = 3;
   // DigestString(sql) under the housegate-replay-mvp-v0 profile.
