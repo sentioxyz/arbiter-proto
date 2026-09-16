@@ -965,6 +965,16 @@ type RaftCommand struct {
 	//	*RaftCommand_RegisterNode
 	//	*RaftCommand_MarkActive
 	//	*RaftCommand_EvictNode
+	//	*RaftCommand_BeginSnapshotQuery
+	//	*RaftCommand_GrantSnapshotQuery
+	//	*RaftCommand_ReleaseSnapshotQuery
+	//	*RaftCommand_SubmitSnapshotQuery
+	//	*RaftCommand_AbortSnapshotQuery
+	//	*RaftCommand_ActivateQueryProfile
+	//	*RaftCommand_RecordSnapshotQueryClaim
+	//	*RaftCommand_RecordSnapshotQueryAttestation
+	//	*RaftCommand_PublishExecutorProfileTransition
+	//	*RaftCommand_RecordSnapshotArtifactReady
 	Cmd           isRaftCommand_Cmd `protobuf_oneof:"cmd"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1160,6 +1170,96 @@ func (x *RaftCommand) GetEvictNode() *EvictNodeCmd {
 	return nil
 }
 
+func (x *RaftCommand) GetBeginSnapshotQuery() *BeginSnapshotQueryCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_BeginSnapshotQuery); ok {
+			return x.BeginSnapshotQuery
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetGrantSnapshotQuery() *GrantSnapshotQueryCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_GrantSnapshotQuery); ok {
+			return x.GrantSnapshotQuery
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetReleaseSnapshotQuery() *ReleaseSnapshotQueryCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_ReleaseSnapshotQuery); ok {
+			return x.ReleaseSnapshotQuery
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetSubmitSnapshotQuery() *SubmitSnapshotQueryCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_SubmitSnapshotQuery); ok {
+			return x.SubmitSnapshotQuery
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetAbortSnapshotQuery() *AbortSnapshotQueryCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_AbortSnapshotQuery); ok {
+			return x.AbortSnapshotQuery
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetActivateQueryProfile() *ActivateQueryProfileCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_ActivateQueryProfile); ok {
+			return x.ActivateQueryProfile
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetRecordSnapshotQueryClaim() *RecordSnapshotQueryClaimCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_RecordSnapshotQueryClaim); ok {
+			return x.RecordSnapshotQueryClaim
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetRecordSnapshotQueryAttestation() *RecordSnapshotQueryAttestationCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_RecordSnapshotQueryAttestation); ok {
+			return x.RecordSnapshotQueryAttestation
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetPublishExecutorProfileTransition() *PublishExecutorProfileTransitionCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_PublishExecutorProfileTransition); ok {
+			return x.PublishExecutorProfileTransition
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetRecordSnapshotArtifactReady() *RecordSnapshotArtifactReadyCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_RecordSnapshotArtifactReady); ok {
+			return x.RecordSnapshotArtifactReady
+		}
+	}
+	return nil
+}
+
 type isRaftCommand_Cmd interface {
 	isRaftCommand_Cmd()
 }
@@ -1232,6 +1332,46 @@ type RaftCommand_EvictNode struct {
 	EvictNode *EvictNodeCmd `protobuf:"bytes,17,opt,name=evict_node,json=evictNode,proto3,oneof"`
 }
 
+type RaftCommand_BeginSnapshotQuery struct {
+	BeginSnapshotQuery *BeginSnapshotQueryCmd `protobuf:"bytes,18,opt,name=begin_snapshot_query,json=beginSnapshotQuery,proto3,oneof"`
+}
+
+type RaftCommand_GrantSnapshotQuery struct {
+	GrantSnapshotQuery *GrantSnapshotQueryCmd `protobuf:"bytes,19,opt,name=grant_snapshot_query,json=grantSnapshotQuery,proto3,oneof"`
+}
+
+type RaftCommand_ReleaseSnapshotQuery struct {
+	ReleaseSnapshotQuery *ReleaseSnapshotQueryCmd `protobuf:"bytes,20,opt,name=release_snapshot_query,json=releaseSnapshotQuery,proto3,oneof"`
+}
+
+type RaftCommand_SubmitSnapshotQuery struct {
+	SubmitSnapshotQuery *SubmitSnapshotQueryCmd `protobuf:"bytes,21,opt,name=submit_snapshot_query,json=submitSnapshotQuery,proto3,oneof"`
+}
+
+type RaftCommand_AbortSnapshotQuery struct {
+	AbortSnapshotQuery *AbortSnapshotQueryCmd `protobuf:"bytes,22,opt,name=abort_snapshot_query,json=abortSnapshotQuery,proto3,oneof"`
+}
+
+type RaftCommand_ActivateQueryProfile struct {
+	ActivateQueryProfile *ActivateQueryProfileCmd `protobuf:"bytes,23,opt,name=activate_query_profile,json=activateQueryProfile,proto3,oneof"`
+}
+
+type RaftCommand_RecordSnapshotQueryClaim struct {
+	RecordSnapshotQueryClaim *RecordSnapshotQueryClaimCmd `protobuf:"bytes,24,opt,name=record_snapshot_query_claim,json=recordSnapshotQueryClaim,proto3,oneof"`
+}
+
+type RaftCommand_RecordSnapshotQueryAttestation struct {
+	RecordSnapshotQueryAttestation *RecordSnapshotQueryAttestationCmd `protobuf:"bytes,25,opt,name=record_snapshot_query_attestation,json=recordSnapshotQueryAttestation,proto3,oneof"`
+}
+
+type RaftCommand_PublishExecutorProfileTransition struct {
+	PublishExecutorProfileTransition *PublishExecutorProfileTransitionCmd `protobuf:"bytes,26,opt,name=publish_executor_profile_transition,json=publishExecutorProfileTransition,proto3,oneof"`
+}
+
+type RaftCommand_RecordSnapshotArtifactReady struct {
+	RecordSnapshotArtifactReady *RecordSnapshotArtifactReadyCmd `protobuf:"bytes,27,opt,name=record_snapshot_artifact_ready,json=recordSnapshotArtifactReady,proto3,oneof"`
+}
+
 func (*RaftCommand_SubmitStatement) isRaftCommand_Cmd() {}
 
 func (*RaftCommand_SealL3Block) isRaftCommand_Cmd() {}
@@ -1265,6 +1405,535 @@ func (*RaftCommand_RegisterNode) isRaftCommand_Cmd() {}
 func (*RaftCommand_MarkActive) isRaftCommand_Cmd() {}
 
 func (*RaftCommand_EvictNode) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_BeginSnapshotQuery) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_GrantSnapshotQuery) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_ReleaseSnapshotQuery) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_SubmitSnapshotQuery) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_AbortSnapshotQuery) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_ActivateQueryProfile) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_RecordSnapshotQueryClaim) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_RecordSnapshotQueryAttestation) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_PublishExecutorProfileTransition) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_RecordSnapshotArtifactReady) isRaftCommand_Cmd() {}
+
+// Begins draining using the authenticated request; Apply makes no network calls.
+type BeginSnapshotQueryCmd struct {
+	state         protoimpl.MessageState       `protogen:"open.v1"`
+	Request       *AcquireSnapshotQueryRequest `protobuf:"bytes,1,opt,name=request,proto3" json:"request,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BeginSnapshotQueryCmd) Reset() {
+	*x = BeginSnapshotQueryCmd{}
+	mi := &file_raftlog_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BeginSnapshotQueryCmd) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BeginSnapshotQueryCmd) ProtoMessage() {}
+
+func (x *BeginSnapshotQueryCmd) ProtoReflect() protoreflect.Message {
+	mi := &file_raftlog_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BeginSnapshotQueryCmd.ProtoReflect.Descriptor instead.
+func (*BeginSnapshotQueryCmd) Descriptor() ([]byte, []int) {
+	return file_raftlog_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *BeginSnapshotQueryCmd) GetRequest() *AcquireSnapshotQueryRequest {
+	if x != nil {
+		return x.Request
+	}
+	return nil
+}
+
+// Grants only the matching draining request after prior work is terminal.
+type GrantSnapshotQueryCmd struct {
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	RequestId     string                    `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	Reservation   *SnapshotQueryReservation `protobuf:"bytes,2,opt,name=reservation,proto3" json:"reservation,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GrantSnapshotQueryCmd) Reset() {
+	*x = GrantSnapshotQueryCmd{}
+	mi := &file_raftlog_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GrantSnapshotQueryCmd) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GrantSnapshotQueryCmd) ProtoMessage() {}
+
+func (x *GrantSnapshotQueryCmd) ProtoReflect() protoreflect.Message {
+	mi := &file_raftlog_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GrantSnapshotQueryCmd.ProtoReflect.Descriptor instead.
+func (*GrantSnapshotQueryCmd) Descriptor() ([]byte, []int) {
+	return file_raftlog_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *GrantSnapshotQueryCmd) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
+func (x *GrantSnapshotQueryCmd) GetReservation() *SnapshotQueryReservation {
+	if x != nil {
+		return x.Reservation
+	}
+	return nil
+}
+
+// Checks the request/fence and persists a cancellation tombstone atomically.
+type ReleaseSnapshotQueryCmd struct {
+	state         protoimpl.MessageState       `protogen:"open.v1"`
+	Request       *ReleaseSnapshotQueryRequest `protobuf:"bytes,1,opt,name=request,proto3" json:"request,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReleaseSnapshotQueryCmd) Reset() {
+	*x = ReleaseSnapshotQueryCmd{}
+	mi := &file_raftlog_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReleaseSnapshotQueryCmd) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReleaseSnapshotQueryCmd) ProtoMessage() {}
+
+func (x *ReleaseSnapshotQueryCmd) ProtoReflect() protoreflect.Message {
+	mi := &file_raftlog_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReleaseSnapshotQueryCmd.ProtoReflect.Descriptor instead.
+func (*ReleaseSnapshotQueryCmd) Descriptor() ([]byte, []int) {
+	return file_raftlog_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ReleaseSnapshotQueryCmd) GetRequest() *ReleaseSnapshotQueryRequest {
+	if x != nil {
+		return x.Request
+	}
+	return nil
+}
+
+// Durable singleton sequencing with deterministic admission and gap-proof checks.
+type SubmitSnapshotQueryCmd struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Envelope           *SnapshotQueryEnvelope `protobuf:"bytes,1,opt,name=envelope,proto3" json:"envelope,omitempty"`
+	NonMembershipProof []byte                 `protobuf:"bytes,2,opt,name=non_membership_proof,json=nonMembershipProof,proto3" json:"non_membership_proof,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *SubmitSnapshotQueryCmd) Reset() {
+	*x = SubmitSnapshotQueryCmd{}
+	mi := &file_raftlog_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SubmitSnapshotQueryCmd) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SubmitSnapshotQueryCmd) ProtoMessage() {}
+
+func (x *SubmitSnapshotQueryCmd) ProtoReflect() protoreflect.Message {
+	mi := &file_raftlog_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SubmitSnapshotQueryCmd.ProtoReflect.Descriptor instead.
+func (*SubmitSnapshotQueryCmd) Descriptor() ([]byte, []int) {
+	return file_raftlog_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *SubmitSnapshotQueryCmd) GetEnvelope() *SnapshotQueryEnvelope {
+	if x != nil {
+		return x.Envelope
+	}
+	return nil
+}
+
+func (x *SubmitSnapshotQueryCmd) GetNonMembershipProof() []byte {
+	if x != nil {
+		return x.NonMembershipProof
+	}
+	return nil
+}
+
+// An authority-authenticated terminal abort; never inferred from client cancellation.
+type AbortSnapshotQueryCmd struct {
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	Record        *SnapshotQueryAbortRecord `protobuf:"bytes,1,opt,name=record,proto3" json:"record,omitempty"`
+	AuthorityJws  string                    `protobuf:"bytes,2,opt,name=authority_jws,json=authorityJws,proto3" json:"authority_jws,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AbortSnapshotQueryCmd) Reset() {
+	*x = AbortSnapshotQueryCmd{}
+	mi := &file_raftlog_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AbortSnapshotQueryCmd) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AbortSnapshotQueryCmd) ProtoMessage() {}
+
+func (x *AbortSnapshotQueryCmd) ProtoReflect() protoreflect.Message {
+	mi := &file_raftlog_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AbortSnapshotQueryCmd.ProtoReflect.Descriptor instead.
+func (*AbortSnapshotQueryCmd) Descriptor() ([]byte, []int) {
+	return file_raftlog_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *AbortSnapshotQueryCmd) GetRecord() *SnapshotQueryAbortRecord {
+	if x != nil {
+		return x.Record
+	}
+	return nil
+}
+
+func (x *AbortSnapshotQueryCmd) GetAuthorityJws() string {
+	if x != nil {
+		return x.AuthorityJws
+	}
+	return ""
+}
+
+// Authority-authenticated activation of the committed profile pair.
+type ActivateQueryProfileCmd struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Activation    *ActiveQueryPolicy     `protobuf:"bytes,1,opt,name=activation,proto3" json:"activation,omitempty"`
+	AuthorityJws  string                 `protobuf:"bytes,2,opt,name=authority_jws,json=authorityJws,proto3" json:"authority_jws,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ActivateQueryProfileCmd) Reset() {
+	*x = ActivateQueryProfileCmd{}
+	mi := &file_raftlog_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ActivateQueryProfileCmd) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ActivateQueryProfileCmd) ProtoMessage() {}
+
+func (x *ActivateQueryProfileCmd) ProtoReflect() protoreflect.Message {
+	mi := &file_raftlog_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ActivateQueryProfileCmd.ProtoReflect.Descriptor instead.
+func (*ActivateQueryProfileCmd) Descriptor() ([]byte, []int) {
+	return file_raftlog_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ActivateQueryProfileCmd) GetActivation() *ActiveQueryPolicy {
+	if x != nil {
+		return x.Activation
+	}
+	return nil
+}
+
+func (x *ActivateQueryProfileCmd) GetAuthorityJws() string {
+	if x != nil {
+		return x.AuthorityJws
+	}
+	return ""
+}
+
+// The authenticated source-role transport must bind the sender to the assigned
+// source before proposal. The source_node string alone provides no authentication.
+type RecordSnapshotQueryClaimCmd struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Claim         *SnapshotQueryClaim    `protobuf:"bytes,1,opt,name=claim,proto3" json:"claim,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordSnapshotQueryClaimCmd) Reset() {
+	*x = RecordSnapshotQueryClaimCmd{}
+	mi := &file_raftlog_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordSnapshotQueryClaimCmd) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordSnapshotQueryClaimCmd) ProtoMessage() {}
+
+func (x *RecordSnapshotQueryClaimCmd) ProtoReflect() protoreflect.Message {
+	mi := &file_raftlog_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordSnapshotQueryClaimCmd.ProtoReflect.Descriptor instead.
+func (*RecordSnapshotQueryClaimCmd) Descriptor() ([]byte, []int) {
+	return file_raftlog_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *RecordSnapshotQueryClaimCmd) GetClaim() *SnapshotQueryClaim {
+	if x != nil {
+		return x.Claim
+	}
+	return nil
+}
+
+// Records verified new-lane attestation without changing old receipt domains.
+type RecordSnapshotQueryAttestationCmd struct {
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	Attestation   *SnapshotQueryAttestation `protobuf:"bytes,1,opt,name=attestation,proto3" json:"attestation,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordSnapshotQueryAttestationCmd) Reset() {
+	*x = RecordSnapshotQueryAttestationCmd{}
+	mi := &file_raftlog_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordSnapshotQueryAttestationCmd) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordSnapshotQueryAttestationCmd) ProtoMessage() {}
+
+func (x *RecordSnapshotQueryAttestationCmd) ProtoReflect() protoreflect.Message {
+	mi := &file_raftlog_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordSnapshotQueryAttestationCmd.ProtoReflect.Descriptor instead.
+func (*RecordSnapshotQueryAttestationCmd) Descriptor() ([]byte, []int) {
+	return file_raftlog_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *RecordSnapshotQueryAttestationCmd) GetAttestation() *SnapshotQueryAttestation {
+	if x != nil {
+		return x.Attestation
+	}
+	return nil
+}
+
+// Authority-authenticated transition plus compatible manifest and receipts.
+// New authority command purposes are defined by the owning runtime task;
+// the existing promotion signature purpose remains unchanged.
+type PublishExecutorProfileTransitionCmd struct {
+	state         protoimpl.MessageState              `protogen:"open.v1"`
+	Transition    *ExecutorProfileTransition          `protobuf:"bytes,1,opt,name=transition,proto3" json:"transition,omitempty"`
+	Manifest      *SafeSnapshotManifest               `protobuf:"bytes,2,opt,name=manifest,proto3" json:"manifest,omitempty"`
+	Receipts      []*ExecutorProfileTransitionReceipt `protobuf:"bytes,3,rep,name=receipts,proto3" json:"receipts,omitempty"`
+	AuthorityJws  string                              `protobuf:"bytes,4,opt,name=authority_jws,json=authorityJws,proto3" json:"authority_jws,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PublishExecutorProfileTransitionCmd) Reset() {
+	*x = PublishExecutorProfileTransitionCmd{}
+	mi := &file_raftlog_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PublishExecutorProfileTransitionCmd) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PublishExecutorProfileTransitionCmd) ProtoMessage() {}
+
+func (x *PublishExecutorProfileTransitionCmd) ProtoReflect() protoreflect.Message {
+	mi := &file_raftlog_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PublishExecutorProfileTransitionCmd.ProtoReflect.Descriptor instead.
+func (*PublishExecutorProfileTransitionCmd) Descriptor() ([]byte, []int) {
+	return file_raftlog_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *PublishExecutorProfileTransitionCmd) GetTransition() *ExecutorProfileTransition {
+	if x != nil {
+		return x.Transition
+	}
+	return nil
+}
+
+func (x *PublishExecutorProfileTransitionCmd) GetManifest() *SafeSnapshotManifest {
+	if x != nil {
+		return x.Manifest
+	}
+	return nil
+}
+
+func (x *PublishExecutorProfileTransitionCmd) GetReceipts() []*ExecutorProfileTransitionReceipt {
+	if x != nil {
+		return x.Receipts
+	}
+	return nil
+}
+
+func (x *PublishExecutorProfileTransitionCmd) GetAuthorityJws() string {
+	if x != nil {
+		return x.AuthorityJws
+	}
+	return ""
+}
+
+// Stores only signature-checked readiness for this exact committed manifest.
+type RecordSnapshotArtifactReadyCmd struct {
+	state         protoimpl.MessageState           `protogen:"open.v1"`
+	Submission    *SnapshotArtifactReadySubmission `protobuf:"bytes,1,opt,name=submission,proto3" json:"submission,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordSnapshotArtifactReadyCmd) Reset() {
+	*x = RecordSnapshotArtifactReadyCmd{}
+	mi := &file_raftlog_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordSnapshotArtifactReadyCmd) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordSnapshotArtifactReadyCmd) ProtoMessage() {}
+
+func (x *RecordSnapshotArtifactReadyCmd) ProtoReflect() protoreflect.Message {
+	mi := &file_raftlog_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordSnapshotArtifactReadyCmd.ProtoReflect.Descriptor instead.
+func (*RecordSnapshotArtifactReadyCmd) Descriptor() ([]byte, []int) {
+	return file_raftlog_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *RecordSnapshotArtifactReadyCmd) GetSubmission() *SnapshotArtifactReadySubmission {
+	if x != nil {
+		return x.Submission
+	}
+	return nil
+}
 
 var File_raftlog_proto protoreflect.FileDescriptor
 
@@ -1314,8 +1983,7 @@ const file_raftlog_proto_rawDesc = "" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\"?\n" +
 	"\fEvictNodeCmd\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x16\n" +
-	"\x06reason\x18\x02 \x01(\tR\x06reason\"\x93\n" +
-	"\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\"\xe9\x11\n" +
 	"\vRaftCommand\x12H\n" +
 	"\x10submit_statement\x18\x01 \x01(\v2\x1b.arbiter.SubmitStatementCmdH\x00R\x0fsubmitStatement\x12=\n" +
 	"\rseal_l3_block\x18\x02 \x01(\v2\x17.arbiter.SealL3BlockCmdH\x00R\vsealL3Block\x12B\n" +
@@ -1337,8 +2005,52 @@ const file_raftlog_proto_rawDesc = "" +
 	"\vmark_active\x18\x10 \x01(\v2\x16.arbiter.MarkActiveCmdH\x00R\n" +
 	"markActive\x126\n" +
 	"\n" +
-	"evict_node\x18\x11 \x01(\v2\x15.arbiter.EvictNodeCmdH\x00R\tevictNodeB\x05\n" +
-	"\x03cmd*q\n" +
+	"evict_node\x18\x11 \x01(\v2\x15.arbiter.EvictNodeCmdH\x00R\tevictNode\x12R\n" +
+	"\x14begin_snapshot_query\x18\x12 \x01(\v2\x1e.arbiter.BeginSnapshotQueryCmdH\x00R\x12beginSnapshotQuery\x12R\n" +
+	"\x14grant_snapshot_query\x18\x13 \x01(\v2\x1e.arbiter.GrantSnapshotQueryCmdH\x00R\x12grantSnapshotQuery\x12X\n" +
+	"\x16release_snapshot_query\x18\x14 \x01(\v2 .arbiter.ReleaseSnapshotQueryCmdH\x00R\x14releaseSnapshotQuery\x12U\n" +
+	"\x15submit_snapshot_query\x18\x15 \x01(\v2\x1f.arbiter.SubmitSnapshotQueryCmdH\x00R\x13submitSnapshotQuery\x12R\n" +
+	"\x14abort_snapshot_query\x18\x16 \x01(\v2\x1e.arbiter.AbortSnapshotQueryCmdH\x00R\x12abortSnapshotQuery\x12X\n" +
+	"\x16activate_query_profile\x18\x17 \x01(\v2 .arbiter.ActivateQueryProfileCmdH\x00R\x14activateQueryProfile\x12e\n" +
+	"\x1brecord_snapshot_query_claim\x18\x18 \x01(\v2$.arbiter.RecordSnapshotQueryClaimCmdH\x00R\x18recordSnapshotQueryClaim\x12w\n" +
+	"!record_snapshot_query_attestation\x18\x19 \x01(\v2*.arbiter.RecordSnapshotQueryAttestationCmdH\x00R\x1erecordSnapshotQueryAttestation\x12}\n" +
+	"#publish_executor_profile_transition\x18\x1a \x01(\v2,.arbiter.PublishExecutorProfileTransitionCmdH\x00R publishExecutorProfileTransition\x12n\n" +
+	"\x1erecord_snapshot_artifact_ready\x18\x1b \x01(\v2'.arbiter.RecordSnapshotArtifactReadyCmdH\x00R\x1brecordSnapshotArtifactReadyB\x05\n" +
+	"\x03cmd\"W\n" +
+	"\x15BeginSnapshotQueryCmd\x12>\n" +
+	"\arequest\x18\x01 \x01(\v2$.arbiter.AcquireSnapshotQueryRequestR\arequest\"{\n" +
+	"\x15GrantSnapshotQueryCmd\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x01 \x01(\tR\trequestId\x12C\n" +
+	"\vreservation\x18\x02 \x01(\v2!.arbiter.SnapshotQueryReservationR\vreservation\"Y\n" +
+	"\x17ReleaseSnapshotQueryCmd\x12>\n" +
+	"\arequest\x18\x01 \x01(\v2$.arbiter.ReleaseSnapshotQueryRequestR\arequest\"\x86\x01\n" +
+	"\x16SubmitSnapshotQueryCmd\x12:\n" +
+	"\benvelope\x18\x01 \x01(\v2\x1e.arbiter.SnapshotQueryEnvelopeR\benvelope\x120\n" +
+	"\x14non_membership_proof\x18\x02 \x01(\fR\x12nonMembershipProof\"w\n" +
+	"\x15AbortSnapshotQueryCmd\x129\n" +
+	"\x06record\x18\x01 \x01(\v2!.arbiter.SnapshotQueryAbortRecordR\x06record\x12#\n" +
+	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"z\n" +
+	"\x17ActivateQueryProfileCmd\x12:\n" +
+	"\n" +
+	"activation\x18\x01 \x01(\v2\x1a.arbiter.ActiveQueryPolicyR\n" +
+	"activation\x12#\n" +
+	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"P\n" +
+	"\x1bRecordSnapshotQueryClaimCmd\x121\n" +
+	"\x05claim\x18\x01 \x01(\v2\x1b.arbiter.SnapshotQueryClaimR\x05claim\"h\n" +
+	"!RecordSnapshotQueryAttestationCmd\x12C\n" +
+	"\vattestation\x18\x01 \x01(\v2!.arbiter.SnapshotQueryAttestationR\vattestation\"\x90\x02\n" +
+	"#PublishExecutorProfileTransitionCmd\x12B\n" +
+	"\n" +
+	"transition\x18\x01 \x01(\v2\".arbiter.ExecutorProfileTransitionR\n" +
+	"transition\x129\n" +
+	"\bmanifest\x18\x02 \x01(\v2\x1d.arbiter.SafeSnapshotManifestR\bmanifest\x12E\n" +
+	"\breceipts\x18\x03 \x03(\v2).arbiter.ExecutorProfileTransitionReceiptR\breceipts\x12#\n" +
+	"\rauthority_jws\x18\x04 \x01(\tR\fauthorityJws\"j\n" +
+	"\x1eRecordSnapshotArtifactReadyCmd\x12H\n" +
+	"\n" +
+	"submission\x18\x01 \x01(\v2(.arbiter.SnapshotArtifactReadySubmissionR\n" +
+	"submission*q\n" +
 	"\x10ChallengeVerdict\x12!\n" +
 	"\x1dCHALLENGE_VERDICT_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16CHALLENGE_VERDICT_SAFE\x10\x01\x12\x1e\n" +
@@ -1357,52 +2069,73 @@ func file_raftlog_proto_rawDescGZIP() []byte {
 }
 
 var file_raftlog_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_raftlog_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_raftlog_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_raftlog_proto_goTypes = []any{
-	(ChallengeVerdict)(0),            // 0: arbiter.ChallengeVerdict
-	(*SubmitStatementCmd)(nil),       // 1: arbiter.SubmitStatementCmd
-	(*SealL3BlockCmd)(nil),           // 2: arbiter.SealL3BlockCmd
-	(*MarkReplayingCmd)(nil),         // 3: arbiter.MarkReplayingCmd
-	(*RegisterRCCmd)(nil),            // 4: arbiter.RegisterRCCmd
-	(*RecordAttestationCmd)(nil),     // 5: arbiter.RecordAttestationCmd
-	(*RecordByteSideScanCmd)(nil),    // 6: arbiter.RecordByteSideScanCmd
-	(*RecordAnchorFinalityCmd)(nil),  // 7: arbiter.RecordAnchorFinalityCmd
-	(*RecordPromotionIssuedCmd)(nil), // 8: arbiter.RecordPromotionIssuedCmd
-	(*RecordPromotionAckCmd)(nil),    // 9: arbiter.RecordPromotionAckCmd
-	(*PublishSafeSnapshotCmd)(nil),   // 10: arbiter.PublishSafeSnapshotCmd
-	(*ScheduleUnsafeCleanupCmd)(nil), // 11: arbiter.ScheduleUnsafeCleanupCmd
-	(*RecordCleanupAckCmd)(nil),      // 12: arbiter.RecordCleanupAckCmd
-	(*OpenChallengeCmd)(nil),         // 13: arbiter.OpenChallengeCmd
-	(*ResolveChallengeCmd)(nil),      // 14: arbiter.ResolveChallengeCmd
-	(*RegisterNodeCmd)(nil),          // 15: arbiter.RegisterNodeCmd
-	(*MarkActiveCmd)(nil),            // 16: arbiter.MarkActiveCmd
-	(*EvictNodeCmd)(nil),             // 17: arbiter.EvictNodeCmd
-	(*RaftCommand)(nil),              // 18: arbiter.RaftCommand
-	(*StatementEnvelopeV2)(nil),      // 19: arbiter.StatementEnvelopeV2
-	(*RCRecord)(nil),                 // 20: arbiter.RCRecord
-	(*ReplayAttestation)(nil),        // 21: arbiter.ReplayAttestation
-	(*ByteSideScanMsg)(nil),          // 22: arbiter.ByteSideScanMsg
-	(*AnchorRef)(nil),                // 23: arbiter.AnchorRef
-	(*PromoteSafePartition)(nil),     // 24: arbiter.PromoteSafePartition
-	(*PromotionAck)(nil),             // 25: arbiter.PromotionAck
-	(*SafeSnapshotManifest)(nil),     // 26: arbiter.SafeSnapshotManifest
-	(*UnsafeCleanup)(nil),            // 27: arbiter.UnsafeCleanup
-	(*CleanupAck)(nil),               // 28: arbiter.CleanupAck
-	(*NodeRegistration)(nil),         // 29: arbiter.NodeRegistration
+	(ChallengeVerdict)(0),                       // 0: arbiter.ChallengeVerdict
+	(*SubmitStatementCmd)(nil),                  // 1: arbiter.SubmitStatementCmd
+	(*SealL3BlockCmd)(nil),                      // 2: arbiter.SealL3BlockCmd
+	(*MarkReplayingCmd)(nil),                    // 3: arbiter.MarkReplayingCmd
+	(*RegisterRCCmd)(nil),                       // 4: arbiter.RegisterRCCmd
+	(*RecordAttestationCmd)(nil),                // 5: arbiter.RecordAttestationCmd
+	(*RecordByteSideScanCmd)(nil),               // 6: arbiter.RecordByteSideScanCmd
+	(*RecordAnchorFinalityCmd)(nil),             // 7: arbiter.RecordAnchorFinalityCmd
+	(*RecordPromotionIssuedCmd)(nil),            // 8: arbiter.RecordPromotionIssuedCmd
+	(*RecordPromotionAckCmd)(nil),               // 9: arbiter.RecordPromotionAckCmd
+	(*PublishSafeSnapshotCmd)(nil),              // 10: arbiter.PublishSafeSnapshotCmd
+	(*ScheduleUnsafeCleanupCmd)(nil),            // 11: arbiter.ScheduleUnsafeCleanupCmd
+	(*RecordCleanupAckCmd)(nil),                 // 12: arbiter.RecordCleanupAckCmd
+	(*OpenChallengeCmd)(nil),                    // 13: arbiter.OpenChallengeCmd
+	(*ResolveChallengeCmd)(nil),                 // 14: arbiter.ResolveChallengeCmd
+	(*RegisterNodeCmd)(nil),                     // 15: arbiter.RegisterNodeCmd
+	(*MarkActiveCmd)(nil),                       // 16: arbiter.MarkActiveCmd
+	(*EvictNodeCmd)(nil),                        // 17: arbiter.EvictNodeCmd
+	(*RaftCommand)(nil),                         // 18: arbiter.RaftCommand
+	(*BeginSnapshotQueryCmd)(nil),               // 19: arbiter.BeginSnapshotQueryCmd
+	(*GrantSnapshotQueryCmd)(nil),               // 20: arbiter.GrantSnapshotQueryCmd
+	(*ReleaseSnapshotQueryCmd)(nil),             // 21: arbiter.ReleaseSnapshotQueryCmd
+	(*SubmitSnapshotQueryCmd)(nil),              // 22: arbiter.SubmitSnapshotQueryCmd
+	(*AbortSnapshotQueryCmd)(nil),               // 23: arbiter.AbortSnapshotQueryCmd
+	(*ActivateQueryProfileCmd)(nil),             // 24: arbiter.ActivateQueryProfileCmd
+	(*RecordSnapshotQueryClaimCmd)(nil),         // 25: arbiter.RecordSnapshotQueryClaimCmd
+	(*RecordSnapshotQueryAttestationCmd)(nil),   // 26: arbiter.RecordSnapshotQueryAttestationCmd
+	(*PublishExecutorProfileTransitionCmd)(nil), // 27: arbiter.PublishExecutorProfileTransitionCmd
+	(*RecordSnapshotArtifactReadyCmd)(nil),      // 28: arbiter.RecordSnapshotArtifactReadyCmd
+	(*StatementEnvelopeV2)(nil),                 // 29: arbiter.StatementEnvelopeV2
+	(*RCRecord)(nil),                            // 30: arbiter.RCRecord
+	(*ReplayAttestation)(nil),                   // 31: arbiter.ReplayAttestation
+	(*ByteSideScanMsg)(nil),                     // 32: arbiter.ByteSideScanMsg
+	(*AnchorRef)(nil),                           // 33: arbiter.AnchorRef
+	(*PromoteSafePartition)(nil),                // 34: arbiter.PromoteSafePartition
+	(*PromotionAck)(nil),                        // 35: arbiter.PromotionAck
+	(*SafeSnapshotManifest)(nil),                // 36: arbiter.SafeSnapshotManifest
+	(*UnsafeCleanup)(nil),                       // 37: arbiter.UnsafeCleanup
+	(*CleanupAck)(nil),                          // 38: arbiter.CleanupAck
+	(*NodeRegistration)(nil),                    // 39: arbiter.NodeRegistration
+	(*AcquireSnapshotQueryRequest)(nil),         // 40: arbiter.AcquireSnapshotQueryRequest
+	(*SnapshotQueryReservation)(nil),            // 41: arbiter.SnapshotQueryReservation
+	(*ReleaseSnapshotQueryRequest)(nil),         // 42: arbiter.ReleaseSnapshotQueryRequest
+	(*SnapshotQueryEnvelope)(nil),               // 43: arbiter.SnapshotQueryEnvelope
+	(*SnapshotQueryAbortRecord)(nil),            // 44: arbiter.SnapshotQueryAbortRecord
+	(*ActiveQueryPolicy)(nil),                   // 45: arbiter.ActiveQueryPolicy
+	(*SnapshotQueryClaim)(nil),                  // 46: arbiter.SnapshotQueryClaim
+	(*SnapshotQueryAttestation)(nil),            // 47: arbiter.SnapshotQueryAttestation
+	(*ExecutorProfileTransition)(nil),           // 48: arbiter.ExecutorProfileTransition
+	(*ExecutorProfileTransitionReceipt)(nil),    // 49: arbiter.ExecutorProfileTransitionReceipt
+	(*SnapshotArtifactReadySubmission)(nil),     // 50: arbiter.SnapshotArtifactReadySubmission
 }
 var file_raftlog_proto_depIdxs = []int32{
-	19, // 0: arbiter.SubmitStatementCmd.envelope:type_name -> arbiter.StatementEnvelopeV2
-	20, // 1: arbiter.RegisterRCCmd.rc:type_name -> arbiter.RCRecord
-	21, // 2: arbiter.RecordAttestationCmd.attestation:type_name -> arbiter.ReplayAttestation
-	22, // 3: arbiter.RecordByteSideScanCmd.scan:type_name -> arbiter.ByteSideScanMsg
-	23, // 4: arbiter.RecordAnchorFinalityCmd.anchor:type_name -> arbiter.AnchorRef
-	24, // 5: arbiter.RecordPromotionIssuedCmd.promote:type_name -> arbiter.PromoteSafePartition
-	25, // 6: arbiter.RecordPromotionAckCmd.ack:type_name -> arbiter.PromotionAck
-	26, // 7: arbiter.PublishSafeSnapshotCmd.manifest:type_name -> arbiter.SafeSnapshotManifest
-	27, // 8: arbiter.ScheduleUnsafeCleanupCmd.cleanup:type_name -> arbiter.UnsafeCleanup
-	28, // 9: arbiter.RecordCleanupAckCmd.ack:type_name -> arbiter.CleanupAck
+	29, // 0: arbiter.SubmitStatementCmd.envelope:type_name -> arbiter.StatementEnvelopeV2
+	30, // 1: arbiter.RegisterRCCmd.rc:type_name -> arbiter.RCRecord
+	31, // 2: arbiter.RecordAttestationCmd.attestation:type_name -> arbiter.ReplayAttestation
+	32, // 3: arbiter.RecordByteSideScanCmd.scan:type_name -> arbiter.ByteSideScanMsg
+	33, // 4: arbiter.RecordAnchorFinalityCmd.anchor:type_name -> arbiter.AnchorRef
+	34, // 5: arbiter.RecordPromotionIssuedCmd.promote:type_name -> arbiter.PromoteSafePartition
+	35, // 6: arbiter.RecordPromotionAckCmd.ack:type_name -> arbiter.PromotionAck
+	36, // 7: arbiter.PublishSafeSnapshotCmd.manifest:type_name -> arbiter.SafeSnapshotManifest
+	37, // 8: arbiter.ScheduleUnsafeCleanupCmd.cleanup:type_name -> arbiter.UnsafeCleanup
+	38, // 9: arbiter.RecordCleanupAckCmd.ack:type_name -> arbiter.CleanupAck
 	0,  // 10: arbiter.ResolveChallengeCmd.verdict:type_name -> arbiter.ChallengeVerdict
-	29, // 11: arbiter.RegisterNodeCmd.registration:type_name -> arbiter.NodeRegistration
+	39, // 11: arbiter.RegisterNodeCmd.registration:type_name -> arbiter.NodeRegistration
 	1,  // 12: arbiter.RaftCommand.submit_statement:type_name -> arbiter.SubmitStatementCmd
 	2,  // 13: arbiter.RaftCommand.seal_l3_block:type_name -> arbiter.SealL3BlockCmd
 	3,  // 14: arbiter.RaftCommand.mark_replaying:type_name -> arbiter.MarkReplayingCmd
@@ -1420,11 +2153,33 @@ var file_raftlog_proto_depIdxs = []int32{
 	15, // 26: arbiter.RaftCommand.register_node:type_name -> arbiter.RegisterNodeCmd
 	16, // 27: arbiter.RaftCommand.mark_active:type_name -> arbiter.MarkActiveCmd
 	17, // 28: arbiter.RaftCommand.evict_node:type_name -> arbiter.EvictNodeCmd
-	29, // [29:29] is the sub-list for method output_type
-	29, // [29:29] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	19, // 29: arbiter.RaftCommand.begin_snapshot_query:type_name -> arbiter.BeginSnapshotQueryCmd
+	20, // 30: arbiter.RaftCommand.grant_snapshot_query:type_name -> arbiter.GrantSnapshotQueryCmd
+	21, // 31: arbiter.RaftCommand.release_snapshot_query:type_name -> arbiter.ReleaseSnapshotQueryCmd
+	22, // 32: arbiter.RaftCommand.submit_snapshot_query:type_name -> arbiter.SubmitSnapshotQueryCmd
+	23, // 33: arbiter.RaftCommand.abort_snapshot_query:type_name -> arbiter.AbortSnapshotQueryCmd
+	24, // 34: arbiter.RaftCommand.activate_query_profile:type_name -> arbiter.ActivateQueryProfileCmd
+	25, // 35: arbiter.RaftCommand.record_snapshot_query_claim:type_name -> arbiter.RecordSnapshotQueryClaimCmd
+	26, // 36: arbiter.RaftCommand.record_snapshot_query_attestation:type_name -> arbiter.RecordSnapshotQueryAttestationCmd
+	27, // 37: arbiter.RaftCommand.publish_executor_profile_transition:type_name -> arbiter.PublishExecutorProfileTransitionCmd
+	28, // 38: arbiter.RaftCommand.record_snapshot_artifact_ready:type_name -> arbiter.RecordSnapshotArtifactReadyCmd
+	40, // 39: arbiter.BeginSnapshotQueryCmd.request:type_name -> arbiter.AcquireSnapshotQueryRequest
+	41, // 40: arbiter.GrantSnapshotQueryCmd.reservation:type_name -> arbiter.SnapshotQueryReservation
+	42, // 41: arbiter.ReleaseSnapshotQueryCmd.request:type_name -> arbiter.ReleaseSnapshotQueryRequest
+	43, // 42: arbiter.SubmitSnapshotQueryCmd.envelope:type_name -> arbiter.SnapshotQueryEnvelope
+	44, // 43: arbiter.AbortSnapshotQueryCmd.record:type_name -> arbiter.SnapshotQueryAbortRecord
+	45, // 44: arbiter.ActivateQueryProfileCmd.activation:type_name -> arbiter.ActiveQueryPolicy
+	46, // 45: arbiter.RecordSnapshotQueryClaimCmd.claim:type_name -> arbiter.SnapshotQueryClaim
+	47, // 46: arbiter.RecordSnapshotQueryAttestationCmd.attestation:type_name -> arbiter.SnapshotQueryAttestation
+	48, // 47: arbiter.PublishExecutorProfileTransitionCmd.transition:type_name -> arbiter.ExecutorProfileTransition
+	36, // 48: arbiter.PublishExecutorProfileTransitionCmd.manifest:type_name -> arbiter.SafeSnapshotManifest
+	49, // 49: arbiter.PublishExecutorProfileTransitionCmd.receipts:type_name -> arbiter.ExecutorProfileTransitionReceipt
+	50, // 50: arbiter.RecordSnapshotArtifactReadyCmd.submission:type_name -> arbiter.SnapshotArtifactReadySubmission
+	51, // [51:51] is the sub-list for method output_type
+	51, // [51:51] is the sub-list for method input_type
+	51, // [51:51] is the sub-list for extension type_name
+	51, // [51:51] is the sub-list for extension extendee
+	0,  // [0:51] is the sub-list for field type_name
 }
 
 func init() { file_raftlog_proto_init() }
@@ -1452,6 +2207,16 @@ func file_raftlog_proto_init() {
 		(*RaftCommand_RegisterNode)(nil),
 		(*RaftCommand_MarkActive)(nil),
 		(*RaftCommand_EvictNode)(nil),
+		(*RaftCommand_BeginSnapshotQuery)(nil),
+		(*RaftCommand_GrantSnapshotQuery)(nil),
+		(*RaftCommand_ReleaseSnapshotQuery)(nil),
+		(*RaftCommand_SubmitSnapshotQuery)(nil),
+		(*RaftCommand_AbortSnapshotQuery)(nil),
+		(*RaftCommand_ActivateQueryProfile)(nil),
+		(*RaftCommand_RecordSnapshotQueryClaim)(nil),
+		(*RaftCommand_RecordSnapshotQueryAttestation)(nil),
+		(*RaftCommand_PublishExecutorProfileTransition)(nil),
+		(*RaftCommand_RecordSnapshotArtifactReady)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1459,7 +2224,7 @@ func file_raftlog_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_raftlog_proto_rawDesc), len(file_raftlog_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   18,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

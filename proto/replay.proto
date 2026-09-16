@@ -146,3 +146,308 @@ message SafeSnapshotManifest {
   string manifest_root = 9;
   repeated TableManifest tables = 10;
 }
+
+// Snapshot-query canonical mirrors. Protobuf defaults are not canonical JSON.
+// HG canonicalization emits [] for empty new collections; do not change legacy
+// proto nil/empty behavior or hash protobuf/protojson bytes.
+
+// SnapshotPin is an append-only snapshot-query contract record.
+message SnapshotPin {
+  string network_id = 1;
+  uint32 keeper_shard_id = 2;
+  string snapshot_id = 3;
+  uint64 safe_block_seq = 4;
+  string manifest_root = 5;
+  string state_root = 6;
+  string schema_snapshot_id = 7;
+  string schema_root = 8;
+}
+
+// Complete content projection. Storage locations are deliberately excluded.
+message SnapshotReadPart {
+  string table_id = 1;
+  string partition_id = 2;
+  string part_name = 3;
+  string part_phys_hash = 4;
+  string part_row_lthash = 5;
+  uint64 row_count = 6;
+  uint64 bytes = 7;
+}
+
+// SnapshotReadTable is an append-only snapshot-query contract record.
+message SnapshotReadTable {
+  string database = 1;
+  string table = 2;
+  string table_id = 3;
+  string schema_hash = 4;
+  repeated PartitionCommitment partition_roots = 5;
+  repeated SnapshotReadPart active_parts = 6;
+}
+
+// SnapshotReadSet is an append-only snapshot-query contract record.
+message SnapshotReadSet {
+  SnapshotPin read_snapshot = 1;
+  repeated SnapshotReadTable tables = 2;
+}
+
+// The v3 signed binding. Field order mirrors canonical HG replay records.
+message SnapshotQueryBinding {
+  uint32 envelope_version = 1;
+  string input_kind = 2;
+  string client_account = 3;
+  string statement_id = 4;
+  uint32 statement_kind = 5;
+  string network_id = 6;
+  uint32 keeper_shard_id = 7;
+  string sql_hash = 8;
+  string settings_hash = 9;
+  string target_table_id = 10;
+  string schema_hash = 11;
+  string row_id_profile_id = 12;
+  uint32 client_revision = 13;
+  SnapshotPin read_snapshot = 14;
+  string read_set_root = 15;
+  string schema_snapshot_id = 16;
+  string schema_root = 17;
+  string logical_database = 18;
+  string query_profile_id = 19;
+  string executor_profile_id = 20;
+  string reservation_id = 21;
+  uint64 fencing_generation = 22;
+}
+
+// SnapshotQueryInput is an append-only snapshot-query contract record.
+message SnapshotQueryInput {
+  SnapshotQueryBinding binding = 1;
+  string sql = 2;
+  SnapshotReadSet read_set = 3;
+}
+
+// SnapshotQueryEnvelope is an append-only snapshot-query contract record.
+message SnapshotQueryEnvelope {
+  SnapshotQueryInput input = 1;
+  string input_root = 2;
+  string user_jws = 3;
+}
+
+// SnapshotQueryReservation is an append-only snapshot-query contract record.
+message SnapshotQueryReservation {
+  string reservation_id = 1;
+  uint64 fencing_generation = 2;
+  string client_account = 3;
+  string statement_id = 4;
+  SnapshotPin read_snapshot = 5;
+  string executor_profile_id = 6;
+  string query_profile_id = 7;
+  string activation_id = 8;
+}
+
+// Version 1 authenticates negative lookups and draining/granted/consumed/released states.
+// Reservation is absent before grant; released request tombstones survive restart.
+// terminal_proof is control evidence, never part of the signed user-input root.
+message SnapshotQueryReservationStatus {
+  uint32 version = 1;
+  bool found = 2;
+  string state = 3;
+  string request_id = 4;
+  string client_account = 5;
+  string statement_id = 6;
+  uint64 fencing_generation = 7;
+  SnapshotQueryReservation reservation = 8;
+  uint64 block_seq = 9;
+  bytes terminal_proof = 10;
+}
+
+// SnapshotQueryStatement is an append-only snapshot-query contract record.
+message SnapshotQueryStatement {
+  uint64 statement_seq = 1;
+  SnapshotQueryEnvelope envelope = 2;
+}
+
+// Verifier dispatch requires a complete committed source_claim and its digest.
+// In-process source preparation may omit source_claim before the claim is committed.
+message SnapshotQueryJob {
+  uint64 block_seq = 1;
+  string prev_safe_snapshot_id = 2;
+  string prev_state_root = 3;
+  string schema_snapshot_id = 4;
+  string executor_profile_id = 5;
+  string query_profile_id = 6;
+  SnapshotQueryReservation reservation = 7;
+  SnapshotQueryStatement statement = 8;
+  string source_claim_root = 9;
+  SnapshotQueryClaim source_claim = 10;
+}
+
+// SnapshotQueryEvidence is an append-only snapshot-query contract record.
+message SnapshotQueryEvidence {
+  string execution_outcome = 1;
+  uint64 output_row_count = 2;
+  string output_rows_root = 3;
+}
+
+// Hashing uses a canonical affected_parts projection without storage_refs.
+// The transport retains the existing PartManifestEntry storage hints.
+message SnapshotQueryReceipt {
+  uint64 block_seq = 1;
+  string statement_root = 2;
+  string input_root = 3;
+  string read_set_root = 4;
+  SnapshotPin read_snapshot = 5;
+  string schema_snapshot_id = 6;
+  string executor_profile_id = 7;
+  string query_profile_id = 8;
+  string reservation_id = 9;
+  uint64 fencing_generation = 10;
+  string execution_outcome = 11;
+  string abort_record_root = 12;
+  uint64 output_row_count = 13;
+  string output_rows_root = 14;
+  string source_claim_root = 15;
+  string computed_state_root = 16;
+  bool match_source_root = 17;
+  repeated PartitionCommitment partition_commitments_after = 18;
+  repeated PartManifestEntry affected_parts = 19;
+  string replay_log_hash = 20;
+}
+
+// SnapshotQueryAttestation is an append-only snapshot-query contract record.
+message SnapshotQueryAttestation {
+  string replica_id = 1;
+  SnapshotQueryReceipt receipt = 2;
+  string receipt_hash = 3;
+  string signature = 4;
+}
+
+// SnapshotQuerySubmitResult is an append-only snapshot-query contract record.
+message SnapshotQuerySubmitResult {
+  uint32 admission_code = 1;
+  string message = 2;
+  uint64 statement_seq = 3;
+  uint64 block_seq = 4;
+  string source_node = 5;
+  string input_root = 6;
+  SnapshotQueryReservation reservation = 7;
+}
+
+// Version 1 uses found=false for an authenticated negative lookup.
+// A zero accepted result is not a negative lookup; terminal_proof is not user input.
+message SnapshotQueryStatus {
+  uint32 version = 1;
+  bool found = 2;
+  SnapshotQuerySubmitResult accepted = 3;
+  string lifecycle = 4;
+  string execution_outcome = 5;
+  bytes terminal_proof = 6;
+}
+
+// ActiveQueryPolicy is an append-only snapshot-query contract record.
+message ActiveQueryPolicy {
+  string activation_id = 1;
+  string network_id = 2;
+  uint32 keeper_shard_id = 3;
+  uint64 activation_block_seq = 4;
+  string executor_profile_id = 5;
+  string query_profile_id = 6;
+  bool enabled = 7;
+}
+
+// ExecutorProfileTransition is an append-only snapshot-query contract record.
+message ExecutorProfileTransition {
+  string network_id = 1;
+  uint32 keeper_shard_id = 2;
+  string prev_snapshot_id = 3;
+  string prev_state_root = 4;
+  string old_executor_profile_id = 5;
+  string new_executor_profile_id = 6;
+  string schema_snapshot_id = 7;
+  string schema_root = 8;
+  string data_root = 9;
+  string next_snapshot_id = 10;
+  string next_state_root = 11;
+  string next_manifest_root = 12;
+  ActiveQueryPolicy activation = 13;
+}
+
+// ExecutorProfileTransitionReceipt is an append-only snapshot-query contract record.
+message ExecutorProfileTransitionReceipt {
+  string transition_root = 1;
+  string replica_id = 2;
+  string signature = 3;
+}
+
+// SnapshotArtifactReady is an append-only snapshot-query contract record.
+message SnapshotArtifactReady {
+  string snapshot_id = 1;
+  string manifest_root = 2;
+  string schema_root = 3;
+  string artifact_set_root = 4;
+  string publisher_id = 5;
+  string retention_policy_id = 6;
+}
+
+// SnapshotQueryAbortRecord is an append-only snapshot-query contract record.
+message SnapshotQueryAbortRecord {
+  uint64 block_seq = 1;
+  string statement_id = 2;
+  string input_root = 3;
+  string reservation_id = 4;
+  uint64 fencing_generation = 5;
+  string reason_code = 6;
+  string cleanup_authorization_root = 7;
+  string prev_snapshot_id = 8;
+  string next_snapshot_id = 9;
+}
+
+// The claim digest binds all fields; it is not the computed_state_root.
+// partition_deltas holds new-part sums; partition_commitments_after holds full roots.
+message SnapshotQueryClaim {
+  string source_node = 1;
+  string statement_id = 2;
+  uint64 statement_seq = 3;
+  uint64 block_seq = 4;
+  string input_root = 5;
+  string reservation_id = 6;
+  uint64 fencing_generation = 7;
+  string execution_outcome = 8;
+  uint64 output_row_count = 9;
+  string output_rows_root = 10;
+  string computed_state_root = 11;
+  repeated PartitionCommitment partition_deltas = 12;
+  repeated PartitionCommitment partition_commitments_after = 13;
+  repeated SnapshotReadPart candidate_parts = 14;
+}
+
+// ProfileSetting is an append-only snapshot-query contract record.
+message ProfileSetting {
+  string name = 1;
+  string value = 2;
+}
+
+// QueryLimits is an append-only snapshot-query contract record.
+message QueryLimits {
+  uint64 max_sql_bytes = 1;
+  uint64 max_descriptor_bytes = 2;
+  uint64 max_output_rows = 3;
+  uint64 max_output_bytes = 4;
+  uint64 max_restore_bytes = 5;
+  uint64 max_sort_memory_bytes = 6;
+  uint64 max_spill_bytes = 7;
+  uint64 max_execution_ms = 8;
+}
+
+// Immutable execution profile; its canonical digest is its external ID.
+// No self-referential profile ID is included.
+message QueryProfileRecord {
+  uint32 version = 1;
+  string clickhouse_build_digest = 2;
+  string platform = 3;
+  string native_analyzer_build_digest = 4;
+  string grpc_analyzer_build_digest = 5;
+  string tzdata_digest = 6;
+  repeated ProfileSetting settings = 7;
+  repeated string scalar_operators = 8;
+  string column_profile_id = 9;
+  string output_order_id = 10;
+  QueryLimits limits = 11;
+}

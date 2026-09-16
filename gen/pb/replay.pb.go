@@ -871,6 +871,2490 @@ func (x *SafeSnapshotManifest) GetTables() []*TableManifest {
 	return nil
 }
 
+// SnapshotPin is an append-only snapshot-query contract record.
+type SnapshotPin struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	NetworkId        string                 `protobuf:"bytes,1,opt,name=network_id,json=networkId,proto3" json:"network_id,omitempty"`
+	KeeperShardId    uint32                 `protobuf:"varint,2,opt,name=keeper_shard_id,json=keeperShardId,proto3" json:"keeper_shard_id,omitempty"`
+	SnapshotId       string                 `protobuf:"bytes,3,opt,name=snapshot_id,json=snapshotId,proto3" json:"snapshot_id,omitempty"`
+	SafeBlockSeq     uint64                 `protobuf:"varint,4,opt,name=safe_block_seq,json=safeBlockSeq,proto3" json:"safe_block_seq,omitempty"`
+	ManifestRoot     string                 `protobuf:"bytes,5,opt,name=manifest_root,json=manifestRoot,proto3" json:"manifest_root,omitempty"`
+	StateRoot        string                 `protobuf:"bytes,6,opt,name=state_root,json=stateRoot,proto3" json:"state_root,omitempty"`
+	SchemaSnapshotId string                 `protobuf:"bytes,7,opt,name=schema_snapshot_id,json=schemaSnapshotId,proto3" json:"schema_snapshot_id,omitempty"`
+	SchemaRoot       string                 `protobuf:"bytes,8,opt,name=schema_root,json=schemaRoot,proto3" json:"schema_root,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *SnapshotPin) Reset() {
+	*x = SnapshotPin{}
+	mi := &file_replay_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotPin) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotPin) ProtoMessage() {}
+
+func (x *SnapshotPin) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotPin.ProtoReflect.Descriptor instead.
+func (*SnapshotPin) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *SnapshotPin) GetNetworkId() string {
+	if x != nil {
+		return x.NetworkId
+	}
+	return ""
+}
+
+func (x *SnapshotPin) GetKeeperShardId() uint32 {
+	if x != nil {
+		return x.KeeperShardId
+	}
+	return 0
+}
+
+func (x *SnapshotPin) GetSnapshotId() string {
+	if x != nil {
+		return x.SnapshotId
+	}
+	return ""
+}
+
+func (x *SnapshotPin) GetSafeBlockSeq() uint64 {
+	if x != nil {
+		return x.SafeBlockSeq
+	}
+	return 0
+}
+
+func (x *SnapshotPin) GetManifestRoot() string {
+	if x != nil {
+		return x.ManifestRoot
+	}
+	return ""
+}
+
+func (x *SnapshotPin) GetStateRoot() string {
+	if x != nil {
+		return x.StateRoot
+	}
+	return ""
+}
+
+func (x *SnapshotPin) GetSchemaSnapshotId() string {
+	if x != nil {
+		return x.SchemaSnapshotId
+	}
+	return ""
+}
+
+func (x *SnapshotPin) GetSchemaRoot() string {
+	if x != nil {
+		return x.SchemaRoot
+	}
+	return ""
+}
+
+// Complete content projection. Storage locations are deliberately excluded.
+type SnapshotReadPart struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TableId       string                 `protobuf:"bytes,1,opt,name=table_id,json=tableId,proto3" json:"table_id,omitempty"`
+	PartitionId   string                 `protobuf:"bytes,2,opt,name=partition_id,json=partitionId,proto3" json:"partition_id,omitempty"`
+	PartName      string                 `protobuf:"bytes,3,opt,name=part_name,json=partName,proto3" json:"part_name,omitempty"`
+	PartPhysHash  string                 `protobuf:"bytes,4,opt,name=part_phys_hash,json=partPhysHash,proto3" json:"part_phys_hash,omitempty"`
+	PartRowLthash string                 `protobuf:"bytes,5,opt,name=part_row_lthash,json=partRowLthash,proto3" json:"part_row_lthash,omitempty"`
+	RowCount      uint64                 `protobuf:"varint,6,opt,name=row_count,json=rowCount,proto3" json:"row_count,omitempty"`
+	Bytes         uint64                 `protobuf:"varint,7,opt,name=bytes,proto3" json:"bytes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SnapshotReadPart) Reset() {
+	*x = SnapshotReadPart{}
+	mi := &file_replay_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotReadPart) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotReadPart) ProtoMessage() {}
+
+func (x *SnapshotReadPart) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotReadPart.ProtoReflect.Descriptor instead.
+func (*SnapshotReadPart) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *SnapshotReadPart) GetTableId() string {
+	if x != nil {
+		return x.TableId
+	}
+	return ""
+}
+
+func (x *SnapshotReadPart) GetPartitionId() string {
+	if x != nil {
+		return x.PartitionId
+	}
+	return ""
+}
+
+func (x *SnapshotReadPart) GetPartName() string {
+	if x != nil {
+		return x.PartName
+	}
+	return ""
+}
+
+func (x *SnapshotReadPart) GetPartPhysHash() string {
+	if x != nil {
+		return x.PartPhysHash
+	}
+	return ""
+}
+
+func (x *SnapshotReadPart) GetPartRowLthash() string {
+	if x != nil {
+		return x.PartRowLthash
+	}
+	return ""
+}
+
+func (x *SnapshotReadPart) GetRowCount() uint64 {
+	if x != nil {
+		return x.RowCount
+	}
+	return 0
+}
+
+func (x *SnapshotReadPart) GetBytes() uint64 {
+	if x != nil {
+		return x.Bytes
+	}
+	return 0
+}
+
+// SnapshotReadTable is an append-only snapshot-query contract record.
+type SnapshotReadTable struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Database       string                 `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
+	Table          string                 `protobuf:"bytes,2,opt,name=table,proto3" json:"table,omitempty"`
+	TableId        string                 `protobuf:"bytes,3,opt,name=table_id,json=tableId,proto3" json:"table_id,omitempty"`
+	SchemaHash     string                 `protobuf:"bytes,4,opt,name=schema_hash,json=schemaHash,proto3" json:"schema_hash,omitempty"`
+	PartitionRoots []*PartitionCommitment `protobuf:"bytes,5,rep,name=partition_roots,json=partitionRoots,proto3" json:"partition_roots,omitempty"`
+	ActiveParts    []*SnapshotReadPart    `protobuf:"bytes,6,rep,name=active_parts,json=activeParts,proto3" json:"active_parts,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *SnapshotReadTable) Reset() {
+	*x = SnapshotReadTable{}
+	mi := &file_replay_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotReadTable) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotReadTable) ProtoMessage() {}
+
+func (x *SnapshotReadTable) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotReadTable.ProtoReflect.Descriptor instead.
+func (*SnapshotReadTable) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *SnapshotReadTable) GetDatabase() string {
+	if x != nil {
+		return x.Database
+	}
+	return ""
+}
+
+func (x *SnapshotReadTable) GetTable() string {
+	if x != nil {
+		return x.Table
+	}
+	return ""
+}
+
+func (x *SnapshotReadTable) GetTableId() string {
+	if x != nil {
+		return x.TableId
+	}
+	return ""
+}
+
+func (x *SnapshotReadTable) GetSchemaHash() string {
+	if x != nil {
+		return x.SchemaHash
+	}
+	return ""
+}
+
+func (x *SnapshotReadTable) GetPartitionRoots() []*PartitionCommitment {
+	if x != nil {
+		return x.PartitionRoots
+	}
+	return nil
+}
+
+func (x *SnapshotReadTable) GetActiveParts() []*SnapshotReadPart {
+	if x != nil {
+		return x.ActiveParts
+	}
+	return nil
+}
+
+// SnapshotReadSet is an append-only snapshot-query contract record.
+type SnapshotReadSet struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ReadSnapshot  *SnapshotPin           `protobuf:"bytes,1,opt,name=read_snapshot,json=readSnapshot,proto3" json:"read_snapshot,omitempty"`
+	Tables        []*SnapshotReadTable   `protobuf:"bytes,2,rep,name=tables,proto3" json:"tables,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SnapshotReadSet) Reset() {
+	*x = SnapshotReadSet{}
+	mi := &file_replay_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotReadSet) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotReadSet) ProtoMessage() {}
+
+func (x *SnapshotReadSet) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotReadSet.ProtoReflect.Descriptor instead.
+func (*SnapshotReadSet) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *SnapshotReadSet) GetReadSnapshot() *SnapshotPin {
+	if x != nil {
+		return x.ReadSnapshot
+	}
+	return nil
+}
+
+func (x *SnapshotReadSet) GetTables() []*SnapshotReadTable {
+	if x != nil {
+		return x.Tables
+	}
+	return nil
+}
+
+// The v3 signed binding. Field order mirrors canonical HG replay records.
+type SnapshotQueryBinding struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	EnvelopeVersion   uint32                 `protobuf:"varint,1,opt,name=envelope_version,json=envelopeVersion,proto3" json:"envelope_version,omitempty"`
+	InputKind         string                 `protobuf:"bytes,2,opt,name=input_kind,json=inputKind,proto3" json:"input_kind,omitempty"`
+	ClientAccount     string                 `protobuf:"bytes,3,opt,name=client_account,json=clientAccount,proto3" json:"client_account,omitempty"`
+	StatementId       string                 `protobuf:"bytes,4,opt,name=statement_id,json=statementId,proto3" json:"statement_id,omitempty"`
+	StatementKind     uint32                 `protobuf:"varint,5,opt,name=statement_kind,json=statementKind,proto3" json:"statement_kind,omitempty"`
+	NetworkId         string                 `protobuf:"bytes,6,opt,name=network_id,json=networkId,proto3" json:"network_id,omitempty"`
+	KeeperShardId     uint32                 `protobuf:"varint,7,opt,name=keeper_shard_id,json=keeperShardId,proto3" json:"keeper_shard_id,omitempty"`
+	SqlHash           string                 `protobuf:"bytes,8,opt,name=sql_hash,json=sqlHash,proto3" json:"sql_hash,omitempty"`
+	SettingsHash      string                 `protobuf:"bytes,9,opt,name=settings_hash,json=settingsHash,proto3" json:"settings_hash,omitempty"`
+	TargetTableId     string                 `protobuf:"bytes,10,opt,name=target_table_id,json=targetTableId,proto3" json:"target_table_id,omitempty"`
+	SchemaHash        string                 `protobuf:"bytes,11,opt,name=schema_hash,json=schemaHash,proto3" json:"schema_hash,omitempty"`
+	RowIdProfileId    string                 `protobuf:"bytes,12,opt,name=row_id_profile_id,json=rowIdProfileId,proto3" json:"row_id_profile_id,omitempty"`
+	ClientRevision    uint32                 `protobuf:"varint,13,opt,name=client_revision,json=clientRevision,proto3" json:"client_revision,omitempty"`
+	ReadSnapshot      *SnapshotPin           `protobuf:"bytes,14,opt,name=read_snapshot,json=readSnapshot,proto3" json:"read_snapshot,omitempty"`
+	ReadSetRoot       string                 `protobuf:"bytes,15,opt,name=read_set_root,json=readSetRoot,proto3" json:"read_set_root,omitempty"`
+	SchemaSnapshotId  string                 `protobuf:"bytes,16,opt,name=schema_snapshot_id,json=schemaSnapshotId,proto3" json:"schema_snapshot_id,omitempty"`
+	SchemaRoot        string                 `protobuf:"bytes,17,opt,name=schema_root,json=schemaRoot,proto3" json:"schema_root,omitempty"`
+	LogicalDatabase   string                 `protobuf:"bytes,18,opt,name=logical_database,json=logicalDatabase,proto3" json:"logical_database,omitempty"`
+	QueryProfileId    string                 `protobuf:"bytes,19,opt,name=query_profile_id,json=queryProfileId,proto3" json:"query_profile_id,omitempty"`
+	ExecutorProfileId string                 `protobuf:"bytes,20,opt,name=executor_profile_id,json=executorProfileId,proto3" json:"executor_profile_id,omitempty"`
+	ReservationId     string                 `protobuf:"bytes,21,opt,name=reservation_id,json=reservationId,proto3" json:"reservation_id,omitempty"`
+	FencingGeneration uint64                 `protobuf:"varint,22,opt,name=fencing_generation,json=fencingGeneration,proto3" json:"fencing_generation,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *SnapshotQueryBinding) Reset() {
+	*x = SnapshotQueryBinding{}
+	mi := &file_replay_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotQueryBinding) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotQueryBinding) ProtoMessage() {}
+
+func (x *SnapshotQueryBinding) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotQueryBinding.ProtoReflect.Descriptor instead.
+func (*SnapshotQueryBinding) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *SnapshotQueryBinding) GetEnvelopeVersion() uint32 {
+	if x != nil {
+		return x.EnvelopeVersion
+	}
+	return 0
+}
+
+func (x *SnapshotQueryBinding) GetInputKind() string {
+	if x != nil {
+		return x.InputKind
+	}
+	return ""
+}
+
+func (x *SnapshotQueryBinding) GetClientAccount() string {
+	if x != nil {
+		return x.ClientAccount
+	}
+	return ""
+}
+
+func (x *SnapshotQueryBinding) GetStatementId() string {
+	if x != nil {
+		return x.StatementId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryBinding) GetStatementKind() uint32 {
+	if x != nil {
+		return x.StatementKind
+	}
+	return 0
+}
+
+func (x *SnapshotQueryBinding) GetNetworkId() string {
+	if x != nil {
+		return x.NetworkId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryBinding) GetKeeperShardId() uint32 {
+	if x != nil {
+		return x.KeeperShardId
+	}
+	return 0
+}
+
+func (x *SnapshotQueryBinding) GetSqlHash() string {
+	if x != nil {
+		return x.SqlHash
+	}
+	return ""
+}
+
+func (x *SnapshotQueryBinding) GetSettingsHash() string {
+	if x != nil {
+		return x.SettingsHash
+	}
+	return ""
+}
+
+func (x *SnapshotQueryBinding) GetTargetTableId() string {
+	if x != nil {
+		return x.TargetTableId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryBinding) GetSchemaHash() string {
+	if x != nil {
+		return x.SchemaHash
+	}
+	return ""
+}
+
+func (x *SnapshotQueryBinding) GetRowIdProfileId() string {
+	if x != nil {
+		return x.RowIdProfileId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryBinding) GetClientRevision() uint32 {
+	if x != nil {
+		return x.ClientRevision
+	}
+	return 0
+}
+
+func (x *SnapshotQueryBinding) GetReadSnapshot() *SnapshotPin {
+	if x != nil {
+		return x.ReadSnapshot
+	}
+	return nil
+}
+
+func (x *SnapshotQueryBinding) GetReadSetRoot() string {
+	if x != nil {
+		return x.ReadSetRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQueryBinding) GetSchemaSnapshotId() string {
+	if x != nil {
+		return x.SchemaSnapshotId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryBinding) GetSchemaRoot() string {
+	if x != nil {
+		return x.SchemaRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQueryBinding) GetLogicalDatabase() string {
+	if x != nil {
+		return x.LogicalDatabase
+	}
+	return ""
+}
+
+func (x *SnapshotQueryBinding) GetQueryProfileId() string {
+	if x != nil {
+		return x.QueryProfileId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryBinding) GetExecutorProfileId() string {
+	if x != nil {
+		return x.ExecutorProfileId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryBinding) GetReservationId() string {
+	if x != nil {
+		return x.ReservationId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryBinding) GetFencingGeneration() uint64 {
+	if x != nil {
+		return x.FencingGeneration
+	}
+	return 0
+}
+
+// SnapshotQueryInput is an append-only snapshot-query contract record.
+type SnapshotQueryInput struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Binding       *SnapshotQueryBinding  `protobuf:"bytes,1,opt,name=binding,proto3" json:"binding,omitempty"`
+	Sql           string                 `protobuf:"bytes,2,opt,name=sql,proto3" json:"sql,omitempty"`
+	ReadSet       *SnapshotReadSet       `protobuf:"bytes,3,opt,name=read_set,json=readSet,proto3" json:"read_set,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SnapshotQueryInput) Reset() {
+	*x = SnapshotQueryInput{}
+	mi := &file_replay_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotQueryInput) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotQueryInput) ProtoMessage() {}
+
+func (x *SnapshotQueryInput) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotQueryInput.ProtoReflect.Descriptor instead.
+func (*SnapshotQueryInput) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *SnapshotQueryInput) GetBinding() *SnapshotQueryBinding {
+	if x != nil {
+		return x.Binding
+	}
+	return nil
+}
+
+func (x *SnapshotQueryInput) GetSql() string {
+	if x != nil {
+		return x.Sql
+	}
+	return ""
+}
+
+func (x *SnapshotQueryInput) GetReadSet() *SnapshotReadSet {
+	if x != nil {
+		return x.ReadSet
+	}
+	return nil
+}
+
+// SnapshotQueryEnvelope is an append-only snapshot-query contract record.
+type SnapshotQueryEnvelope struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Input         *SnapshotQueryInput    `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
+	InputRoot     string                 `protobuf:"bytes,2,opt,name=input_root,json=inputRoot,proto3" json:"input_root,omitempty"`
+	UserJws       string                 `protobuf:"bytes,3,opt,name=user_jws,json=userJws,proto3" json:"user_jws,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SnapshotQueryEnvelope) Reset() {
+	*x = SnapshotQueryEnvelope{}
+	mi := &file_replay_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotQueryEnvelope) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotQueryEnvelope) ProtoMessage() {}
+
+func (x *SnapshotQueryEnvelope) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotQueryEnvelope.ProtoReflect.Descriptor instead.
+func (*SnapshotQueryEnvelope) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *SnapshotQueryEnvelope) GetInput() *SnapshotQueryInput {
+	if x != nil {
+		return x.Input
+	}
+	return nil
+}
+
+func (x *SnapshotQueryEnvelope) GetInputRoot() string {
+	if x != nil {
+		return x.InputRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQueryEnvelope) GetUserJws() string {
+	if x != nil {
+		return x.UserJws
+	}
+	return ""
+}
+
+// SnapshotQueryReservation is an append-only snapshot-query contract record.
+type SnapshotQueryReservation struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	ReservationId     string                 `protobuf:"bytes,1,opt,name=reservation_id,json=reservationId,proto3" json:"reservation_id,omitempty"`
+	FencingGeneration uint64                 `protobuf:"varint,2,opt,name=fencing_generation,json=fencingGeneration,proto3" json:"fencing_generation,omitempty"`
+	ClientAccount     string                 `protobuf:"bytes,3,opt,name=client_account,json=clientAccount,proto3" json:"client_account,omitempty"`
+	StatementId       string                 `protobuf:"bytes,4,opt,name=statement_id,json=statementId,proto3" json:"statement_id,omitempty"`
+	ReadSnapshot      *SnapshotPin           `protobuf:"bytes,5,opt,name=read_snapshot,json=readSnapshot,proto3" json:"read_snapshot,omitempty"`
+	ExecutorProfileId string                 `protobuf:"bytes,6,opt,name=executor_profile_id,json=executorProfileId,proto3" json:"executor_profile_id,omitempty"`
+	QueryProfileId    string                 `protobuf:"bytes,7,opt,name=query_profile_id,json=queryProfileId,proto3" json:"query_profile_id,omitempty"`
+	ActivationId      string                 `protobuf:"bytes,8,opt,name=activation_id,json=activationId,proto3" json:"activation_id,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *SnapshotQueryReservation) Reset() {
+	*x = SnapshotQueryReservation{}
+	mi := &file_replay_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotQueryReservation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotQueryReservation) ProtoMessage() {}
+
+func (x *SnapshotQueryReservation) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotQueryReservation.ProtoReflect.Descriptor instead.
+func (*SnapshotQueryReservation) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *SnapshotQueryReservation) GetReservationId() string {
+	if x != nil {
+		return x.ReservationId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReservation) GetFencingGeneration() uint64 {
+	if x != nil {
+		return x.FencingGeneration
+	}
+	return 0
+}
+
+func (x *SnapshotQueryReservation) GetClientAccount() string {
+	if x != nil {
+		return x.ClientAccount
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReservation) GetStatementId() string {
+	if x != nil {
+		return x.StatementId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReservation) GetReadSnapshot() *SnapshotPin {
+	if x != nil {
+		return x.ReadSnapshot
+	}
+	return nil
+}
+
+func (x *SnapshotQueryReservation) GetExecutorProfileId() string {
+	if x != nil {
+		return x.ExecutorProfileId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReservation) GetQueryProfileId() string {
+	if x != nil {
+		return x.QueryProfileId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReservation) GetActivationId() string {
+	if x != nil {
+		return x.ActivationId
+	}
+	return ""
+}
+
+// Version 1 authenticates negative lookups and draining/granted/consumed/released states.
+// Reservation is absent before grant; released request tombstones survive restart.
+// terminal_proof is control evidence, never part of the signed user-input root.
+type SnapshotQueryReservationStatus struct {
+	state             protoimpl.MessageState    `protogen:"open.v1"`
+	Version           uint32                    `protobuf:"varint,1,opt,name=version,proto3" json:"version,omitempty"`
+	Found             bool                      `protobuf:"varint,2,opt,name=found,proto3" json:"found,omitempty"`
+	State             string                    `protobuf:"bytes,3,opt,name=state,proto3" json:"state,omitempty"`
+	RequestId         string                    `protobuf:"bytes,4,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	ClientAccount     string                    `protobuf:"bytes,5,opt,name=client_account,json=clientAccount,proto3" json:"client_account,omitempty"`
+	StatementId       string                    `protobuf:"bytes,6,opt,name=statement_id,json=statementId,proto3" json:"statement_id,omitempty"`
+	FencingGeneration uint64                    `protobuf:"varint,7,opt,name=fencing_generation,json=fencingGeneration,proto3" json:"fencing_generation,omitempty"`
+	Reservation       *SnapshotQueryReservation `protobuf:"bytes,8,opt,name=reservation,proto3" json:"reservation,omitempty"`
+	BlockSeq          uint64                    `protobuf:"varint,9,opt,name=block_seq,json=blockSeq,proto3" json:"block_seq,omitempty"`
+	TerminalProof     []byte                    `protobuf:"bytes,10,opt,name=terminal_proof,json=terminalProof,proto3" json:"terminal_proof,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *SnapshotQueryReservationStatus) Reset() {
+	*x = SnapshotQueryReservationStatus{}
+	mi := &file_replay_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotQueryReservationStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotQueryReservationStatus) ProtoMessage() {}
+
+func (x *SnapshotQueryReservationStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotQueryReservationStatus.ProtoReflect.Descriptor instead.
+func (*SnapshotQueryReservationStatus) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *SnapshotQueryReservationStatus) GetVersion() uint32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *SnapshotQueryReservationStatus) GetFound() bool {
+	if x != nil {
+		return x.Found
+	}
+	return false
+}
+
+func (x *SnapshotQueryReservationStatus) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReservationStatus) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReservationStatus) GetClientAccount() string {
+	if x != nil {
+		return x.ClientAccount
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReservationStatus) GetStatementId() string {
+	if x != nil {
+		return x.StatementId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReservationStatus) GetFencingGeneration() uint64 {
+	if x != nil {
+		return x.FencingGeneration
+	}
+	return 0
+}
+
+func (x *SnapshotQueryReservationStatus) GetReservation() *SnapshotQueryReservation {
+	if x != nil {
+		return x.Reservation
+	}
+	return nil
+}
+
+func (x *SnapshotQueryReservationStatus) GetBlockSeq() uint64 {
+	if x != nil {
+		return x.BlockSeq
+	}
+	return 0
+}
+
+func (x *SnapshotQueryReservationStatus) GetTerminalProof() []byte {
+	if x != nil {
+		return x.TerminalProof
+	}
+	return nil
+}
+
+// SnapshotQueryStatement is an append-only snapshot-query contract record.
+type SnapshotQueryStatement struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StatementSeq  uint64                 `protobuf:"varint,1,opt,name=statement_seq,json=statementSeq,proto3" json:"statement_seq,omitempty"`
+	Envelope      *SnapshotQueryEnvelope `protobuf:"bytes,2,opt,name=envelope,proto3" json:"envelope,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SnapshotQueryStatement) Reset() {
+	*x = SnapshotQueryStatement{}
+	mi := &file_replay_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotQueryStatement) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotQueryStatement) ProtoMessage() {}
+
+func (x *SnapshotQueryStatement) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotQueryStatement.ProtoReflect.Descriptor instead.
+func (*SnapshotQueryStatement) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *SnapshotQueryStatement) GetStatementSeq() uint64 {
+	if x != nil {
+		return x.StatementSeq
+	}
+	return 0
+}
+
+func (x *SnapshotQueryStatement) GetEnvelope() *SnapshotQueryEnvelope {
+	if x != nil {
+		return x.Envelope
+	}
+	return nil
+}
+
+// Verifier dispatch requires a complete committed source_claim and its digest.
+// In-process source preparation may omit source_claim before the claim is committed.
+type SnapshotQueryJob struct {
+	state              protoimpl.MessageState    `protogen:"open.v1"`
+	BlockSeq           uint64                    `protobuf:"varint,1,opt,name=block_seq,json=blockSeq,proto3" json:"block_seq,omitempty"`
+	PrevSafeSnapshotId string                    `protobuf:"bytes,2,opt,name=prev_safe_snapshot_id,json=prevSafeSnapshotId,proto3" json:"prev_safe_snapshot_id,omitempty"`
+	PrevStateRoot      string                    `protobuf:"bytes,3,opt,name=prev_state_root,json=prevStateRoot,proto3" json:"prev_state_root,omitempty"`
+	SchemaSnapshotId   string                    `protobuf:"bytes,4,opt,name=schema_snapshot_id,json=schemaSnapshotId,proto3" json:"schema_snapshot_id,omitempty"`
+	ExecutorProfileId  string                    `protobuf:"bytes,5,opt,name=executor_profile_id,json=executorProfileId,proto3" json:"executor_profile_id,omitempty"`
+	QueryProfileId     string                    `protobuf:"bytes,6,opt,name=query_profile_id,json=queryProfileId,proto3" json:"query_profile_id,omitempty"`
+	Reservation        *SnapshotQueryReservation `protobuf:"bytes,7,opt,name=reservation,proto3" json:"reservation,omitempty"`
+	Statement          *SnapshotQueryStatement   `protobuf:"bytes,8,opt,name=statement,proto3" json:"statement,omitempty"`
+	SourceClaimRoot    string                    `protobuf:"bytes,9,opt,name=source_claim_root,json=sourceClaimRoot,proto3" json:"source_claim_root,omitempty"`
+	SourceClaim        *SnapshotQueryClaim       `protobuf:"bytes,10,opt,name=source_claim,json=sourceClaim,proto3" json:"source_claim,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *SnapshotQueryJob) Reset() {
+	*x = SnapshotQueryJob{}
+	mi := &file_replay_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotQueryJob) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotQueryJob) ProtoMessage() {}
+
+func (x *SnapshotQueryJob) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotQueryJob.ProtoReflect.Descriptor instead.
+func (*SnapshotQueryJob) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *SnapshotQueryJob) GetBlockSeq() uint64 {
+	if x != nil {
+		return x.BlockSeq
+	}
+	return 0
+}
+
+func (x *SnapshotQueryJob) GetPrevSafeSnapshotId() string {
+	if x != nil {
+		return x.PrevSafeSnapshotId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryJob) GetPrevStateRoot() string {
+	if x != nil {
+		return x.PrevStateRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQueryJob) GetSchemaSnapshotId() string {
+	if x != nil {
+		return x.SchemaSnapshotId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryJob) GetExecutorProfileId() string {
+	if x != nil {
+		return x.ExecutorProfileId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryJob) GetQueryProfileId() string {
+	if x != nil {
+		return x.QueryProfileId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryJob) GetReservation() *SnapshotQueryReservation {
+	if x != nil {
+		return x.Reservation
+	}
+	return nil
+}
+
+func (x *SnapshotQueryJob) GetStatement() *SnapshotQueryStatement {
+	if x != nil {
+		return x.Statement
+	}
+	return nil
+}
+
+func (x *SnapshotQueryJob) GetSourceClaimRoot() string {
+	if x != nil {
+		return x.SourceClaimRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQueryJob) GetSourceClaim() *SnapshotQueryClaim {
+	if x != nil {
+		return x.SourceClaim
+	}
+	return nil
+}
+
+// SnapshotQueryEvidence is an append-only snapshot-query contract record.
+type SnapshotQueryEvidence struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	ExecutionOutcome string                 `protobuf:"bytes,1,opt,name=execution_outcome,json=executionOutcome,proto3" json:"execution_outcome,omitempty"`
+	OutputRowCount   uint64                 `protobuf:"varint,2,opt,name=output_row_count,json=outputRowCount,proto3" json:"output_row_count,omitempty"`
+	OutputRowsRoot   string                 `protobuf:"bytes,3,opt,name=output_rows_root,json=outputRowsRoot,proto3" json:"output_rows_root,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *SnapshotQueryEvidence) Reset() {
+	*x = SnapshotQueryEvidence{}
+	mi := &file_replay_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotQueryEvidence) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotQueryEvidence) ProtoMessage() {}
+
+func (x *SnapshotQueryEvidence) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotQueryEvidence.ProtoReflect.Descriptor instead.
+func (*SnapshotQueryEvidence) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *SnapshotQueryEvidence) GetExecutionOutcome() string {
+	if x != nil {
+		return x.ExecutionOutcome
+	}
+	return ""
+}
+
+func (x *SnapshotQueryEvidence) GetOutputRowCount() uint64 {
+	if x != nil {
+		return x.OutputRowCount
+	}
+	return 0
+}
+
+func (x *SnapshotQueryEvidence) GetOutputRowsRoot() string {
+	if x != nil {
+		return x.OutputRowsRoot
+	}
+	return ""
+}
+
+// Hashing uses a canonical affected_parts projection without storage_refs.
+// The transport retains the existing PartManifestEntry storage hints.
+type SnapshotQueryReceipt struct {
+	state                     protoimpl.MessageState `protogen:"open.v1"`
+	BlockSeq                  uint64                 `protobuf:"varint,1,opt,name=block_seq,json=blockSeq,proto3" json:"block_seq,omitempty"`
+	StatementRoot             string                 `protobuf:"bytes,2,opt,name=statement_root,json=statementRoot,proto3" json:"statement_root,omitempty"`
+	InputRoot                 string                 `protobuf:"bytes,3,opt,name=input_root,json=inputRoot,proto3" json:"input_root,omitempty"`
+	ReadSetRoot               string                 `protobuf:"bytes,4,opt,name=read_set_root,json=readSetRoot,proto3" json:"read_set_root,omitempty"`
+	ReadSnapshot              *SnapshotPin           `protobuf:"bytes,5,opt,name=read_snapshot,json=readSnapshot,proto3" json:"read_snapshot,omitempty"`
+	SchemaSnapshotId          string                 `protobuf:"bytes,6,opt,name=schema_snapshot_id,json=schemaSnapshotId,proto3" json:"schema_snapshot_id,omitempty"`
+	ExecutorProfileId         string                 `protobuf:"bytes,7,opt,name=executor_profile_id,json=executorProfileId,proto3" json:"executor_profile_id,omitempty"`
+	QueryProfileId            string                 `protobuf:"bytes,8,opt,name=query_profile_id,json=queryProfileId,proto3" json:"query_profile_id,omitempty"`
+	ReservationId             string                 `protobuf:"bytes,9,opt,name=reservation_id,json=reservationId,proto3" json:"reservation_id,omitempty"`
+	FencingGeneration         uint64                 `protobuf:"varint,10,opt,name=fencing_generation,json=fencingGeneration,proto3" json:"fencing_generation,omitempty"`
+	ExecutionOutcome          string                 `protobuf:"bytes,11,opt,name=execution_outcome,json=executionOutcome,proto3" json:"execution_outcome,omitempty"`
+	AbortRecordRoot           string                 `protobuf:"bytes,12,opt,name=abort_record_root,json=abortRecordRoot,proto3" json:"abort_record_root,omitempty"`
+	OutputRowCount            uint64                 `protobuf:"varint,13,opt,name=output_row_count,json=outputRowCount,proto3" json:"output_row_count,omitempty"`
+	OutputRowsRoot            string                 `protobuf:"bytes,14,opt,name=output_rows_root,json=outputRowsRoot,proto3" json:"output_rows_root,omitempty"`
+	SourceClaimRoot           string                 `protobuf:"bytes,15,opt,name=source_claim_root,json=sourceClaimRoot,proto3" json:"source_claim_root,omitempty"`
+	ComputedStateRoot         string                 `protobuf:"bytes,16,opt,name=computed_state_root,json=computedStateRoot,proto3" json:"computed_state_root,omitempty"`
+	MatchSourceRoot           bool                   `protobuf:"varint,17,opt,name=match_source_root,json=matchSourceRoot,proto3" json:"match_source_root,omitempty"`
+	PartitionCommitmentsAfter []*PartitionCommitment `protobuf:"bytes,18,rep,name=partition_commitments_after,json=partitionCommitmentsAfter,proto3" json:"partition_commitments_after,omitempty"`
+	AffectedParts             []*PartManifestEntry   `protobuf:"bytes,19,rep,name=affected_parts,json=affectedParts,proto3" json:"affected_parts,omitempty"`
+	ReplayLogHash             string                 `protobuf:"bytes,20,opt,name=replay_log_hash,json=replayLogHash,proto3" json:"replay_log_hash,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *SnapshotQueryReceipt) Reset() {
+	*x = SnapshotQueryReceipt{}
+	mi := &file_replay_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotQueryReceipt) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotQueryReceipt) ProtoMessage() {}
+
+func (x *SnapshotQueryReceipt) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotQueryReceipt.ProtoReflect.Descriptor instead.
+func (*SnapshotQueryReceipt) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *SnapshotQueryReceipt) GetBlockSeq() uint64 {
+	if x != nil {
+		return x.BlockSeq
+	}
+	return 0
+}
+
+func (x *SnapshotQueryReceipt) GetStatementRoot() string {
+	if x != nil {
+		return x.StatementRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReceipt) GetInputRoot() string {
+	if x != nil {
+		return x.InputRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReceipt) GetReadSetRoot() string {
+	if x != nil {
+		return x.ReadSetRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReceipt) GetReadSnapshot() *SnapshotPin {
+	if x != nil {
+		return x.ReadSnapshot
+	}
+	return nil
+}
+
+func (x *SnapshotQueryReceipt) GetSchemaSnapshotId() string {
+	if x != nil {
+		return x.SchemaSnapshotId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReceipt) GetExecutorProfileId() string {
+	if x != nil {
+		return x.ExecutorProfileId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReceipt) GetQueryProfileId() string {
+	if x != nil {
+		return x.QueryProfileId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReceipt) GetReservationId() string {
+	if x != nil {
+		return x.ReservationId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReceipt) GetFencingGeneration() uint64 {
+	if x != nil {
+		return x.FencingGeneration
+	}
+	return 0
+}
+
+func (x *SnapshotQueryReceipt) GetExecutionOutcome() string {
+	if x != nil {
+		return x.ExecutionOutcome
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReceipt) GetAbortRecordRoot() string {
+	if x != nil {
+		return x.AbortRecordRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReceipt) GetOutputRowCount() uint64 {
+	if x != nil {
+		return x.OutputRowCount
+	}
+	return 0
+}
+
+func (x *SnapshotQueryReceipt) GetOutputRowsRoot() string {
+	if x != nil {
+		return x.OutputRowsRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReceipt) GetSourceClaimRoot() string {
+	if x != nil {
+		return x.SourceClaimRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReceipt) GetComputedStateRoot() string {
+	if x != nil {
+		return x.ComputedStateRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQueryReceipt) GetMatchSourceRoot() bool {
+	if x != nil {
+		return x.MatchSourceRoot
+	}
+	return false
+}
+
+func (x *SnapshotQueryReceipt) GetPartitionCommitmentsAfter() []*PartitionCommitment {
+	if x != nil {
+		return x.PartitionCommitmentsAfter
+	}
+	return nil
+}
+
+func (x *SnapshotQueryReceipt) GetAffectedParts() []*PartManifestEntry {
+	if x != nil {
+		return x.AffectedParts
+	}
+	return nil
+}
+
+func (x *SnapshotQueryReceipt) GetReplayLogHash() string {
+	if x != nil {
+		return x.ReplayLogHash
+	}
+	return ""
+}
+
+// SnapshotQueryAttestation is an append-only snapshot-query contract record.
+type SnapshotQueryAttestation struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ReplicaId     string                 `protobuf:"bytes,1,opt,name=replica_id,json=replicaId,proto3" json:"replica_id,omitempty"`
+	Receipt       *SnapshotQueryReceipt  `protobuf:"bytes,2,opt,name=receipt,proto3" json:"receipt,omitempty"`
+	ReceiptHash   string                 `protobuf:"bytes,3,opt,name=receipt_hash,json=receiptHash,proto3" json:"receipt_hash,omitempty"`
+	Signature     string                 `protobuf:"bytes,4,opt,name=signature,proto3" json:"signature,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SnapshotQueryAttestation) Reset() {
+	*x = SnapshotQueryAttestation{}
+	mi := &file_replay_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotQueryAttestation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotQueryAttestation) ProtoMessage() {}
+
+func (x *SnapshotQueryAttestation) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotQueryAttestation.ProtoReflect.Descriptor instead.
+func (*SnapshotQueryAttestation) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *SnapshotQueryAttestation) GetReplicaId() string {
+	if x != nil {
+		return x.ReplicaId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryAttestation) GetReceipt() *SnapshotQueryReceipt {
+	if x != nil {
+		return x.Receipt
+	}
+	return nil
+}
+
+func (x *SnapshotQueryAttestation) GetReceiptHash() string {
+	if x != nil {
+		return x.ReceiptHash
+	}
+	return ""
+}
+
+func (x *SnapshotQueryAttestation) GetSignature() string {
+	if x != nil {
+		return x.Signature
+	}
+	return ""
+}
+
+// SnapshotQuerySubmitResult is an append-only snapshot-query contract record.
+type SnapshotQuerySubmitResult struct {
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	AdmissionCode uint32                    `protobuf:"varint,1,opt,name=admission_code,json=admissionCode,proto3" json:"admission_code,omitempty"`
+	Message       string                    `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	StatementSeq  uint64                    `protobuf:"varint,3,opt,name=statement_seq,json=statementSeq,proto3" json:"statement_seq,omitempty"`
+	BlockSeq      uint64                    `protobuf:"varint,4,opt,name=block_seq,json=blockSeq,proto3" json:"block_seq,omitempty"`
+	SourceNode    string                    `protobuf:"bytes,5,opt,name=source_node,json=sourceNode,proto3" json:"source_node,omitempty"`
+	InputRoot     string                    `protobuf:"bytes,6,opt,name=input_root,json=inputRoot,proto3" json:"input_root,omitempty"`
+	Reservation   *SnapshotQueryReservation `protobuf:"bytes,7,opt,name=reservation,proto3" json:"reservation,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SnapshotQuerySubmitResult) Reset() {
+	*x = SnapshotQuerySubmitResult{}
+	mi := &file_replay_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotQuerySubmitResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotQuerySubmitResult) ProtoMessage() {}
+
+func (x *SnapshotQuerySubmitResult) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotQuerySubmitResult.ProtoReflect.Descriptor instead.
+func (*SnapshotQuerySubmitResult) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *SnapshotQuerySubmitResult) GetAdmissionCode() uint32 {
+	if x != nil {
+		return x.AdmissionCode
+	}
+	return 0
+}
+
+func (x *SnapshotQuerySubmitResult) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *SnapshotQuerySubmitResult) GetStatementSeq() uint64 {
+	if x != nil {
+		return x.StatementSeq
+	}
+	return 0
+}
+
+func (x *SnapshotQuerySubmitResult) GetBlockSeq() uint64 {
+	if x != nil {
+		return x.BlockSeq
+	}
+	return 0
+}
+
+func (x *SnapshotQuerySubmitResult) GetSourceNode() string {
+	if x != nil {
+		return x.SourceNode
+	}
+	return ""
+}
+
+func (x *SnapshotQuerySubmitResult) GetInputRoot() string {
+	if x != nil {
+		return x.InputRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQuerySubmitResult) GetReservation() *SnapshotQueryReservation {
+	if x != nil {
+		return x.Reservation
+	}
+	return nil
+}
+
+// Version 1 uses found=false for an authenticated negative lookup.
+// A zero accepted result is not a negative lookup; terminal_proof is not user input.
+type SnapshotQueryStatus struct {
+	state            protoimpl.MessageState     `protogen:"open.v1"`
+	Version          uint32                     `protobuf:"varint,1,opt,name=version,proto3" json:"version,omitempty"`
+	Found            bool                       `protobuf:"varint,2,opt,name=found,proto3" json:"found,omitempty"`
+	Accepted         *SnapshotQuerySubmitResult `protobuf:"bytes,3,opt,name=accepted,proto3" json:"accepted,omitempty"`
+	Lifecycle        string                     `protobuf:"bytes,4,opt,name=lifecycle,proto3" json:"lifecycle,omitempty"`
+	ExecutionOutcome string                     `protobuf:"bytes,5,opt,name=execution_outcome,json=executionOutcome,proto3" json:"execution_outcome,omitempty"`
+	TerminalProof    []byte                     `protobuf:"bytes,6,opt,name=terminal_proof,json=terminalProof,proto3" json:"terminal_proof,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *SnapshotQueryStatus) Reset() {
+	*x = SnapshotQueryStatus{}
+	mi := &file_replay_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotQueryStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotQueryStatus) ProtoMessage() {}
+
+func (x *SnapshotQueryStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotQueryStatus.ProtoReflect.Descriptor instead.
+func (*SnapshotQueryStatus) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *SnapshotQueryStatus) GetVersion() uint32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *SnapshotQueryStatus) GetFound() bool {
+	if x != nil {
+		return x.Found
+	}
+	return false
+}
+
+func (x *SnapshotQueryStatus) GetAccepted() *SnapshotQuerySubmitResult {
+	if x != nil {
+		return x.Accepted
+	}
+	return nil
+}
+
+func (x *SnapshotQueryStatus) GetLifecycle() string {
+	if x != nil {
+		return x.Lifecycle
+	}
+	return ""
+}
+
+func (x *SnapshotQueryStatus) GetExecutionOutcome() string {
+	if x != nil {
+		return x.ExecutionOutcome
+	}
+	return ""
+}
+
+func (x *SnapshotQueryStatus) GetTerminalProof() []byte {
+	if x != nil {
+		return x.TerminalProof
+	}
+	return nil
+}
+
+// ActiveQueryPolicy is an append-only snapshot-query contract record.
+type ActiveQueryPolicy struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	ActivationId       string                 `protobuf:"bytes,1,opt,name=activation_id,json=activationId,proto3" json:"activation_id,omitempty"`
+	NetworkId          string                 `protobuf:"bytes,2,opt,name=network_id,json=networkId,proto3" json:"network_id,omitempty"`
+	KeeperShardId      uint32                 `protobuf:"varint,3,opt,name=keeper_shard_id,json=keeperShardId,proto3" json:"keeper_shard_id,omitempty"`
+	ActivationBlockSeq uint64                 `protobuf:"varint,4,opt,name=activation_block_seq,json=activationBlockSeq,proto3" json:"activation_block_seq,omitempty"`
+	ExecutorProfileId  string                 `protobuf:"bytes,5,opt,name=executor_profile_id,json=executorProfileId,proto3" json:"executor_profile_id,omitempty"`
+	QueryProfileId     string                 `protobuf:"bytes,6,opt,name=query_profile_id,json=queryProfileId,proto3" json:"query_profile_id,omitempty"`
+	Enabled            bool                   `protobuf:"varint,7,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *ActiveQueryPolicy) Reset() {
+	*x = ActiveQueryPolicy{}
+	mi := &file_replay_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ActiveQueryPolicy) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ActiveQueryPolicy) ProtoMessage() {}
+
+func (x *ActiveQueryPolicy) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ActiveQueryPolicy.ProtoReflect.Descriptor instead.
+func (*ActiveQueryPolicy) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *ActiveQueryPolicy) GetActivationId() string {
+	if x != nil {
+		return x.ActivationId
+	}
+	return ""
+}
+
+func (x *ActiveQueryPolicy) GetNetworkId() string {
+	if x != nil {
+		return x.NetworkId
+	}
+	return ""
+}
+
+func (x *ActiveQueryPolicy) GetKeeperShardId() uint32 {
+	if x != nil {
+		return x.KeeperShardId
+	}
+	return 0
+}
+
+func (x *ActiveQueryPolicy) GetActivationBlockSeq() uint64 {
+	if x != nil {
+		return x.ActivationBlockSeq
+	}
+	return 0
+}
+
+func (x *ActiveQueryPolicy) GetExecutorProfileId() string {
+	if x != nil {
+		return x.ExecutorProfileId
+	}
+	return ""
+}
+
+func (x *ActiveQueryPolicy) GetQueryProfileId() string {
+	if x != nil {
+		return x.QueryProfileId
+	}
+	return ""
+}
+
+func (x *ActiveQueryPolicy) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+// ExecutorProfileTransition is an append-only snapshot-query contract record.
+type ExecutorProfileTransition struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	NetworkId            string                 `protobuf:"bytes,1,opt,name=network_id,json=networkId,proto3" json:"network_id,omitempty"`
+	KeeperShardId        uint32                 `protobuf:"varint,2,opt,name=keeper_shard_id,json=keeperShardId,proto3" json:"keeper_shard_id,omitempty"`
+	PrevSnapshotId       string                 `protobuf:"bytes,3,opt,name=prev_snapshot_id,json=prevSnapshotId,proto3" json:"prev_snapshot_id,omitempty"`
+	PrevStateRoot        string                 `protobuf:"bytes,4,opt,name=prev_state_root,json=prevStateRoot,proto3" json:"prev_state_root,omitempty"`
+	OldExecutorProfileId string                 `protobuf:"bytes,5,opt,name=old_executor_profile_id,json=oldExecutorProfileId,proto3" json:"old_executor_profile_id,omitempty"`
+	NewExecutorProfileId string                 `protobuf:"bytes,6,opt,name=new_executor_profile_id,json=newExecutorProfileId,proto3" json:"new_executor_profile_id,omitempty"`
+	SchemaSnapshotId     string                 `protobuf:"bytes,7,opt,name=schema_snapshot_id,json=schemaSnapshotId,proto3" json:"schema_snapshot_id,omitempty"`
+	SchemaRoot           string                 `protobuf:"bytes,8,opt,name=schema_root,json=schemaRoot,proto3" json:"schema_root,omitempty"`
+	DataRoot             string                 `protobuf:"bytes,9,opt,name=data_root,json=dataRoot,proto3" json:"data_root,omitempty"`
+	NextSnapshotId       string                 `protobuf:"bytes,10,opt,name=next_snapshot_id,json=nextSnapshotId,proto3" json:"next_snapshot_id,omitempty"`
+	NextStateRoot        string                 `protobuf:"bytes,11,opt,name=next_state_root,json=nextStateRoot,proto3" json:"next_state_root,omitempty"`
+	NextManifestRoot     string                 `protobuf:"bytes,12,opt,name=next_manifest_root,json=nextManifestRoot,proto3" json:"next_manifest_root,omitempty"`
+	Activation           *ActiveQueryPolicy     `protobuf:"bytes,13,opt,name=activation,proto3" json:"activation,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *ExecutorProfileTransition) Reset() {
+	*x = ExecutorProfileTransition{}
+	mi := &file_replay_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExecutorProfileTransition) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExecutorProfileTransition) ProtoMessage() {}
+
+func (x *ExecutorProfileTransition) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExecutorProfileTransition.ProtoReflect.Descriptor instead.
+func (*ExecutorProfileTransition) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ExecutorProfileTransition) GetNetworkId() string {
+	if x != nil {
+		return x.NetworkId
+	}
+	return ""
+}
+
+func (x *ExecutorProfileTransition) GetKeeperShardId() uint32 {
+	if x != nil {
+		return x.KeeperShardId
+	}
+	return 0
+}
+
+func (x *ExecutorProfileTransition) GetPrevSnapshotId() string {
+	if x != nil {
+		return x.PrevSnapshotId
+	}
+	return ""
+}
+
+func (x *ExecutorProfileTransition) GetPrevStateRoot() string {
+	if x != nil {
+		return x.PrevStateRoot
+	}
+	return ""
+}
+
+func (x *ExecutorProfileTransition) GetOldExecutorProfileId() string {
+	if x != nil {
+		return x.OldExecutorProfileId
+	}
+	return ""
+}
+
+func (x *ExecutorProfileTransition) GetNewExecutorProfileId() string {
+	if x != nil {
+		return x.NewExecutorProfileId
+	}
+	return ""
+}
+
+func (x *ExecutorProfileTransition) GetSchemaSnapshotId() string {
+	if x != nil {
+		return x.SchemaSnapshotId
+	}
+	return ""
+}
+
+func (x *ExecutorProfileTransition) GetSchemaRoot() string {
+	if x != nil {
+		return x.SchemaRoot
+	}
+	return ""
+}
+
+func (x *ExecutorProfileTransition) GetDataRoot() string {
+	if x != nil {
+		return x.DataRoot
+	}
+	return ""
+}
+
+func (x *ExecutorProfileTransition) GetNextSnapshotId() string {
+	if x != nil {
+		return x.NextSnapshotId
+	}
+	return ""
+}
+
+func (x *ExecutorProfileTransition) GetNextStateRoot() string {
+	if x != nil {
+		return x.NextStateRoot
+	}
+	return ""
+}
+
+func (x *ExecutorProfileTransition) GetNextManifestRoot() string {
+	if x != nil {
+		return x.NextManifestRoot
+	}
+	return ""
+}
+
+func (x *ExecutorProfileTransition) GetActivation() *ActiveQueryPolicy {
+	if x != nil {
+		return x.Activation
+	}
+	return nil
+}
+
+// ExecutorProfileTransitionReceipt is an append-only snapshot-query contract record.
+type ExecutorProfileTransitionReceipt struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	TransitionRoot string                 `protobuf:"bytes,1,opt,name=transition_root,json=transitionRoot,proto3" json:"transition_root,omitempty"`
+	ReplicaId      string                 `protobuf:"bytes,2,opt,name=replica_id,json=replicaId,proto3" json:"replica_id,omitempty"`
+	Signature      string                 `protobuf:"bytes,3,opt,name=signature,proto3" json:"signature,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ExecutorProfileTransitionReceipt) Reset() {
+	*x = ExecutorProfileTransitionReceipt{}
+	mi := &file_replay_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExecutorProfileTransitionReceipt) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExecutorProfileTransitionReceipt) ProtoMessage() {}
+
+func (x *ExecutorProfileTransitionReceipt) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExecutorProfileTransitionReceipt.ProtoReflect.Descriptor instead.
+func (*ExecutorProfileTransitionReceipt) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ExecutorProfileTransitionReceipt) GetTransitionRoot() string {
+	if x != nil {
+		return x.TransitionRoot
+	}
+	return ""
+}
+
+func (x *ExecutorProfileTransitionReceipt) GetReplicaId() string {
+	if x != nil {
+		return x.ReplicaId
+	}
+	return ""
+}
+
+func (x *ExecutorProfileTransitionReceipt) GetSignature() string {
+	if x != nil {
+		return x.Signature
+	}
+	return ""
+}
+
+// SnapshotArtifactReady is an append-only snapshot-query contract record.
+type SnapshotArtifactReady struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	SnapshotId        string                 `protobuf:"bytes,1,opt,name=snapshot_id,json=snapshotId,proto3" json:"snapshot_id,omitempty"`
+	ManifestRoot      string                 `protobuf:"bytes,2,opt,name=manifest_root,json=manifestRoot,proto3" json:"manifest_root,omitempty"`
+	SchemaRoot        string                 `protobuf:"bytes,3,opt,name=schema_root,json=schemaRoot,proto3" json:"schema_root,omitempty"`
+	ArtifactSetRoot   string                 `protobuf:"bytes,4,opt,name=artifact_set_root,json=artifactSetRoot,proto3" json:"artifact_set_root,omitempty"`
+	PublisherId       string                 `protobuf:"bytes,5,opt,name=publisher_id,json=publisherId,proto3" json:"publisher_id,omitempty"`
+	RetentionPolicyId string                 `protobuf:"bytes,6,opt,name=retention_policy_id,json=retentionPolicyId,proto3" json:"retention_policy_id,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *SnapshotArtifactReady) Reset() {
+	*x = SnapshotArtifactReady{}
+	mi := &file_replay_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotArtifactReady) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotArtifactReady) ProtoMessage() {}
+
+func (x *SnapshotArtifactReady) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotArtifactReady.ProtoReflect.Descriptor instead.
+func (*SnapshotArtifactReady) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *SnapshotArtifactReady) GetSnapshotId() string {
+	if x != nil {
+		return x.SnapshotId
+	}
+	return ""
+}
+
+func (x *SnapshotArtifactReady) GetManifestRoot() string {
+	if x != nil {
+		return x.ManifestRoot
+	}
+	return ""
+}
+
+func (x *SnapshotArtifactReady) GetSchemaRoot() string {
+	if x != nil {
+		return x.SchemaRoot
+	}
+	return ""
+}
+
+func (x *SnapshotArtifactReady) GetArtifactSetRoot() string {
+	if x != nil {
+		return x.ArtifactSetRoot
+	}
+	return ""
+}
+
+func (x *SnapshotArtifactReady) GetPublisherId() string {
+	if x != nil {
+		return x.PublisherId
+	}
+	return ""
+}
+
+func (x *SnapshotArtifactReady) GetRetentionPolicyId() string {
+	if x != nil {
+		return x.RetentionPolicyId
+	}
+	return ""
+}
+
+// SnapshotQueryAbortRecord is an append-only snapshot-query contract record.
+type SnapshotQueryAbortRecord struct {
+	state                    protoimpl.MessageState `protogen:"open.v1"`
+	BlockSeq                 uint64                 `protobuf:"varint,1,opt,name=block_seq,json=blockSeq,proto3" json:"block_seq,omitempty"`
+	StatementId              string                 `protobuf:"bytes,2,opt,name=statement_id,json=statementId,proto3" json:"statement_id,omitempty"`
+	InputRoot                string                 `protobuf:"bytes,3,opt,name=input_root,json=inputRoot,proto3" json:"input_root,omitempty"`
+	ReservationId            string                 `protobuf:"bytes,4,opt,name=reservation_id,json=reservationId,proto3" json:"reservation_id,omitempty"`
+	FencingGeneration        uint64                 `protobuf:"varint,5,opt,name=fencing_generation,json=fencingGeneration,proto3" json:"fencing_generation,omitempty"`
+	ReasonCode               string                 `protobuf:"bytes,6,opt,name=reason_code,json=reasonCode,proto3" json:"reason_code,omitempty"`
+	CleanupAuthorizationRoot string                 `protobuf:"bytes,7,opt,name=cleanup_authorization_root,json=cleanupAuthorizationRoot,proto3" json:"cleanup_authorization_root,omitempty"`
+	PrevSnapshotId           string                 `protobuf:"bytes,8,opt,name=prev_snapshot_id,json=prevSnapshotId,proto3" json:"prev_snapshot_id,omitempty"`
+	NextSnapshotId           string                 `protobuf:"bytes,9,opt,name=next_snapshot_id,json=nextSnapshotId,proto3" json:"next_snapshot_id,omitempty"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
+}
+
+func (x *SnapshotQueryAbortRecord) Reset() {
+	*x = SnapshotQueryAbortRecord{}
+	mi := &file_replay_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotQueryAbortRecord) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotQueryAbortRecord) ProtoMessage() {}
+
+func (x *SnapshotQueryAbortRecord) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotQueryAbortRecord.ProtoReflect.Descriptor instead.
+func (*SnapshotQueryAbortRecord) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *SnapshotQueryAbortRecord) GetBlockSeq() uint64 {
+	if x != nil {
+		return x.BlockSeq
+	}
+	return 0
+}
+
+func (x *SnapshotQueryAbortRecord) GetStatementId() string {
+	if x != nil {
+		return x.StatementId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryAbortRecord) GetInputRoot() string {
+	if x != nil {
+		return x.InputRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQueryAbortRecord) GetReservationId() string {
+	if x != nil {
+		return x.ReservationId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryAbortRecord) GetFencingGeneration() uint64 {
+	if x != nil {
+		return x.FencingGeneration
+	}
+	return 0
+}
+
+func (x *SnapshotQueryAbortRecord) GetReasonCode() string {
+	if x != nil {
+		return x.ReasonCode
+	}
+	return ""
+}
+
+func (x *SnapshotQueryAbortRecord) GetCleanupAuthorizationRoot() string {
+	if x != nil {
+		return x.CleanupAuthorizationRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQueryAbortRecord) GetPrevSnapshotId() string {
+	if x != nil {
+		return x.PrevSnapshotId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryAbortRecord) GetNextSnapshotId() string {
+	if x != nil {
+		return x.NextSnapshotId
+	}
+	return ""
+}
+
+// The claim digest binds all fields; it is not the computed_state_root.
+// partition_deltas holds new-part sums; partition_commitments_after holds full roots.
+type SnapshotQueryClaim struct {
+	state                     protoimpl.MessageState `protogen:"open.v1"`
+	SourceNode                string                 `protobuf:"bytes,1,opt,name=source_node,json=sourceNode,proto3" json:"source_node,omitempty"`
+	StatementId               string                 `protobuf:"bytes,2,opt,name=statement_id,json=statementId,proto3" json:"statement_id,omitempty"`
+	StatementSeq              uint64                 `protobuf:"varint,3,opt,name=statement_seq,json=statementSeq,proto3" json:"statement_seq,omitempty"`
+	BlockSeq                  uint64                 `protobuf:"varint,4,opt,name=block_seq,json=blockSeq,proto3" json:"block_seq,omitempty"`
+	InputRoot                 string                 `protobuf:"bytes,5,opt,name=input_root,json=inputRoot,proto3" json:"input_root,omitempty"`
+	ReservationId             string                 `protobuf:"bytes,6,opt,name=reservation_id,json=reservationId,proto3" json:"reservation_id,omitempty"`
+	FencingGeneration         uint64                 `protobuf:"varint,7,opt,name=fencing_generation,json=fencingGeneration,proto3" json:"fencing_generation,omitempty"`
+	ExecutionOutcome          string                 `protobuf:"bytes,8,opt,name=execution_outcome,json=executionOutcome,proto3" json:"execution_outcome,omitempty"`
+	OutputRowCount            uint64                 `protobuf:"varint,9,opt,name=output_row_count,json=outputRowCount,proto3" json:"output_row_count,omitempty"`
+	OutputRowsRoot            string                 `protobuf:"bytes,10,opt,name=output_rows_root,json=outputRowsRoot,proto3" json:"output_rows_root,omitempty"`
+	ComputedStateRoot         string                 `protobuf:"bytes,11,opt,name=computed_state_root,json=computedStateRoot,proto3" json:"computed_state_root,omitempty"`
+	PartitionDeltas           []*PartitionCommitment `protobuf:"bytes,12,rep,name=partition_deltas,json=partitionDeltas,proto3" json:"partition_deltas,omitempty"`
+	PartitionCommitmentsAfter []*PartitionCommitment `protobuf:"bytes,13,rep,name=partition_commitments_after,json=partitionCommitmentsAfter,proto3" json:"partition_commitments_after,omitempty"`
+	CandidateParts            []*SnapshotReadPart    `protobuf:"bytes,14,rep,name=candidate_parts,json=candidateParts,proto3" json:"candidate_parts,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *SnapshotQueryClaim) Reset() {
+	*x = SnapshotQueryClaim{}
+	mi := &file_replay_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SnapshotQueryClaim) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SnapshotQueryClaim) ProtoMessage() {}
+
+func (x *SnapshotQueryClaim) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SnapshotQueryClaim.ProtoReflect.Descriptor instead.
+func (*SnapshotQueryClaim) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *SnapshotQueryClaim) GetSourceNode() string {
+	if x != nil {
+		return x.SourceNode
+	}
+	return ""
+}
+
+func (x *SnapshotQueryClaim) GetStatementId() string {
+	if x != nil {
+		return x.StatementId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryClaim) GetStatementSeq() uint64 {
+	if x != nil {
+		return x.StatementSeq
+	}
+	return 0
+}
+
+func (x *SnapshotQueryClaim) GetBlockSeq() uint64 {
+	if x != nil {
+		return x.BlockSeq
+	}
+	return 0
+}
+
+func (x *SnapshotQueryClaim) GetInputRoot() string {
+	if x != nil {
+		return x.InputRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQueryClaim) GetReservationId() string {
+	if x != nil {
+		return x.ReservationId
+	}
+	return ""
+}
+
+func (x *SnapshotQueryClaim) GetFencingGeneration() uint64 {
+	if x != nil {
+		return x.FencingGeneration
+	}
+	return 0
+}
+
+func (x *SnapshotQueryClaim) GetExecutionOutcome() string {
+	if x != nil {
+		return x.ExecutionOutcome
+	}
+	return ""
+}
+
+func (x *SnapshotQueryClaim) GetOutputRowCount() uint64 {
+	if x != nil {
+		return x.OutputRowCount
+	}
+	return 0
+}
+
+func (x *SnapshotQueryClaim) GetOutputRowsRoot() string {
+	if x != nil {
+		return x.OutputRowsRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQueryClaim) GetComputedStateRoot() string {
+	if x != nil {
+		return x.ComputedStateRoot
+	}
+	return ""
+}
+
+func (x *SnapshotQueryClaim) GetPartitionDeltas() []*PartitionCommitment {
+	if x != nil {
+		return x.PartitionDeltas
+	}
+	return nil
+}
+
+func (x *SnapshotQueryClaim) GetPartitionCommitmentsAfter() []*PartitionCommitment {
+	if x != nil {
+		return x.PartitionCommitmentsAfter
+	}
+	return nil
+}
+
+func (x *SnapshotQueryClaim) GetCandidateParts() []*SnapshotReadPart {
+	if x != nil {
+		return x.CandidateParts
+	}
+	return nil
+}
+
+// ProfileSetting is an append-only snapshot-query contract record.
+type ProfileSetting struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Value         string                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProfileSetting) Reset() {
+	*x = ProfileSetting{}
+	mi := &file_replay_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProfileSetting) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProfileSetting) ProtoMessage() {}
+
+func (x *ProfileSetting) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProfileSetting.ProtoReflect.Descriptor instead.
+func (*ProfileSetting) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *ProfileSetting) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ProfileSetting) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+// QueryLimits is an append-only snapshot-query contract record.
+type QueryLimits struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	MaxSqlBytes        uint64                 `protobuf:"varint,1,opt,name=max_sql_bytes,json=maxSqlBytes,proto3" json:"max_sql_bytes,omitempty"`
+	MaxDescriptorBytes uint64                 `protobuf:"varint,2,opt,name=max_descriptor_bytes,json=maxDescriptorBytes,proto3" json:"max_descriptor_bytes,omitempty"`
+	MaxOutputRows      uint64                 `protobuf:"varint,3,opt,name=max_output_rows,json=maxOutputRows,proto3" json:"max_output_rows,omitempty"`
+	MaxOutputBytes     uint64                 `protobuf:"varint,4,opt,name=max_output_bytes,json=maxOutputBytes,proto3" json:"max_output_bytes,omitempty"`
+	MaxRestoreBytes    uint64                 `protobuf:"varint,5,opt,name=max_restore_bytes,json=maxRestoreBytes,proto3" json:"max_restore_bytes,omitempty"`
+	MaxSortMemoryBytes uint64                 `protobuf:"varint,6,opt,name=max_sort_memory_bytes,json=maxSortMemoryBytes,proto3" json:"max_sort_memory_bytes,omitempty"`
+	MaxSpillBytes      uint64                 `protobuf:"varint,7,opt,name=max_spill_bytes,json=maxSpillBytes,proto3" json:"max_spill_bytes,omitempty"`
+	MaxExecutionMs     uint64                 `protobuf:"varint,8,opt,name=max_execution_ms,json=maxExecutionMs,proto3" json:"max_execution_ms,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *QueryLimits) Reset() {
+	*x = QueryLimits{}
+	mi := &file_replay_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QueryLimits) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryLimits) ProtoMessage() {}
+
+func (x *QueryLimits) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueryLimits.ProtoReflect.Descriptor instead.
+func (*QueryLimits) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *QueryLimits) GetMaxSqlBytes() uint64 {
+	if x != nil {
+		return x.MaxSqlBytes
+	}
+	return 0
+}
+
+func (x *QueryLimits) GetMaxDescriptorBytes() uint64 {
+	if x != nil {
+		return x.MaxDescriptorBytes
+	}
+	return 0
+}
+
+func (x *QueryLimits) GetMaxOutputRows() uint64 {
+	if x != nil {
+		return x.MaxOutputRows
+	}
+	return 0
+}
+
+func (x *QueryLimits) GetMaxOutputBytes() uint64 {
+	if x != nil {
+		return x.MaxOutputBytes
+	}
+	return 0
+}
+
+func (x *QueryLimits) GetMaxRestoreBytes() uint64 {
+	if x != nil {
+		return x.MaxRestoreBytes
+	}
+	return 0
+}
+
+func (x *QueryLimits) GetMaxSortMemoryBytes() uint64 {
+	if x != nil {
+		return x.MaxSortMemoryBytes
+	}
+	return 0
+}
+
+func (x *QueryLimits) GetMaxSpillBytes() uint64 {
+	if x != nil {
+		return x.MaxSpillBytes
+	}
+	return 0
+}
+
+func (x *QueryLimits) GetMaxExecutionMs() uint64 {
+	if x != nil {
+		return x.MaxExecutionMs
+	}
+	return 0
+}
+
+// Immutable execution profile; its canonical digest is its external ID.
+// No self-referential profile ID is included.
+type QueryProfileRecord struct {
+	state                     protoimpl.MessageState `protogen:"open.v1"`
+	Version                   uint32                 `protobuf:"varint,1,opt,name=version,proto3" json:"version,omitempty"`
+	ClickhouseBuildDigest     string                 `protobuf:"bytes,2,opt,name=clickhouse_build_digest,json=clickhouseBuildDigest,proto3" json:"clickhouse_build_digest,omitempty"`
+	Platform                  string                 `protobuf:"bytes,3,opt,name=platform,proto3" json:"platform,omitempty"`
+	NativeAnalyzerBuildDigest string                 `protobuf:"bytes,4,opt,name=native_analyzer_build_digest,json=nativeAnalyzerBuildDigest,proto3" json:"native_analyzer_build_digest,omitempty"`
+	GrpcAnalyzerBuildDigest   string                 `protobuf:"bytes,5,opt,name=grpc_analyzer_build_digest,json=grpcAnalyzerBuildDigest,proto3" json:"grpc_analyzer_build_digest,omitempty"`
+	TzdataDigest              string                 `protobuf:"bytes,6,opt,name=tzdata_digest,json=tzdataDigest,proto3" json:"tzdata_digest,omitempty"`
+	Settings                  []*ProfileSetting      `protobuf:"bytes,7,rep,name=settings,proto3" json:"settings,omitempty"`
+	ScalarOperators           []string               `protobuf:"bytes,8,rep,name=scalar_operators,json=scalarOperators,proto3" json:"scalar_operators,omitempty"`
+	ColumnProfileId           string                 `protobuf:"bytes,9,opt,name=column_profile_id,json=columnProfileId,proto3" json:"column_profile_id,omitempty"`
+	OutputOrderId             string                 `protobuf:"bytes,10,opt,name=output_order_id,json=outputOrderId,proto3" json:"output_order_id,omitempty"`
+	Limits                    *QueryLimits           `protobuf:"bytes,11,opt,name=limits,proto3" json:"limits,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *QueryProfileRecord) Reset() {
+	*x = QueryProfileRecord{}
+	mi := &file_replay_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QueryProfileRecord) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryProfileRecord) ProtoMessage() {}
+
+func (x *QueryProfileRecord) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueryProfileRecord.ProtoReflect.Descriptor instead.
+func (*QueryProfileRecord) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *QueryProfileRecord) GetVersion() uint32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *QueryProfileRecord) GetClickhouseBuildDigest() string {
+	if x != nil {
+		return x.ClickhouseBuildDigest
+	}
+	return ""
+}
+
+func (x *QueryProfileRecord) GetPlatform() string {
+	if x != nil {
+		return x.Platform
+	}
+	return ""
+}
+
+func (x *QueryProfileRecord) GetNativeAnalyzerBuildDigest() string {
+	if x != nil {
+		return x.NativeAnalyzerBuildDigest
+	}
+	return ""
+}
+
+func (x *QueryProfileRecord) GetGrpcAnalyzerBuildDigest() string {
+	if x != nil {
+		return x.GrpcAnalyzerBuildDigest
+	}
+	return ""
+}
+
+func (x *QueryProfileRecord) GetTzdataDigest() string {
+	if x != nil {
+		return x.TzdataDigest
+	}
+	return ""
+}
+
+func (x *QueryProfileRecord) GetSettings() []*ProfileSetting {
+	if x != nil {
+		return x.Settings
+	}
+	return nil
+}
+
+func (x *QueryProfileRecord) GetScalarOperators() []string {
+	if x != nil {
+		return x.ScalarOperators
+	}
+	return nil
+}
+
+func (x *QueryProfileRecord) GetColumnProfileId() string {
+	if x != nil {
+		return x.ColumnProfileId
+	}
+	return ""
+}
+
+func (x *QueryProfileRecord) GetOutputOrderId() string {
+	if x != nil {
+		return x.OutputOrderId
+	}
+	return ""
+}
+
+func (x *QueryProfileRecord) GetLimits() *QueryLimits {
+	if x != nil {
+		return x.Limits
+	}
+	return nil
+}
+
 var File_replay_proto protoreflect.FileDescriptor
 
 const file_replay_proto_rawDesc = "" +
@@ -958,7 +3442,260 @@ const file_replay_proto_rawDesc = "" +
 	"\tdata_root\x18\b \x01(\tR\bdataRoot\x12#\n" +
 	"\rmanifest_root\x18\t \x01(\tR\fmanifestRoot\x12.\n" +
 	"\x06tables\x18\n" +
-	" \x03(\v2\x16.arbiter.TableManifestR\x06tablesB.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
+	" \x03(\v2\x16.arbiter.TableManifestR\x06tables\"\xae\x02\n" +
+	"\vSnapshotPin\x12\x1d\n" +
+	"\n" +
+	"network_id\x18\x01 \x01(\tR\tnetworkId\x12&\n" +
+	"\x0fkeeper_shard_id\x18\x02 \x01(\rR\rkeeperShardId\x12\x1f\n" +
+	"\vsnapshot_id\x18\x03 \x01(\tR\n" +
+	"snapshotId\x12$\n" +
+	"\x0esafe_block_seq\x18\x04 \x01(\x04R\fsafeBlockSeq\x12#\n" +
+	"\rmanifest_root\x18\x05 \x01(\tR\fmanifestRoot\x12\x1d\n" +
+	"\n" +
+	"state_root\x18\x06 \x01(\tR\tstateRoot\x12,\n" +
+	"\x12schema_snapshot_id\x18\a \x01(\tR\x10schemaSnapshotId\x12\x1f\n" +
+	"\vschema_root\x18\b \x01(\tR\n" +
+	"schemaRoot\"\xee\x01\n" +
+	"\x10SnapshotReadPart\x12\x19\n" +
+	"\btable_id\x18\x01 \x01(\tR\atableId\x12!\n" +
+	"\fpartition_id\x18\x02 \x01(\tR\vpartitionId\x12\x1b\n" +
+	"\tpart_name\x18\x03 \x01(\tR\bpartName\x12$\n" +
+	"\x0epart_phys_hash\x18\x04 \x01(\tR\fpartPhysHash\x12&\n" +
+	"\x0fpart_row_lthash\x18\x05 \x01(\tR\rpartRowLthash\x12\x1b\n" +
+	"\trow_count\x18\x06 \x01(\x04R\browCount\x12\x14\n" +
+	"\x05bytes\x18\a \x01(\x04R\x05bytes\"\x86\x02\n" +
+	"\x11SnapshotReadTable\x12\x1a\n" +
+	"\bdatabase\x18\x01 \x01(\tR\bdatabase\x12\x14\n" +
+	"\x05table\x18\x02 \x01(\tR\x05table\x12\x19\n" +
+	"\btable_id\x18\x03 \x01(\tR\atableId\x12\x1f\n" +
+	"\vschema_hash\x18\x04 \x01(\tR\n" +
+	"schemaHash\x12E\n" +
+	"\x0fpartition_roots\x18\x05 \x03(\v2\x1c.arbiter.PartitionCommitmentR\x0epartitionRoots\x12<\n" +
+	"\factive_parts\x18\x06 \x03(\v2\x19.arbiter.SnapshotReadPartR\vactiveParts\"\x80\x01\n" +
+	"\x0fSnapshotReadSet\x129\n" +
+	"\rread_snapshot\x18\x01 \x01(\v2\x14.arbiter.SnapshotPinR\freadSnapshot\x122\n" +
+	"\x06tables\x18\x02 \x03(\v2\x1a.arbiter.SnapshotReadTableR\x06tables\"\xfe\x06\n" +
+	"\x14SnapshotQueryBinding\x12)\n" +
+	"\x10envelope_version\x18\x01 \x01(\rR\x0fenvelopeVersion\x12\x1d\n" +
+	"\n" +
+	"input_kind\x18\x02 \x01(\tR\tinputKind\x12%\n" +
+	"\x0eclient_account\x18\x03 \x01(\tR\rclientAccount\x12!\n" +
+	"\fstatement_id\x18\x04 \x01(\tR\vstatementId\x12%\n" +
+	"\x0estatement_kind\x18\x05 \x01(\rR\rstatementKind\x12\x1d\n" +
+	"\n" +
+	"network_id\x18\x06 \x01(\tR\tnetworkId\x12&\n" +
+	"\x0fkeeper_shard_id\x18\a \x01(\rR\rkeeperShardId\x12\x19\n" +
+	"\bsql_hash\x18\b \x01(\tR\asqlHash\x12#\n" +
+	"\rsettings_hash\x18\t \x01(\tR\fsettingsHash\x12&\n" +
+	"\x0ftarget_table_id\x18\n" +
+	" \x01(\tR\rtargetTableId\x12\x1f\n" +
+	"\vschema_hash\x18\v \x01(\tR\n" +
+	"schemaHash\x12)\n" +
+	"\x11row_id_profile_id\x18\f \x01(\tR\x0erowIdProfileId\x12'\n" +
+	"\x0fclient_revision\x18\r \x01(\rR\x0eclientRevision\x129\n" +
+	"\rread_snapshot\x18\x0e \x01(\v2\x14.arbiter.SnapshotPinR\freadSnapshot\x12\"\n" +
+	"\rread_set_root\x18\x0f \x01(\tR\vreadSetRoot\x12,\n" +
+	"\x12schema_snapshot_id\x18\x10 \x01(\tR\x10schemaSnapshotId\x12\x1f\n" +
+	"\vschema_root\x18\x11 \x01(\tR\n" +
+	"schemaRoot\x12)\n" +
+	"\x10logical_database\x18\x12 \x01(\tR\x0flogicalDatabase\x12(\n" +
+	"\x10query_profile_id\x18\x13 \x01(\tR\x0equeryProfileId\x12.\n" +
+	"\x13executor_profile_id\x18\x14 \x01(\tR\x11executorProfileId\x12%\n" +
+	"\x0ereservation_id\x18\x15 \x01(\tR\rreservationId\x12-\n" +
+	"\x12fencing_generation\x18\x16 \x01(\x04R\x11fencingGeneration\"\x94\x01\n" +
+	"\x12SnapshotQueryInput\x127\n" +
+	"\abinding\x18\x01 \x01(\v2\x1d.arbiter.SnapshotQueryBindingR\abinding\x12\x10\n" +
+	"\x03sql\x18\x02 \x01(\tR\x03sql\x123\n" +
+	"\bread_set\x18\x03 \x01(\v2\x18.arbiter.SnapshotReadSetR\areadSet\"\x84\x01\n" +
+	"\x15SnapshotQueryEnvelope\x121\n" +
+	"\x05input\x18\x01 \x01(\v2\x1b.arbiter.SnapshotQueryInputR\x05input\x12\x1d\n" +
+	"\n" +
+	"input_root\x18\x02 \x01(\tR\tinputRoot\x12\x19\n" +
+	"\buser_jws\x18\x03 \x01(\tR\auserJws\"\xf4\x02\n" +
+	"\x18SnapshotQueryReservation\x12%\n" +
+	"\x0ereservation_id\x18\x01 \x01(\tR\rreservationId\x12-\n" +
+	"\x12fencing_generation\x18\x02 \x01(\x04R\x11fencingGeneration\x12%\n" +
+	"\x0eclient_account\x18\x03 \x01(\tR\rclientAccount\x12!\n" +
+	"\fstatement_id\x18\x04 \x01(\tR\vstatementId\x129\n" +
+	"\rread_snapshot\x18\x05 \x01(\v2\x14.arbiter.SnapshotPinR\freadSnapshot\x12.\n" +
+	"\x13executor_profile_id\x18\x06 \x01(\tR\x11executorProfileId\x12(\n" +
+	"\x10query_profile_id\x18\a \x01(\tR\x0equeryProfileId\x12#\n" +
+	"\ractivation_id\x18\b \x01(\tR\factivationId\"\x87\x03\n" +
+	"\x1eSnapshotQueryReservationStatus\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\rR\aversion\x12\x14\n" +
+	"\x05found\x18\x02 \x01(\bR\x05found\x12\x14\n" +
+	"\x05state\x18\x03 \x01(\tR\x05state\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x04 \x01(\tR\trequestId\x12%\n" +
+	"\x0eclient_account\x18\x05 \x01(\tR\rclientAccount\x12!\n" +
+	"\fstatement_id\x18\x06 \x01(\tR\vstatementId\x12-\n" +
+	"\x12fencing_generation\x18\a \x01(\x04R\x11fencingGeneration\x12C\n" +
+	"\vreservation\x18\b \x01(\v2!.arbiter.SnapshotQueryReservationR\vreservation\x12\x1b\n" +
+	"\tblock_seq\x18\t \x01(\x04R\bblockSeq\x12%\n" +
+	"\x0eterminal_proof\x18\n" +
+	" \x01(\fR\rterminalProof\"y\n" +
+	"\x16SnapshotQueryStatement\x12#\n" +
+	"\rstatement_seq\x18\x01 \x01(\x04R\fstatementSeq\x12:\n" +
+	"\benvelope\x18\x02 \x01(\v2\x1e.arbiter.SnapshotQueryEnvelopeR\benvelope\"\x82\x04\n" +
+	"\x10SnapshotQueryJob\x12\x1b\n" +
+	"\tblock_seq\x18\x01 \x01(\x04R\bblockSeq\x121\n" +
+	"\x15prev_safe_snapshot_id\x18\x02 \x01(\tR\x12prevSafeSnapshotId\x12&\n" +
+	"\x0fprev_state_root\x18\x03 \x01(\tR\rprevStateRoot\x12,\n" +
+	"\x12schema_snapshot_id\x18\x04 \x01(\tR\x10schemaSnapshotId\x12.\n" +
+	"\x13executor_profile_id\x18\x05 \x01(\tR\x11executorProfileId\x12(\n" +
+	"\x10query_profile_id\x18\x06 \x01(\tR\x0equeryProfileId\x12C\n" +
+	"\vreservation\x18\a \x01(\v2!.arbiter.SnapshotQueryReservationR\vreservation\x12=\n" +
+	"\tstatement\x18\b \x01(\v2\x1f.arbiter.SnapshotQueryStatementR\tstatement\x12*\n" +
+	"\x11source_claim_root\x18\t \x01(\tR\x0fsourceClaimRoot\x12>\n" +
+	"\fsource_claim\x18\n" +
+	" \x01(\v2\x1b.arbiter.SnapshotQueryClaimR\vsourceClaim\"\x98\x01\n" +
+	"\x15SnapshotQueryEvidence\x12+\n" +
+	"\x11execution_outcome\x18\x01 \x01(\tR\x10executionOutcome\x12(\n" +
+	"\x10output_row_count\x18\x02 \x01(\x04R\x0eoutputRowCount\x12(\n" +
+	"\x10output_rows_root\x18\x03 \x01(\tR\x0eoutputRowsRoot\"\xb4\a\n" +
+	"\x14SnapshotQueryReceipt\x12\x1b\n" +
+	"\tblock_seq\x18\x01 \x01(\x04R\bblockSeq\x12%\n" +
+	"\x0estatement_root\x18\x02 \x01(\tR\rstatementRoot\x12\x1d\n" +
+	"\n" +
+	"input_root\x18\x03 \x01(\tR\tinputRoot\x12\"\n" +
+	"\rread_set_root\x18\x04 \x01(\tR\vreadSetRoot\x129\n" +
+	"\rread_snapshot\x18\x05 \x01(\v2\x14.arbiter.SnapshotPinR\freadSnapshot\x12,\n" +
+	"\x12schema_snapshot_id\x18\x06 \x01(\tR\x10schemaSnapshotId\x12.\n" +
+	"\x13executor_profile_id\x18\a \x01(\tR\x11executorProfileId\x12(\n" +
+	"\x10query_profile_id\x18\b \x01(\tR\x0equeryProfileId\x12%\n" +
+	"\x0ereservation_id\x18\t \x01(\tR\rreservationId\x12-\n" +
+	"\x12fencing_generation\x18\n" +
+	" \x01(\x04R\x11fencingGeneration\x12+\n" +
+	"\x11execution_outcome\x18\v \x01(\tR\x10executionOutcome\x12*\n" +
+	"\x11abort_record_root\x18\f \x01(\tR\x0fabortRecordRoot\x12(\n" +
+	"\x10output_row_count\x18\r \x01(\x04R\x0eoutputRowCount\x12(\n" +
+	"\x10output_rows_root\x18\x0e \x01(\tR\x0eoutputRowsRoot\x12*\n" +
+	"\x11source_claim_root\x18\x0f \x01(\tR\x0fsourceClaimRoot\x12.\n" +
+	"\x13computed_state_root\x18\x10 \x01(\tR\x11computedStateRoot\x12*\n" +
+	"\x11match_source_root\x18\x11 \x01(\bR\x0fmatchSourceRoot\x12\\\n" +
+	"\x1bpartition_commitments_after\x18\x12 \x03(\v2\x1c.arbiter.PartitionCommitmentR\x19partitionCommitmentsAfter\x12A\n" +
+	"\x0eaffected_parts\x18\x13 \x03(\v2\x1a.arbiter.PartManifestEntryR\raffectedParts\x12&\n" +
+	"\x0freplay_log_hash\x18\x14 \x01(\tR\rreplayLogHash\"\xb3\x01\n" +
+	"\x18SnapshotQueryAttestation\x12\x1d\n" +
+	"\n" +
+	"replica_id\x18\x01 \x01(\tR\treplicaId\x127\n" +
+	"\areceipt\x18\x02 \x01(\v2\x1d.arbiter.SnapshotQueryReceiptR\areceipt\x12!\n" +
+	"\freceipt_hash\x18\x03 \x01(\tR\vreceiptHash\x12\x1c\n" +
+	"\tsignature\x18\x04 \x01(\tR\tsignature\"\xa3\x02\n" +
+	"\x19SnapshotQuerySubmitResult\x12%\n" +
+	"\x0eadmission_code\x18\x01 \x01(\rR\radmissionCode\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12#\n" +
+	"\rstatement_seq\x18\x03 \x01(\x04R\fstatementSeq\x12\x1b\n" +
+	"\tblock_seq\x18\x04 \x01(\x04R\bblockSeq\x12\x1f\n" +
+	"\vsource_node\x18\x05 \x01(\tR\n" +
+	"sourceNode\x12\x1d\n" +
+	"\n" +
+	"input_root\x18\x06 \x01(\tR\tinputRoot\x12C\n" +
+	"\vreservation\x18\a \x01(\v2!.arbiter.SnapshotQueryReservationR\vreservation\"\xf7\x01\n" +
+	"\x13SnapshotQueryStatus\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\rR\aversion\x12\x14\n" +
+	"\x05found\x18\x02 \x01(\bR\x05found\x12>\n" +
+	"\baccepted\x18\x03 \x01(\v2\".arbiter.SnapshotQuerySubmitResultR\baccepted\x12\x1c\n" +
+	"\tlifecycle\x18\x04 \x01(\tR\tlifecycle\x12+\n" +
+	"\x11execution_outcome\x18\x05 \x01(\tR\x10executionOutcome\x12%\n" +
+	"\x0eterminal_proof\x18\x06 \x01(\fR\rterminalProof\"\xa5\x02\n" +
+	"\x11ActiveQueryPolicy\x12#\n" +
+	"\ractivation_id\x18\x01 \x01(\tR\factivationId\x12\x1d\n" +
+	"\n" +
+	"network_id\x18\x02 \x01(\tR\tnetworkId\x12&\n" +
+	"\x0fkeeper_shard_id\x18\x03 \x01(\rR\rkeeperShardId\x120\n" +
+	"\x14activation_block_seq\x18\x04 \x01(\x04R\x12activationBlockSeq\x12.\n" +
+	"\x13executor_profile_id\x18\x05 \x01(\tR\x11executorProfileId\x12(\n" +
+	"\x10query_profile_id\x18\x06 \x01(\tR\x0equeryProfileId\x12\x18\n" +
+	"\aenabled\x18\a \x01(\bR\aenabled\"\xca\x04\n" +
+	"\x19ExecutorProfileTransition\x12\x1d\n" +
+	"\n" +
+	"network_id\x18\x01 \x01(\tR\tnetworkId\x12&\n" +
+	"\x0fkeeper_shard_id\x18\x02 \x01(\rR\rkeeperShardId\x12(\n" +
+	"\x10prev_snapshot_id\x18\x03 \x01(\tR\x0eprevSnapshotId\x12&\n" +
+	"\x0fprev_state_root\x18\x04 \x01(\tR\rprevStateRoot\x125\n" +
+	"\x17old_executor_profile_id\x18\x05 \x01(\tR\x14oldExecutorProfileId\x125\n" +
+	"\x17new_executor_profile_id\x18\x06 \x01(\tR\x14newExecutorProfileId\x12,\n" +
+	"\x12schema_snapshot_id\x18\a \x01(\tR\x10schemaSnapshotId\x12\x1f\n" +
+	"\vschema_root\x18\b \x01(\tR\n" +
+	"schemaRoot\x12\x1b\n" +
+	"\tdata_root\x18\t \x01(\tR\bdataRoot\x12(\n" +
+	"\x10next_snapshot_id\x18\n" +
+	" \x01(\tR\x0enextSnapshotId\x12&\n" +
+	"\x0fnext_state_root\x18\v \x01(\tR\rnextStateRoot\x12,\n" +
+	"\x12next_manifest_root\x18\f \x01(\tR\x10nextManifestRoot\x12:\n" +
+	"\n" +
+	"activation\x18\r \x01(\v2\x1a.arbiter.ActiveQueryPolicyR\n" +
+	"activation\"\x88\x01\n" +
+	" ExecutorProfileTransitionReceipt\x12'\n" +
+	"\x0ftransition_root\x18\x01 \x01(\tR\x0etransitionRoot\x12\x1d\n" +
+	"\n" +
+	"replica_id\x18\x02 \x01(\tR\treplicaId\x12\x1c\n" +
+	"\tsignature\x18\x03 \x01(\tR\tsignature\"\xfd\x01\n" +
+	"\x15SnapshotArtifactReady\x12\x1f\n" +
+	"\vsnapshot_id\x18\x01 \x01(\tR\n" +
+	"snapshotId\x12#\n" +
+	"\rmanifest_root\x18\x02 \x01(\tR\fmanifestRoot\x12\x1f\n" +
+	"\vschema_root\x18\x03 \x01(\tR\n" +
+	"schemaRoot\x12*\n" +
+	"\x11artifact_set_root\x18\x04 \x01(\tR\x0fartifactSetRoot\x12!\n" +
+	"\fpublisher_id\x18\x05 \x01(\tR\vpublisherId\x12.\n" +
+	"\x13retention_policy_id\x18\x06 \x01(\tR\x11retentionPolicyId\"\x82\x03\n" +
+	"\x18SnapshotQueryAbortRecord\x12\x1b\n" +
+	"\tblock_seq\x18\x01 \x01(\x04R\bblockSeq\x12!\n" +
+	"\fstatement_id\x18\x02 \x01(\tR\vstatementId\x12\x1d\n" +
+	"\n" +
+	"input_root\x18\x03 \x01(\tR\tinputRoot\x12%\n" +
+	"\x0ereservation_id\x18\x04 \x01(\tR\rreservationId\x12-\n" +
+	"\x12fencing_generation\x18\x05 \x01(\x04R\x11fencingGeneration\x12\x1f\n" +
+	"\vreason_code\x18\x06 \x01(\tR\n" +
+	"reasonCode\x12<\n" +
+	"\x1acleanup_authorization_root\x18\a \x01(\tR\x18cleanupAuthorizationRoot\x12(\n" +
+	"\x10prev_snapshot_id\x18\b \x01(\tR\x0eprevSnapshotId\x12(\n" +
+	"\x10next_snapshot_id\x18\t \x01(\tR\x0enextSnapshotId\"\xab\x05\n" +
+	"\x12SnapshotQueryClaim\x12\x1f\n" +
+	"\vsource_node\x18\x01 \x01(\tR\n" +
+	"sourceNode\x12!\n" +
+	"\fstatement_id\x18\x02 \x01(\tR\vstatementId\x12#\n" +
+	"\rstatement_seq\x18\x03 \x01(\x04R\fstatementSeq\x12\x1b\n" +
+	"\tblock_seq\x18\x04 \x01(\x04R\bblockSeq\x12\x1d\n" +
+	"\n" +
+	"input_root\x18\x05 \x01(\tR\tinputRoot\x12%\n" +
+	"\x0ereservation_id\x18\x06 \x01(\tR\rreservationId\x12-\n" +
+	"\x12fencing_generation\x18\a \x01(\x04R\x11fencingGeneration\x12+\n" +
+	"\x11execution_outcome\x18\b \x01(\tR\x10executionOutcome\x12(\n" +
+	"\x10output_row_count\x18\t \x01(\x04R\x0eoutputRowCount\x12(\n" +
+	"\x10output_rows_root\x18\n" +
+	" \x01(\tR\x0eoutputRowsRoot\x12.\n" +
+	"\x13computed_state_root\x18\v \x01(\tR\x11computedStateRoot\x12G\n" +
+	"\x10partition_deltas\x18\f \x03(\v2\x1c.arbiter.PartitionCommitmentR\x0fpartitionDeltas\x12\\\n" +
+	"\x1bpartition_commitments_after\x18\r \x03(\v2\x1c.arbiter.PartitionCommitmentR\x19partitionCommitmentsAfter\x12B\n" +
+	"\x0fcandidate_parts\x18\x0e \x03(\v2\x19.arbiter.SnapshotReadPartR\x0ecandidateParts\":\n" +
+	"\x0eProfileSetting\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value\"\xe6\x02\n" +
+	"\vQueryLimits\x12\"\n" +
+	"\rmax_sql_bytes\x18\x01 \x01(\x04R\vmaxSqlBytes\x120\n" +
+	"\x14max_descriptor_bytes\x18\x02 \x01(\x04R\x12maxDescriptorBytes\x12&\n" +
+	"\x0fmax_output_rows\x18\x03 \x01(\x04R\rmaxOutputRows\x12(\n" +
+	"\x10max_output_bytes\x18\x04 \x01(\x04R\x0emaxOutputBytes\x12*\n" +
+	"\x11max_restore_bytes\x18\x05 \x01(\x04R\x0fmaxRestoreBytes\x121\n" +
+	"\x15max_sort_memory_bytes\x18\x06 \x01(\x04R\x12maxSortMemoryBytes\x12&\n" +
+	"\x0fmax_spill_bytes\x18\a \x01(\x04R\rmaxSpillBytes\x12(\n" +
+	"\x10max_execution_ms\x18\b \x01(\x04R\x0emaxExecutionMs\"\x87\x04\n" +
+	"\x12QueryProfileRecord\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\rR\aversion\x126\n" +
+	"\x17clickhouse_build_digest\x18\x02 \x01(\tR\x15clickhouseBuildDigest\x12\x1a\n" +
+	"\bplatform\x18\x03 \x01(\tR\bplatform\x12?\n" +
+	"\x1cnative_analyzer_build_digest\x18\x04 \x01(\tR\x19nativeAnalyzerBuildDigest\x12;\n" +
+	"\x1agrpc_analyzer_build_digest\x18\x05 \x01(\tR\x17grpcAnalyzerBuildDigest\x12#\n" +
+	"\rtzdata_digest\x18\x06 \x01(\tR\ftzdataDigest\x123\n" +
+	"\bsettings\x18\a \x03(\v2\x17.arbiter.ProfileSettingR\bsettings\x12)\n" +
+	"\x10scalar_operators\x18\b \x03(\tR\x0fscalarOperators\x12*\n" +
+	"\x11column_profile_id\x18\t \x01(\tR\x0fcolumnProfileId\x12&\n" +
+	"\x0foutput_order_id\x18\n" +
+	" \x01(\tR\routputOrderId\x12,\n" +
+	"\x06limits\x18\v \x01(\v2\x14.arbiter.QueryLimitsR\x06limitsB.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
 
 var (
 	file_replay_proto_rawDescOnce sync.Once
@@ -972,30 +3709,81 @@ func file_replay_proto_rawDescGZIP() []byte {
 	return file_replay_proto_rawDescData
 }
 
-var file_replay_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_replay_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_replay_proto_goTypes = []any{
-	(*Statement)(nil),            // 0: arbiter.Statement
-	(*ReplayJob)(nil),            // 1: arbiter.ReplayJob
-	(*PartitionCommitment)(nil),  // 2: arbiter.PartitionCommitment
-	(*PartManifestEntry)(nil),    // 3: arbiter.PartManifestEntry
-	(*ExecutionReceipt)(nil),     // 4: arbiter.ExecutionReceipt
-	(*ReplayAttestation)(nil),    // 5: arbiter.ReplayAttestation
-	(*TableManifest)(nil),        // 6: arbiter.TableManifest
-	(*SafeSnapshotManifest)(nil), // 7: arbiter.SafeSnapshotManifest
+	(*Statement)(nil),                        // 0: arbiter.Statement
+	(*ReplayJob)(nil),                        // 1: arbiter.ReplayJob
+	(*PartitionCommitment)(nil),              // 2: arbiter.PartitionCommitment
+	(*PartManifestEntry)(nil),                // 3: arbiter.PartManifestEntry
+	(*ExecutionReceipt)(nil),                 // 4: arbiter.ExecutionReceipt
+	(*ReplayAttestation)(nil),                // 5: arbiter.ReplayAttestation
+	(*TableManifest)(nil),                    // 6: arbiter.TableManifest
+	(*SafeSnapshotManifest)(nil),             // 7: arbiter.SafeSnapshotManifest
+	(*SnapshotPin)(nil),                      // 8: arbiter.SnapshotPin
+	(*SnapshotReadPart)(nil),                 // 9: arbiter.SnapshotReadPart
+	(*SnapshotReadTable)(nil),                // 10: arbiter.SnapshotReadTable
+	(*SnapshotReadSet)(nil),                  // 11: arbiter.SnapshotReadSet
+	(*SnapshotQueryBinding)(nil),             // 12: arbiter.SnapshotQueryBinding
+	(*SnapshotQueryInput)(nil),               // 13: arbiter.SnapshotQueryInput
+	(*SnapshotQueryEnvelope)(nil),            // 14: arbiter.SnapshotQueryEnvelope
+	(*SnapshotQueryReservation)(nil),         // 15: arbiter.SnapshotQueryReservation
+	(*SnapshotQueryReservationStatus)(nil),   // 16: arbiter.SnapshotQueryReservationStatus
+	(*SnapshotQueryStatement)(nil),           // 17: arbiter.SnapshotQueryStatement
+	(*SnapshotQueryJob)(nil),                 // 18: arbiter.SnapshotQueryJob
+	(*SnapshotQueryEvidence)(nil),            // 19: arbiter.SnapshotQueryEvidence
+	(*SnapshotQueryReceipt)(nil),             // 20: arbiter.SnapshotQueryReceipt
+	(*SnapshotQueryAttestation)(nil),         // 21: arbiter.SnapshotQueryAttestation
+	(*SnapshotQuerySubmitResult)(nil),        // 22: arbiter.SnapshotQuerySubmitResult
+	(*SnapshotQueryStatus)(nil),              // 23: arbiter.SnapshotQueryStatus
+	(*ActiveQueryPolicy)(nil),                // 24: arbiter.ActiveQueryPolicy
+	(*ExecutorProfileTransition)(nil),        // 25: arbiter.ExecutorProfileTransition
+	(*ExecutorProfileTransitionReceipt)(nil), // 26: arbiter.ExecutorProfileTransitionReceipt
+	(*SnapshotArtifactReady)(nil),            // 27: arbiter.SnapshotArtifactReady
+	(*SnapshotQueryAbortRecord)(nil),         // 28: arbiter.SnapshotQueryAbortRecord
+	(*SnapshotQueryClaim)(nil),               // 29: arbiter.SnapshotQueryClaim
+	(*ProfileSetting)(nil),                   // 30: arbiter.ProfileSetting
+	(*QueryLimits)(nil),                      // 31: arbiter.QueryLimits
+	(*QueryProfileRecord)(nil),               // 32: arbiter.QueryProfileRecord
 }
 var file_replay_proto_depIdxs = []int32{
-	0, // 0: arbiter.ReplayJob.statements:type_name -> arbiter.Statement
-	2, // 1: arbiter.ExecutionReceipt.partition_commitments_after:type_name -> arbiter.PartitionCommitment
-	3, // 2: arbiter.ExecutionReceipt.affected_parts:type_name -> arbiter.PartManifestEntry
-	4, // 3: arbiter.ReplayAttestation.receipt:type_name -> arbiter.ExecutionReceipt
-	2, // 4: arbiter.TableManifest.partition_roots:type_name -> arbiter.PartitionCommitment
-	3, // 5: arbiter.TableManifest.active_parts:type_name -> arbiter.PartManifestEntry
-	6, // 6: arbiter.SafeSnapshotManifest.tables:type_name -> arbiter.TableManifest
-	7, // [7:7] is the sub-list for method output_type
-	7, // [7:7] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	0,  // 0: arbiter.ReplayJob.statements:type_name -> arbiter.Statement
+	2,  // 1: arbiter.ExecutionReceipt.partition_commitments_after:type_name -> arbiter.PartitionCommitment
+	3,  // 2: arbiter.ExecutionReceipt.affected_parts:type_name -> arbiter.PartManifestEntry
+	4,  // 3: arbiter.ReplayAttestation.receipt:type_name -> arbiter.ExecutionReceipt
+	2,  // 4: arbiter.TableManifest.partition_roots:type_name -> arbiter.PartitionCommitment
+	3,  // 5: arbiter.TableManifest.active_parts:type_name -> arbiter.PartManifestEntry
+	6,  // 6: arbiter.SafeSnapshotManifest.tables:type_name -> arbiter.TableManifest
+	2,  // 7: arbiter.SnapshotReadTable.partition_roots:type_name -> arbiter.PartitionCommitment
+	9,  // 8: arbiter.SnapshotReadTable.active_parts:type_name -> arbiter.SnapshotReadPart
+	8,  // 9: arbiter.SnapshotReadSet.read_snapshot:type_name -> arbiter.SnapshotPin
+	10, // 10: arbiter.SnapshotReadSet.tables:type_name -> arbiter.SnapshotReadTable
+	8,  // 11: arbiter.SnapshotQueryBinding.read_snapshot:type_name -> arbiter.SnapshotPin
+	12, // 12: arbiter.SnapshotQueryInput.binding:type_name -> arbiter.SnapshotQueryBinding
+	11, // 13: arbiter.SnapshotQueryInput.read_set:type_name -> arbiter.SnapshotReadSet
+	13, // 14: arbiter.SnapshotQueryEnvelope.input:type_name -> arbiter.SnapshotQueryInput
+	8,  // 15: arbiter.SnapshotQueryReservation.read_snapshot:type_name -> arbiter.SnapshotPin
+	15, // 16: arbiter.SnapshotQueryReservationStatus.reservation:type_name -> arbiter.SnapshotQueryReservation
+	14, // 17: arbiter.SnapshotQueryStatement.envelope:type_name -> arbiter.SnapshotQueryEnvelope
+	15, // 18: arbiter.SnapshotQueryJob.reservation:type_name -> arbiter.SnapshotQueryReservation
+	17, // 19: arbiter.SnapshotQueryJob.statement:type_name -> arbiter.SnapshotQueryStatement
+	29, // 20: arbiter.SnapshotQueryJob.source_claim:type_name -> arbiter.SnapshotQueryClaim
+	8,  // 21: arbiter.SnapshotQueryReceipt.read_snapshot:type_name -> arbiter.SnapshotPin
+	2,  // 22: arbiter.SnapshotQueryReceipt.partition_commitments_after:type_name -> arbiter.PartitionCommitment
+	3,  // 23: arbiter.SnapshotQueryReceipt.affected_parts:type_name -> arbiter.PartManifestEntry
+	20, // 24: arbiter.SnapshotQueryAttestation.receipt:type_name -> arbiter.SnapshotQueryReceipt
+	15, // 25: arbiter.SnapshotQuerySubmitResult.reservation:type_name -> arbiter.SnapshotQueryReservation
+	22, // 26: arbiter.SnapshotQueryStatus.accepted:type_name -> arbiter.SnapshotQuerySubmitResult
+	24, // 27: arbiter.ExecutorProfileTransition.activation:type_name -> arbiter.ActiveQueryPolicy
+	2,  // 28: arbiter.SnapshotQueryClaim.partition_deltas:type_name -> arbiter.PartitionCommitment
+	2,  // 29: arbiter.SnapshotQueryClaim.partition_commitments_after:type_name -> arbiter.PartitionCommitment
+	9,  // 30: arbiter.SnapshotQueryClaim.candidate_parts:type_name -> arbiter.SnapshotReadPart
+	30, // 31: arbiter.QueryProfileRecord.settings:type_name -> arbiter.ProfileSetting
+	31, // 32: arbiter.QueryProfileRecord.limits:type_name -> arbiter.QueryLimits
+	33, // [33:33] is the sub-list for method output_type
+	33, // [33:33] is the sub-list for method input_type
+	33, // [33:33] is the sub-list for extension type_name
+	33, // [33:33] is the sub-list for extension extendee
+	0,  // [0:33] is the sub-list for field type_name
 }
 
 func init() { file_replay_proto_init() }
@@ -1009,7 +3797,7 @@ func file_replay_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_replay_proto_rawDesc), len(file_replay_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
