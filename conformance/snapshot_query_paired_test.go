@@ -3,9 +3,11 @@ package conformance
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	pb "github.com/sentioxyz/arbiter-proto/gen/pb"
@@ -209,6 +211,19 @@ func TestSnapshotQueryPairedIdentityFixture(t *testing.T) {
 	// AC verifies the fixture's ES256K signatures. AP stays dependency-light and
 	// independently verifies exact compact bytes, hashes and generated transports.
 	for _, id := range f.Identities {
+		pieces := strings.Split(id.UserJWS, ".")
+		if len(pieces) != 3 {
+			t.Fatal("compact JWS")
+		}
+		payload, err := base64.RawURLEncoding.DecodeString(pieces[1])
+		if err != nil {
+			t.Fatal(err)
+		}
+		expected := pairedIdentityPayload{"housegate-statement-v3", id.Iat, fixtureCanonical(in.Binding.ProtoReflect()), f.InputRoot}
+		if err = checkPairedIdentityPayload(payload, expected); err != nil {
+			t.Fatal(err)
+		}
+
 		if fmt.Sprintf("0x%x", sha256.Sum256([]byte(id.UserJWS))) != id.UserJWSHash {
 			t.Fatal("original JWS digest")
 		}
@@ -238,6 +253,69 @@ func TestSnapshotQueryPairedIdentityFixture(t *testing.T) {
 			}
 			if !proto.Equal(want, &got) {
 				t.Fatal("status identity loss")
+			}
+		})
+	}
+}
+
+type pairedIdentityPayload struct {
+	Purpose   string          `json:"purpose"`
+	Iat       int64           `json:"iat"`
+	Binding   json.RawMessage `json:"binding"`
+	InputRoot string          `json:"input_root"`
+}
+
+func checkPairedIdentityPayload(payload []byte, expected pairedIdentityPayload) error {
+	canonical, err := json.Marshal(expected)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(payload, canonical) {
+		return fmt.Errorf("complete four-field canonical payload differs (purpose, iat, binding, input_root)")
+	}
+	return nil
+}
+func TestSnapshotQueryPairedIdentityPayloadRejectsIncompleteOrNoncanonical(t *testing.T) {
+	raw, err := os.ReadFile("../testdata/snapshot_query_identity_v1.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fixture struct {
+		Input     json.RawMessage
+		InputRoot string `json:"input_root"`
+	}
+	if err = json.Unmarshal(raw, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	in := pairedProto(t, fixture.Input, &pb.SnapshotQueryInput{}).(*pb.SnapshotQueryInput)
+	root := pairedDigest("snapshot-query-input-v1", string(fixtureCanonical(in.ProtoReflect())))
+	if root != fixture.InputRoot {
+		t.Fatal("input root")
+	}
+	expected := pairedIdentityPayload{"housegate-statement-v3", 1789550000, fixtureCanonical(in.Binding.ProtoReflect()), root}
+	canonical, err := json.Marshal(expected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	missing, _ := json.Marshal(struct {
+		Purpose string          `json:"purpose"`
+		Iat     int64           `json:"iat"`
+		Binding json.RawMessage `json:"binding"`
+	}{expected.Purpose, expected.Iat, expected.Binding})
+	wrong := expected
+	wrong.InputRoot = "0xwrong"
+	wrongBytes, _ := json.Marshal(wrong)
+	reordered, _ := json.Marshal(struct {
+		Iat       int64           `json:"iat"`
+		Purpose   string          `json:"purpose"`
+		Binding   json.RawMessage `json:"binding"`
+		InputRoot string          `json:"input_root"`
+	}{expected.Iat, expected.Purpose, expected.Binding, expected.InputRoot})
+	extra := append(append([]byte{}, canonical[:len(canonical)-1]...), []byte(`,"extra":0}`)...)
+	for name, payload := range map[string][]byte{"missing input_root": missing, "wrong input_root": wrongBytes, "reordered fields": reordered, "extra field": extra} {
+		t.Run(name, func(t *testing.T) {
+			if err := checkPairedIdentityPayload(payload, expected); err == nil {
+				t.Fatal("accepted malformed complete payload")
 			}
 		})
 	}
