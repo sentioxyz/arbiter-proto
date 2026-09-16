@@ -2980,8 +2980,14 @@ type GetSnapshotQueryStatusRequest struct {
 	ClientAccount     string                 `protobuf:"bytes,3,opt,name=client_account,json=clientAccount,proto3" json:"client_account,omitempty"`
 	StatementId       string                 `protobuf:"bytes,4,opt,name=statement_id,json=statementId,proto3" json:"statement_id,omitempty"`
 	ExpectedInputRoot string                 `protobuf:"bytes,5,opt,name=expected_input_root,json=expectedInputRoot,proto3" json:"expected_input_root,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// replay.DigestString (plain SHA-256) of the exact original compact JWS
+	// bytes; never normalize or re-sign the token and never send it in this lookup.
+	// The new-lane handler must require this hash and compare it to the committed
+	// original JWS before returning accepted status. A mismatch is a conflict/refusal,
+	// never found=false or success for an older differently signed submission.
+	ExpectedUserJwsHash string `protobuf:"bytes,6,opt,name=expected_user_jws_hash,json=expectedUserJwsHash,proto3" json:"expected_user_jws_hash,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *GetSnapshotQueryStatusRequest) Reset() {
@@ -3045,6 +3051,13 @@ func (x *GetSnapshotQueryStatusRequest) GetStatementId() string {
 func (x *GetSnapshotQueryStatusRequest) GetExpectedInputRoot() string {
 	if x != nil {
 		return x.ExpectedInputRoot
+	}
+	return ""
+}
+
+func (x *GetSnapshotQueryStatusRequest) GetExpectedUserJwsHash() string {
+	if x != nil {
+		return x.ExpectedUserJwsHash
 	}
 	return ""
 }
@@ -3834,14 +3847,15 @@ const file_arbiter_proto_rawDesc = "" +
 	"\vcontrol_jws\x18\x06 \x01(\tR\n" +
 	"controlJws\x12%\n" +
 	"\x0ereservation_id\x18\a \x01(\tR\rreservationId\x12-\n" +
-	"\x12fencing_generation\x18\b \x01(\x04R\x11fencingGeneration\"\xe0\x01\n" +
+	"\x12fencing_generation\x18\b \x01(\x04R\x11fencingGeneration\"\x95\x02\n" +
 	"\x1dGetSnapshotQueryStatusRequest\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12&\n" +
 	"\x0fkeeper_shard_id\x18\x02 \x01(\rR\rkeeperShardId\x12%\n" +
 	"\x0eclient_account\x18\x03 \x01(\tR\rclientAccount\x12!\n" +
 	"\fstatement_id\x18\x04 \x01(\tR\vstatementId\x12.\n" +
-	"\x13expected_input_root\x18\x05 \x01(\tR\x11expectedInputRoot\"\x92\x02\n" +
+	"\x13expected_input_root\x18\x05 \x01(\tR\x11expectedInputRoot\x123\n" +
+	"\x16expected_user_jws_hash\x18\x06 \x01(\tR\x13expectedUserJwsHash\"\x92\x02\n" +
 	"\x0fSnapshotBarrier\x12\x14\n" +
 	"\x05state\x18\x01 \x01(\tR\x05state\x12\x1e\n" +
 	"\n" +

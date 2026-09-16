@@ -3,6 +3,8 @@ package conformance
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -113,5 +115,47 @@ func TestSnapshotQueryUnknownWireFieldsRetained(t *testing.T) {
 	out.ProtoReflect().SetUnknown(nil)
 	if !proto.Equal(in, out) {
 		t.Fatal("known fields changed with an unknown field present")
+	}
+}
+
+// The input root deliberately excludes the original JWS. Distinct compact
+// signatures for the same binding must stay distinguishable after wire lookup.
+// The C3/C4 handler owns required-field and committed-signature comparison.
+func TestSnapshotQueryStatusOriginalSignatureHashRoundTrip(t *testing.T) {
+	tokens := []string{
+		"eyJhbGciOiJFUzI1NksifQ.eyJiaW5kaW5nIjoic2FtZSJ9.c2lnbmF0dXJlLTE",
+		"eyJhbGciOiJFUzI1NksifQ.eyJiaW5kaW5nIjoic2FtZSJ9.c2lnbmF0dXJlLTI",
+	}
+	var encoded [][]byte
+	for _, token := range tokens {
+		digest := sha256.Sum256([]byte(token))
+		hash := fmt.Sprintf("0x%x", digest)
+		in := &pb.GetSnapshotQueryStatusRequest{
+			NetworkId: "network", KeeperShardId: 7, ClientAccount: "account",
+			StatementId: "account:5:nonce", ExpectedInputRoot: "same-input-root",
+			ExpectedUserJwsHash: hash,
+		}
+		fd := in.ProtoReflect().Descriptor().Fields().ByName("expected_user_jws_hash")
+		if fd == nil || fd.Number() != 6 || fd.Kind() != protoreflect.StringKind {
+			t.Fatalf("original signature hash allocation changed: %v", fd)
+		}
+		raw, err := proto.Marshal(in)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if bytes.Contains(raw, []byte(token)) {
+			t.Fatal("lookup exposed the full compact token")
+		}
+		out := &pb.GetSnapshotQueryStatusRequest{}
+		if err := proto.Unmarshal(raw, out); err != nil {
+			t.Fatal(err)
+		}
+		if !proto.Equal(in, out) || out.GetExpectedUserJwsHash() != hash {
+			t.Fatalf("original signature identity changed: %v", out)
+		}
+		encoded = append(encoded, raw)
+	}
+	if bytes.Equal(encoded[0], encoded[1]) {
+		t.Fatal("distinct original signatures collapsed to the same lookup")
 	}
 }

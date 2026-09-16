@@ -549,6 +549,12 @@ message GetSnapshotQueryStatusRequest {
   string client_account = 3;
   string statement_id = 4;
   string expected_input_root = 5;
+  // replay.DigestString (plain SHA-256) of the exact original compact JWS
+  // bytes; never normalize or re-sign the token and never send it in this lookup.
+  // The new-lane handler must require this hash and compare it to the committed
+  // original JWS before returning accepted status. A mismatch is a conflict/refusal,
+  // never found=false or success for an older differently signed submission.
+  string expected_user_jws_hash = 6;
 }
 
 // Durable barrier state: idle, draining, granted, consumed, or resolving.

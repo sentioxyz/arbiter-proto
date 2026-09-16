@@ -31,7 +31,7 @@ var snapshotQueryFields = map[string]string{
 	"AcquireSnapshotQueryRequest":         "network_id:string keeper_shard_id:uint32 client_account:string statement_id:string request_id:string control_jws:string",
 	"GetSnapshotQueryReservationRequest":  "network_id:string keeper_shard_id:uint32 client_account:string statement_id:string request_id:string control_jws:string reservation_id:string fencing_generation:uint64",
 	"ReleaseSnapshotQueryRequest":         "network_id:string keeper_shard_id:uint32 client_account:string statement_id:string request_id:string control_jws:string reservation_id:string fencing_generation:uint64",
-	"GetSnapshotQueryStatusRequest":       "network_id:string keeper_shard_id:uint32 client_account:string statement_id:string expected_input_root:string",
+	"GetSnapshotQueryStatusRequest":       "network_id:string keeper_shard_id:uint32 client_account:string statement_id:string expected_input_root:string expected_user_jws_hash:string",
 	"SnapshotBarrier":                     "state:string generation:uint64 request_id:string client_account:string statement_id:string reservation:SnapshotQueryReservation block_seq:uint64",
 	"SnapshotArtifactReadySubmission":     "record:SnapshotArtifactReady signature:string",
 	"GetPublishedSnapshotRequest":         "network_id:string keeper_shard_id:uint32 snapshot_id:string",
