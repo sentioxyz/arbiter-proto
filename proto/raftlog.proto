@@ -18,6 +18,7 @@ package arbiter;
 option go_package = "github.com/sentioxyz/arbiter-proto/gen/pb;pb";
 
 import "arbiter.proto";
+import "consensus.proto";
 import "replay.proto";
 
 // SubmitStatementCmd → Sequenced. Deterministic admission in Apply: verify
@@ -160,5 +161,6 @@ message RaftCommand {
     RegisterNodeCmd register_node = 15;
     MarkActiveCmd mark_active = 16;
     EvictNodeCmd evict_node = 17;
+    UpdateConsensusParamsCmd update_consensus_params = 18;
   }
 }
