@@ -1568,10 +1568,17 @@ type PromotionAck struct {
 	Parts                   []*SafePartMapping `protobuf:"bytes,6,rep,name=parts,proto3" json:"parts,omitempty"`
 	// applied=false signals a dropped shadow (base CAS failed); detail says
 	// why. The Arbiter rebases and re-issues (§8.3).
-	Applied       bool   `protobuf:"varint,7,opt,name=applied,proto3" json:"applied,omitempty"`
-	Detail        string `protobuf:"bytes,8,opt,name=detail,proto3" json:"detail,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Applied bool   `protobuf:"varint,7,opt,name=applied,proto3" json:"applied,omitempty"`
+	Detail  string `protobuf:"bytes,8,opt,name=detail,proto3" json:"detail,omitempty"`
+	// Complete active inventory of this safe partition after REPLACE, including
+	// previously-safe parts whose physical names/hashes may have changed.
+	// `parts` remains the candidate-only mapping. The FSM requires this list to
+	// cover exactly its committed safe parts plus those candidates, keyed by
+	// row LtHash, before replacing physical metadata. Missing inventory is only
+	// equivalent to `parts` when the partition had no previously-safe parts.
+	SafePartitionParts []*SafePartMapping `protobuf:"bytes,9,rep,name=safe_partition_parts,json=safePartitionParts,proto3" json:"safe_partition_parts,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *PromotionAck) Reset() {
@@ -1658,6 +1665,13 @@ func (x *PromotionAck) GetDetail() string {
 		return x.Detail
 	}
 	return ""
+}
+
+func (x *PromotionAck) GetSafePartitionParts() []*SafePartMapping {
+	if x != nil {
+		return x.SafePartitionParts
+	}
+	return nil
 }
 
 type CleanupAck struct {
@@ -2665,7 +2679,7 @@ const file_arbiter_proto_rawDesc = "" +
 	"\x0fSafePartMapping\x12&\n" +
 	"\x0fpart_row_lthash\x18\x01 \x01(\tR\rpartRowLthash\x12$\n" +
 	"\x0esafe_part_name\x18\x02 \x01(\tR\fsafePartName\x12$\n" +
-	"\x0epart_phys_hash\x18\x03 \x01(\tR\fpartPhysHash\"\xa8\x02\n" +
+	"\x0epart_phys_hash\x18\x03 \x01(\tR\fpartPhysHash\"\xf4\x02\n" +
 	"\fPromotionAck\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12#\n" +
 	"\rpromotion_seq\x18\x02 \x01(\x04R\fpromotionSeq\x12\x19\n" +
@@ -2674,7 +2688,8 @@ const file_arbiter_proto_rawDesc = "" +
 	"\x19post_partition_commitment\x18\x05 \x01(\tR\x17postPartitionCommitment\x12.\n" +
 	"\x05parts\x18\x06 \x03(\v2\x18.arbiter.SafePartMappingR\x05parts\x12\x18\n" +
 	"\aapplied\x18\a \x01(\bR\aapplied\x12\x16\n" +
-	"\x06detail\x18\b \x01(\tR\x06detail\"\x88\x01\n" +
+	"\x06detail\x18\b \x01(\tR\x06detail\x12J\n" +
+	"\x14safe_partition_parts\x18\t \x03(\v2\x18.arbiter.SafePartMappingR\x12safePartitionParts\"\x88\x01\n" +
 	"\n" +
 	"CleanupAck\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12#\n" +
@@ -2858,45 +2873,46 @@ var file_arbiter_proto_depIdxs = []int32{
 	15, // 12: arbiter.PromotionCommand.promote:type_name -> arbiter.PromoteSafePartition
 	16, // 13: arbiter.PromotionCommand.cleanup:type_name -> arbiter.UnsafeCleanup
 	19, // 14: arbiter.PromotionAck.parts:type_name -> arbiter.SafePartMapping
-	22, // 15: arbiter.L3BlockHeader.l2_anchor_ref:type_name -> arbiter.AnchorRef
-	27, // 16: arbiter.L3Block.header:type_name -> arbiter.L3BlockHeader
-	4,  // 17: arbiter.L3Block.statements:type_name -> arbiter.StatementEnvelopeV2
-	2,  // 18: arbiter.NodeRegistration.roles:type_name -> arbiter.NodeRole
-	4,  // 19: arbiter.ArbiterIngress.SubmitStatement:input_type -> arbiter.StatementEnvelopeV2
-	34, // 20: arbiter.ArbiterIngress.GetStatementStatus:input_type -> arbiter.GetStatementStatusRequest
-	8,  // 21: arbiter.SourceClaims.RegisterResultClaim:input_type -> arbiter.RCRecord
-	9,  // 22: arbiter.VerifierGateway.SubscribeVerifierDispatch:input_type -> arbiter.VerifierHello
-	37, // 23: arbiter.VerifierGateway.SubmitAttestation:input_type -> arbiter.ReplayAttestation
-	13, // 24: arbiter.VerifierGateway.SubmitByteSideScan:input_type -> arbiter.ByteSideScanMsg
-	18, // 25: arbiter.PromotionGateway.SubscribePromotions:input_type -> arbiter.SNodeHello
-	20, // 26: arbiter.PromotionGateway.AckPromotion:input_type -> arbiter.PromotionAck
-	21, // 27: arbiter.PromotionGateway.AckCleanup:input_type -> arbiter.CleanupAck
-	23, // 28: arbiter.SafeState.GetSafeWatermark:input_type -> arbiter.GetSafeWatermarkRequest
-	25, // 29: arbiter.SafeState.GetManifest:input_type -> arbiter.SnapshotRef
-	26, // 30: arbiter.SafeState.GetManifestByBlock:input_type -> arbiter.BlockRef
-	28, // 31: arbiter.SafeState.GetL3Block:input_type -> arbiter.L3BlockRef
-	30, // 32: arbiter.Membership.RegisterNode:input_type -> arbiter.NodeRegistration
-	31, // 33: arbiter.Membership.MarkActive:input_type -> arbiter.NodeRef
-	5,  // 34: arbiter.ArbiterIngress.SubmitStatement:output_type -> arbiter.SequencedAck
-	35, // 35: arbiter.ArbiterIngress.GetStatementStatus:output_type -> arbiter.StatementStatus
-	32, // 36: arbiter.SourceClaims.RegisterResultClaim:output_type -> arbiter.Ack
-	10, // 37: arbiter.VerifierGateway.SubscribeVerifierDispatch:output_type -> arbiter.VerifierDispatch
-	32, // 38: arbiter.VerifierGateway.SubmitAttestation:output_type -> arbiter.Ack
-	32, // 39: arbiter.VerifierGateway.SubmitByteSideScan:output_type -> arbiter.Ack
-	17, // 40: arbiter.PromotionGateway.SubscribePromotions:output_type -> arbiter.PromotionCommand
-	32, // 41: arbiter.PromotionGateway.AckPromotion:output_type -> arbiter.Ack
-	32, // 42: arbiter.PromotionGateway.AckCleanup:output_type -> arbiter.Ack
-	24, // 43: arbiter.SafeState.GetSafeWatermark:output_type -> arbiter.SafeWatermark
-	38, // 44: arbiter.SafeState.GetManifest:output_type -> arbiter.SafeSnapshotManifest
-	38, // 45: arbiter.SafeState.GetManifestByBlock:output_type -> arbiter.SafeSnapshotManifest
-	29, // 46: arbiter.SafeState.GetL3Block:output_type -> arbiter.L3Block
-	32, // 47: arbiter.Membership.RegisterNode:output_type -> arbiter.Ack
-	32, // 48: arbiter.Membership.MarkActive:output_type -> arbiter.Ack
-	34, // [34:49] is the sub-list for method output_type
-	19, // [19:34] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	19, // 15: arbiter.PromotionAck.safe_partition_parts:type_name -> arbiter.SafePartMapping
+	22, // 16: arbiter.L3BlockHeader.l2_anchor_ref:type_name -> arbiter.AnchorRef
+	27, // 17: arbiter.L3Block.header:type_name -> arbiter.L3BlockHeader
+	4,  // 18: arbiter.L3Block.statements:type_name -> arbiter.StatementEnvelopeV2
+	2,  // 19: arbiter.NodeRegistration.roles:type_name -> arbiter.NodeRole
+	4,  // 20: arbiter.ArbiterIngress.SubmitStatement:input_type -> arbiter.StatementEnvelopeV2
+	34, // 21: arbiter.ArbiterIngress.GetStatementStatus:input_type -> arbiter.GetStatementStatusRequest
+	8,  // 22: arbiter.SourceClaims.RegisterResultClaim:input_type -> arbiter.RCRecord
+	9,  // 23: arbiter.VerifierGateway.SubscribeVerifierDispatch:input_type -> arbiter.VerifierHello
+	37, // 24: arbiter.VerifierGateway.SubmitAttestation:input_type -> arbiter.ReplayAttestation
+	13, // 25: arbiter.VerifierGateway.SubmitByteSideScan:input_type -> arbiter.ByteSideScanMsg
+	18, // 26: arbiter.PromotionGateway.SubscribePromotions:input_type -> arbiter.SNodeHello
+	20, // 27: arbiter.PromotionGateway.AckPromotion:input_type -> arbiter.PromotionAck
+	21, // 28: arbiter.PromotionGateway.AckCleanup:input_type -> arbiter.CleanupAck
+	23, // 29: arbiter.SafeState.GetSafeWatermark:input_type -> arbiter.GetSafeWatermarkRequest
+	25, // 30: arbiter.SafeState.GetManifest:input_type -> arbiter.SnapshotRef
+	26, // 31: arbiter.SafeState.GetManifestByBlock:input_type -> arbiter.BlockRef
+	28, // 32: arbiter.SafeState.GetL3Block:input_type -> arbiter.L3BlockRef
+	30, // 33: arbiter.Membership.RegisterNode:input_type -> arbiter.NodeRegistration
+	31, // 34: arbiter.Membership.MarkActive:input_type -> arbiter.NodeRef
+	5,  // 35: arbiter.ArbiterIngress.SubmitStatement:output_type -> arbiter.SequencedAck
+	35, // 36: arbiter.ArbiterIngress.GetStatementStatus:output_type -> arbiter.StatementStatus
+	32, // 37: arbiter.SourceClaims.RegisterResultClaim:output_type -> arbiter.Ack
+	10, // 38: arbiter.VerifierGateway.SubscribeVerifierDispatch:output_type -> arbiter.VerifierDispatch
+	32, // 39: arbiter.VerifierGateway.SubmitAttestation:output_type -> arbiter.Ack
+	32, // 40: arbiter.VerifierGateway.SubmitByteSideScan:output_type -> arbiter.Ack
+	17, // 41: arbiter.PromotionGateway.SubscribePromotions:output_type -> arbiter.PromotionCommand
+	32, // 42: arbiter.PromotionGateway.AckPromotion:output_type -> arbiter.Ack
+	32, // 43: arbiter.PromotionGateway.AckCleanup:output_type -> arbiter.Ack
+	24, // 44: arbiter.SafeState.GetSafeWatermark:output_type -> arbiter.SafeWatermark
+	38, // 45: arbiter.SafeState.GetManifest:output_type -> arbiter.SafeSnapshotManifest
+	38, // 46: arbiter.SafeState.GetManifestByBlock:output_type -> arbiter.SafeSnapshotManifest
+	29, // 47: arbiter.SafeState.GetL3Block:output_type -> arbiter.L3Block
+	32, // 48: arbiter.Membership.RegisterNode:output_type -> arbiter.Ack
+	32, // 49: arbiter.Membership.MarkActive:output_type -> arbiter.Ack
+	35, // [35:50] is the sub-list for method output_type
+	20, // [20:35] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_arbiter_proto_init() }
