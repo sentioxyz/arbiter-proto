@@ -10,6 +10,7 @@ Design source of truth: housegate `docs/superpowers/specs/2026-06-30-sentio-arbi
 |---|---|
 | `proto/replay.proto` | Wire mirror of housegate `pkg/replay` reused types. Field names are frozen against those types' JSON tags — a conformance test in the `arbiter` repo enforces parity. |
 | `proto/arbiter.proto` | Arbiter domain messages + the six gRPC services. |
+| `proto/consensus.proto` | Signed consensus-parameter transitions and `ConsensusAdmin` capability/read/update RPCs. Design: `docs/superpowers/specs/2026-09-17-consensus-parameter-updates.md`. |
 | `proto/da.proto` | Payload store / DA layer: `PayloadStore` (limits, inline+chunked put with ingest lease, batch interleaved fetch, stat) + `PayloadLifecycle` (add-only pins, release-as-permission). Design: `docs/superpowers/specs/2026-07-14-da-payload-store-api-design.md`. |
 | `proto/raftlog.proto` | The replicated-FSM command alphabet (Raft log entry payloads). |
 | `gen/pb` | Generated Go (committed). |
@@ -36,4 +37,3 @@ The version is derived from the last `vX.Y.Z` tag:
 | `Z` | +1 on every further cut within the same UTC day |
 
 The last hand-cut tag is `v0.2.0`, so the first workflow run yields `v0.3.0`. The `version` input overrides the whole calculation; `dry_run` runs the checks and prints the version without tagging.
-
