@@ -63,3 +63,68 @@ func TestArtifactDispositionControlService(t *testing.T) {
 		t.Fatal("tag 28 did not round-trip")
 	}
 }
+
+func TestArtifactDispositionGrantReservationActionContract(t *testing.T) {
+	action := (&pb.ArtifactDispositionActionV1{}).ProtoReflect().Descriptor()
+	for name, number := range map[protoreflect.Name]protoreflect.FieldNumber{
+		"bind_policy": 1, "register_candidate": 2, "record_ready": 3,
+		"publish_candidate": 4, "cancel_candidate": 5, "begin_retirement": 6,
+		"finish_retirement": 7, "admit_use": 8, "close_use": 9,
+		"open_challenge": 10, "resolve_obligation": 11,
+	} {
+		field := action.Fields().ByName(name)
+		if field == nil || field.Number() != number {
+			t.Fatalf("existing disposition action %s moved", name)
+		}
+	}
+
+	grant := (&pb.ArtifactDispositionGrantReservationV1{}).ProtoReflect().Descriptor()
+	fields := grant.Fields()
+	for _, want := range []struct {
+		name   protoreflect.Name
+		number protoreflect.FieldNumber
+	}{
+		{name: "client_account", number: 1},
+		{name: "statement_id", number: 2},
+		{name: "control_binding_digest", number: 3},
+	} {
+		field := fields.ByName(want.name)
+		if field == nil || field.Number() != want.number || field.Kind() != protoreflect.StringKind {
+			t.Fatalf("grant reservation field %s does not preserve its wire contract", want.name)
+		}
+	}
+	if fields.Len() != 3 {
+		t.Fatalf("grant reservation has %d caller fields, want 3", fields.Len())
+	}
+	for _, forbidden := range []protoreflect.Name{
+		"reservation_id", "fencing_generation", "pin", "executor_profile_id", "query_profile_id",
+		"activation_id", "block_seq", "assignment", "obligation_seq", "capacity_allowance_ordinal",
+		"allocator_ordinal", "barrier_state",
+	} {
+		if fields.ByName(forbidden) != nil {
+			t.Fatalf("server-owned grant decision %s must not be caller supplied", forbidden)
+		}
+	}
+
+	variant := action.Fields().ByName("grant_reservation")
+	if variant == nil || variant.Number() != 12 || variant.Kind() != protoreflect.MessageKind || string(variant.Message().Name()) != "ArtifactDispositionGrantReservationV1" {
+		t.Fatalf("grant reservation action descriptor = %v", variant)
+	}
+
+	in := &pb.ArtifactDispositionActionV1{Action: &pb.ArtifactDispositionActionV1_GrantReservation{
+		GrantReservation: &pb.ArtifactDispositionGrantReservationV1{
+			ClientAccount: "0xabc", StatementId: "statement", ControlBindingDigest: "0xdef",
+		},
+	}}
+	raw, err := proto.Marshal(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out pb.ArtifactDispositionActionV1
+	if err := proto.Unmarshal(raw, &out); err != nil {
+		t.Fatal(err)
+	}
+	if !proto.Equal(in, &out) || out.GetGrantReservation() == nil {
+		t.Fatalf("grant reservation action did not round-trip: %v", out.Action)
+	}
+}
