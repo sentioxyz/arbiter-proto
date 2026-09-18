@@ -18,6 +18,7 @@ package arbiter;
 option go_package = "github.com/sentioxyz/arbiter-proto/gen/pb;pb";
 
 import "arbiter.proto";
+import "artifact_disposition.proto";
 import "consensus.proto";
 import "replay.proto";
 
@@ -172,6 +173,7 @@ message RaftCommand {
     RecordSnapshotQueryAttestationCmd record_snapshot_query_attestation = 25;
     PublishExecutorProfileTransitionCmd publish_executor_profile_transition = 26;
     RecordSnapshotArtifactReadyCmd record_snapshot_artifact_ready = 27;
+    ArtifactDispositionCmd artifact_disposition = 28;
   }
 }
 
