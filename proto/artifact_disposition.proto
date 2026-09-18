@@ -1,0 +1,303 @@
+syntax = "proto3";
+
+// artifact_disposition — C1 default-disabled artifact-disposition control
+// surface (signed INSERT SELECT artifact-lifecycle addendum §7–§8).
+package arbiter;
+option go_package = "github.com/sentioxyz/arbiter-proto/gen/pb;pb";
+
+import "arbiter.proto";
+import "replay.proto";
+
+message ArtifactDispositionPolicyV1 {
+  string policy_id = 1;
+  string kind = 2;
+  repeated string administrator_addresses = 3;
+}
+
+message ArtifactDispositionOriginV1 {
+  string kind = 1;
+  string parent_snapshot_id = 2;
+  uint64 safe_block_seq = 3;
+  string activation_id = 4;
+  string transition_root = 5;
+  string client_account = 6;
+  string statement_id = 7;
+  string request_id = 8;
+  string reservation_id = 9;
+  uint64 fencing_generation = 10;
+  uint64 block_seq = 11;
+  uint64 statement_seq = 12;
+  string statement_root = 13;
+  string input_root = 14;
+  string user_jws_hash = 15;
+  string execution_outcome = 16;
+  uint64 candidate_seq = 17;
+}
+
+message ArtifactDispositionUseV1 {
+  string reference_id = 1;
+  SnapshotPin pin = 2;
+  string principal_id = 3;
+  ArtifactDispositionOriginV1 origin = 4;
+  uint64 continuation_obligation_seq = 5;
+}
+
+message ArtifactDispositionBindPolicyV1 {
+  ArtifactDispositionPolicyV1 policy = 1;
+}
+
+message ArtifactDispositionRegisterCandidateV1 {
+  SnapshotPin pin = 1;
+  SafeSnapshotManifest manifest = 2;
+  string publisher_id = 3;
+  string retention_policy_id = 4;
+  string publication_reference_id = 5;
+  ArtifactDispositionOriginV1 origin = 6;
+}
+
+message ArtifactDispositionRecordReadyV1 {
+  uint64 candidate_seq = 1;
+  SnapshotArtifactReadySubmission submission = 2;
+}
+
+message ArtifactDispositionPublishCandidateV1 {
+  uint64 candidate_seq = 1;
+  SafeSnapshotManifest manifest = 2;
+  ExecutorProfileTransition transition = 3;
+  repeated ExecutorProfileTransitionReceipt transition_receipts = 4;
+}
+
+message ArtifactDispositionCancelCandidateV1 {
+  uint64 candidate_seq = 1;
+  string reason_code = 2;
+}
+
+message ArtifactDispositionRetirementTargetV1 {
+  SnapshotPin pin = 1;
+  string retention_policy_id = 2;
+}
+
+message ArtifactDispositionAdmitUseV1 {
+  ArtifactDispositionUseV1 use = 1;
+}
+
+message ArtifactDispositionCloseUseV1 {
+  ArtifactDispositionUseV1 use = 1;
+  uint64 expected_registry_revision = 2;
+}
+
+message ArtifactDispositionOpenChallengeV1 {
+  SnapshotPin pin = 1;
+  ArtifactDispositionOriginV1 origin = 2;
+  SnapshotQueryAttestation attestation = 3;
+  ArtifactDispositionUseV1 replay_use = 4;
+}
+
+message ArtifactDispositionResolveObligationV1 {
+  uint64 obligation_seq = 1;
+}
+
+message ArtifactDispositionActionV1 {
+  oneof action {
+    ArtifactDispositionBindPolicyV1 bind_policy = 1;
+    ArtifactDispositionRegisterCandidateV1 register_candidate = 2;
+    ArtifactDispositionRecordReadyV1 record_ready = 3;
+    ArtifactDispositionPublishCandidateV1 publish_candidate = 4;
+    ArtifactDispositionCancelCandidateV1 cancel_candidate = 5;
+    ArtifactDispositionRetirementTargetV1 begin_retirement = 6;
+    ArtifactDispositionRetirementTargetV1 finish_retirement = 7;
+    ArtifactDispositionAdmitUseV1 admit_use = 8;
+    ArtifactDispositionCloseUseV1 close_use = 9;
+    ArtifactDispositionOpenChallengeV1 open_challenge = 10;
+    ArtifactDispositionResolveObligationV1 resolve_obligation = 11;
+  }
+}
+
+message ArtifactDispositionCommandV1 {
+  uint32 version = 1;
+  string network_id = 2;
+  uint32 keeper_shard_id = 3;
+  string actor_id = 4;
+  string request_id = 5;
+  uint64 expected_revision = 6;
+  ArtifactDispositionActionV1 action = 7;
+}
+
+message ArtifactDispositionRegistryObservationV1 {
+  string reference_id = 1;
+  SnapshotPin pin = 2;
+  string principal_id = 3;
+  uint64 registry_revision = 4;
+  string observation = 5;
+  string record_digest = 6;
+}
+
+message ArtifactDispositionSourceObservationV1 {
+  uint64 obligation_seq = 1;
+  string source_kind = 2;
+  uint64 source_index = 3;
+  ArtifactDispositionOriginV1 source_identity = 4;
+  repeated uint64 replacement_obligation_seqs = 5;
+}
+
+message ArtifactDispositionValidationV1 {
+  uint32 version = 1;
+  string command_root = 2;
+  string actor_id = 3;
+  string actor_role = 4;
+  string administrator_jws_hash = 5;
+  repeated ArtifactDispositionRegistryObservationV1 registry_observations = 6;
+  repeated ArtifactDispositionSourceObservationV1 source_observations = 7;
+  uint64 capacity_allowance_ordinal = 8;
+}
+
+message ApplyArtifactDispositionRequest {
+  ArtifactDispositionCommandV1 command = 1;
+  string administrator_jws = 2;
+  string reply_nonce = 3;
+}
+
+message ArtifactDispositionCmd {
+  ArtifactDispositionCommandV1 command = 1;
+  string administrator_jws = 2;
+  ArtifactDispositionValidationV1 validation = 3;
+}
+
+message ArtifactDispositionRequestKeyV1 {
+  string actor_id = 1;
+  string request_id = 2;
+  string command_root = 3;
+}
+
+message ArtifactDispositionObligationOwnerV1 {
+  SnapshotPin pin = 1;
+  string kind = 2;
+  ArtifactDispositionOriginV1 origin = 3;
+}
+
+message ArtifactDispositionSelectorV1 {
+  oneof selector {
+    string policy_id = 1;
+    uint64 candidate_seq = 2;
+    ArtifactDispositionRetirementTargetV1 retirement = 3;
+    ArtifactDispositionUseV1 use = 4;
+    uint64 obligation_seq = 5;
+    ArtifactDispositionRequestKeyV1 operation = 6;
+    ArtifactDispositionObligationOwnerV1 obligation_owner = 7;
+  }
+}
+
+message GetArtifactDispositionRequest {
+  uint32 version = 1;
+  string network_id = 2;
+  uint32 keeper_shard_id = 3;
+  string reader_id = 4;
+  ArtifactDispositionSelectorV1 selector = 5;
+  string reply_nonce = 6;
+}
+
+message ArtifactDispositionPolicyRecordV1 {
+  ArtifactDispositionPolicyV1 policy = 1;
+  uint64 revision = 2;
+  uint64 commit_index = 3;
+}
+
+message ArtifactDispositionCandidateRecordV1 {
+  uint64 candidate_seq = 1;
+  SnapshotPin pin = 2;
+  string publisher_id = 3;
+  string retention_policy_id = 4;
+  string publication_reference_id = 5;
+  ArtifactDispositionOriginV1 origin = 6;
+  string state = 7;
+  uint64 revision = 8;
+  SnapshotArtifactReadySubmission ready = 9;
+  uint64 obligation_seq = 10;
+  uint64 registered_index = 11;
+  uint64 terminal_index = 12;
+}
+
+message ArtifactDispositionRetirementRecordV1 {
+  SnapshotPin pin = 1;
+  string retention_policy_id = 2;
+  string state = 3;
+  uint64 revision = 4;
+  uint64 published_candidate_seq = 5;
+  uint64 cut_index = 6;
+  uint64 retired_index = 7;
+  repeated string active_use_ids = 8;
+  repeated uint64 unresolved_obligation_seqs = 9;
+}
+
+message ArtifactDispositionUseRecordV1 {
+  ArtifactDispositionUseV1 use = 1;
+  string state = 2;
+  uint64 revision = 3;
+  uint64 admitted_index = 4;
+  uint64 closed_index = 5;
+  uint64 registry_closed_revision = 6;
+  string closure_command_root = 7;
+}
+
+message ArtifactDispositionObligationRecordV1 {
+  uint64 obligation_seq = 1;
+  SnapshotPin pin = 2;
+  string kind = 3;
+  ArtifactDispositionOriginV1 origin = 4;
+  uint64 parent_obligation_seq = 5;
+  string state = 6;
+  uint64 revision = 7;
+  uint64 admitted_index = 8;
+  uint64 resolved_index = 9;
+  repeated uint64 replacement_obligation_seqs = 10;
+  repeated ArtifactDispositionSourceObservationV1 resolution_source_observations = 11;
+}
+
+message ArtifactDispositionResultV1 {
+  string actor_id = 1;
+  string request_id = 2;
+  string command_root = 3;
+  string code = 4;
+  uint64 commit_index = 5;
+  ArtifactDispositionSelectorV1 target = 6;
+  uint64 target_revision = 7;
+}
+
+message ArtifactDispositionRecordV1 {
+  oneof record {
+    ArtifactDispositionPolicyRecordV1 policy = 1;
+    ArtifactDispositionCandidateRecordV1 candidate = 2;
+    ArtifactDispositionRetirementRecordV1 retirement = 3;
+    ArtifactDispositionUseRecordV1 use = 4;
+    ArtifactDispositionObligationRecordV1 obligation = 5;
+  }
+}
+
+message ArtifactDispositionReplyBodyV1 {
+  uint32 version = 1;
+  string network_id = 2;
+  uint32 keeper_shard_id = 3;
+  string reader_id = 4;
+  string reply_nonce = 5;
+  ArtifactDispositionSelectorV1 selector = 6;
+  bool found = 7;
+  uint64 read_index = 8;
+  ArtifactDispositionResultV1 operation_result = 9;
+  ArtifactDispositionRecordV1 record = 10;
+}
+
+message ArtifactDispositionReadProofV1 {
+  uint32 version = 1;
+  string reply_root = 2;
+  ArtifactDispositionReplyBodyV1 body = 3;
+}
+
+message ArtifactDispositionReply {
+  ArtifactDispositionReplyBodyV1 body = 1;
+  bytes proof = 2;
+}
+
+service ArtifactDispositionControl {
+  rpc ApplyArtifactDisposition(ApplyArtifactDispositionRequest) returns (ArtifactDispositionReply);
+  rpc GetArtifactDisposition(GetArtifactDispositionRequest) returns (ArtifactDispositionReply);
+}
