@@ -35,8 +35,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ArbiterIngress_SubmitStatement_FullMethodName    = "/arbiter.ArbiterIngress/SubmitStatement"
-	ArbiterIngress_GetStatementStatus_FullMethodName = "/arbiter.ArbiterIngress/GetStatementStatus"
+	ArbiterIngress_SubmitStatement_FullMethodName             = "/arbiter.ArbiterIngress/SubmitStatement"
+	ArbiterIngress_GetStatementStatus_FullMethodName          = "/arbiter.ArbiterIngress/GetStatementStatus"
+	ArbiterIngress_AcquireSnapshotQuery_FullMethodName        = "/arbiter.ArbiterIngress/AcquireSnapshotQuery"
+	ArbiterIngress_GetSnapshotQueryReservation_FullMethodName = "/arbiter.ArbiterIngress/GetSnapshotQueryReservation"
+	ArbiterIngress_ReleaseSnapshotQuery_FullMethodName        = "/arbiter.ArbiterIngress/ReleaseSnapshotQuery"
+	ArbiterIngress_SubmitSnapshotQuery_FullMethodName         = "/arbiter.ArbiterIngress/SubmitSnapshotQuery"
+	ArbiterIngress_GetSnapshotQueryStatus_FullMethodName      = "/arbiter.ArbiterIngress/GetSnapshotQueryStatus"
 )
 
 // ArbiterIngressClient is the client API for ArbiterIngress service.
@@ -49,6 +54,12 @@ type ArbiterIngressClient interface {
 	SubmitStatement(ctx context.Context, in *StatementEnvelopeV2, opts ...grpc.CallOption) (*SequencedAck, error)
 	// Read-only status probe for staged-intake convergence (housegate P1e).
 	GetStatementStatus(ctx context.Context, in *GetStatementStatusRequest, opts ...grpc.CallOption) (*StatementStatus, error)
+	// New v3 lane; old SubmitStatement continues admitting only its old kinds.
+	AcquireSnapshotQuery(ctx context.Context, in *AcquireSnapshotQueryRequest, opts ...grpc.CallOption) (*SnapshotQueryReservation, error)
+	GetSnapshotQueryReservation(ctx context.Context, in *GetSnapshotQueryReservationRequest, opts ...grpc.CallOption) (*SnapshotQueryReservationStatus, error)
+	ReleaseSnapshotQuery(ctx context.Context, in *ReleaseSnapshotQueryRequest, opts ...grpc.CallOption) (*SnapshotQueryReservationStatus, error)
+	SubmitSnapshotQuery(ctx context.Context, in *SnapshotQueryEnvelope, opts ...grpc.CallOption) (*SnapshotQuerySubmitResult, error)
+	GetSnapshotQueryStatus(ctx context.Context, in *GetSnapshotQueryStatusRequest, opts ...grpc.CallOption) (*SnapshotQueryStatus, error)
 }
 
 type arbiterIngressClient struct {
@@ -79,6 +90,56 @@ func (c *arbiterIngressClient) GetStatementStatus(ctx context.Context, in *GetSt
 	return out, nil
 }
 
+func (c *arbiterIngressClient) AcquireSnapshotQuery(ctx context.Context, in *AcquireSnapshotQueryRequest, opts ...grpc.CallOption) (*SnapshotQueryReservation, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SnapshotQueryReservation)
+	err := c.cc.Invoke(ctx, ArbiterIngress_AcquireSnapshotQuery_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *arbiterIngressClient) GetSnapshotQueryReservation(ctx context.Context, in *GetSnapshotQueryReservationRequest, opts ...grpc.CallOption) (*SnapshotQueryReservationStatus, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SnapshotQueryReservationStatus)
+	err := c.cc.Invoke(ctx, ArbiterIngress_GetSnapshotQueryReservation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *arbiterIngressClient) ReleaseSnapshotQuery(ctx context.Context, in *ReleaseSnapshotQueryRequest, opts ...grpc.CallOption) (*SnapshotQueryReservationStatus, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SnapshotQueryReservationStatus)
+	err := c.cc.Invoke(ctx, ArbiterIngress_ReleaseSnapshotQuery_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *arbiterIngressClient) SubmitSnapshotQuery(ctx context.Context, in *SnapshotQueryEnvelope, opts ...grpc.CallOption) (*SnapshotQuerySubmitResult, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SnapshotQuerySubmitResult)
+	err := c.cc.Invoke(ctx, ArbiterIngress_SubmitSnapshotQuery_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *arbiterIngressClient) GetSnapshotQueryStatus(ctx context.Context, in *GetSnapshotQueryStatusRequest, opts ...grpc.CallOption) (*SnapshotQueryStatus, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SnapshotQueryStatus)
+	err := c.cc.Invoke(ctx, ArbiterIngress_GetSnapshotQueryStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ArbiterIngressServer is the server API for ArbiterIngress service.
 // All implementations must embed UnimplementedArbiterIngressServer
 // for forward compatibility.
@@ -89,6 +150,12 @@ type ArbiterIngressServer interface {
 	SubmitStatement(context.Context, *StatementEnvelopeV2) (*SequencedAck, error)
 	// Read-only status probe for staged-intake convergence (housegate P1e).
 	GetStatementStatus(context.Context, *GetStatementStatusRequest) (*StatementStatus, error)
+	// New v3 lane; old SubmitStatement continues admitting only its old kinds.
+	AcquireSnapshotQuery(context.Context, *AcquireSnapshotQueryRequest) (*SnapshotQueryReservation, error)
+	GetSnapshotQueryReservation(context.Context, *GetSnapshotQueryReservationRequest) (*SnapshotQueryReservationStatus, error)
+	ReleaseSnapshotQuery(context.Context, *ReleaseSnapshotQueryRequest) (*SnapshotQueryReservationStatus, error)
+	SubmitSnapshotQuery(context.Context, *SnapshotQueryEnvelope) (*SnapshotQuerySubmitResult, error)
+	GetSnapshotQueryStatus(context.Context, *GetSnapshotQueryStatusRequest) (*SnapshotQueryStatus, error)
 	mustEmbedUnimplementedArbiterIngressServer()
 }
 
@@ -104,6 +171,21 @@ func (UnimplementedArbiterIngressServer) SubmitStatement(context.Context, *State
 }
 func (UnimplementedArbiterIngressServer) GetStatementStatus(context.Context, *GetStatementStatusRequest) (*StatementStatus, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetStatementStatus not implemented")
+}
+func (UnimplementedArbiterIngressServer) AcquireSnapshotQuery(context.Context, *AcquireSnapshotQueryRequest) (*SnapshotQueryReservation, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AcquireSnapshotQuery not implemented")
+}
+func (UnimplementedArbiterIngressServer) GetSnapshotQueryReservation(context.Context, *GetSnapshotQueryReservationRequest) (*SnapshotQueryReservationStatus, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSnapshotQueryReservation not implemented")
+}
+func (UnimplementedArbiterIngressServer) ReleaseSnapshotQuery(context.Context, *ReleaseSnapshotQueryRequest) (*SnapshotQueryReservationStatus, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReleaseSnapshotQuery not implemented")
+}
+func (UnimplementedArbiterIngressServer) SubmitSnapshotQuery(context.Context, *SnapshotQueryEnvelope) (*SnapshotQuerySubmitResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SubmitSnapshotQuery not implemented")
+}
+func (UnimplementedArbiterIngressServer) GetSnapshotQueryStatus(context.Context, *GetSnapshotQueryStatusRequest) (*SnapshotQueryStatus, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSnapshotQueryStatus not implemented")
 }
 func (UnimplementedArbiterIngressServer) mustEmbedUnimplementedArbiterIngressServer() {}
 func (UnimplementedArbiterIngressServer) testEmbeddedByValue()                        {}
@@ -162,6 +244,96 @@ func _ArbiterIngress_GetStatementStatus_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ArbiterIngress_AcquireSnapshotQuery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AcquireSnapshotQueryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ArbiterIngressServer).AcquireSnapshotQuery(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ArbiterIngress_AcquireSnapshotQuery_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ArbiterIngressServer).AcquireSnapshotQuery(ctx, req.(*AcquireSnapshotQueryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ArbiterIngress_GetSnapshotQueryReservation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSnapshotQueryReservationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ArbiterIngressServer).GetSnapshotQueryReservation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ArbiterIngress_GetSnapshotQueryReservation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ArbiterIngressServer).GetSnapshotQueryReservation(ctx, req.(*GetSnapshotQueryReservationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ArbiterIngress_ReleaseSnapshotQuery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReleaseSnapshotQueryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ArbiterIngressServer).ReleaseSnapshotQuery(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ArbiterIngress_ReleaseSnapshotQuery_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ArbiterIngressServer).ReleaseSnapshotQuery(ctx, req.(*ReleaseSnapshotQueryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ArbiterIngress_SubmitSnapshotQuery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SnapshotQueryEnvelope)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ArbiterIngressServer).SubmitSnapshotQuery(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ArbiterIngress_SubmitSnapshotQuery_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ArbiterIngressServer).SubmitSnapshotQuery(ctx, req.(*SnapshotQueryEnvelope))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ArbiterIngress_GetSnapshotQueryStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSnapshotQueryStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ArbiterIngressServer).GetSnapshotQueryStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ArbiterIngress_GetSnapshotQueryStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ArbiterIngressServer).GetSnapshotQueryStatus(ctx, req.(*GetSnapshotQueryStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ArbiterIngress_ServiceDesc is the grpc.ServiceDesc for ArbiterIngress service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -177,13 +349,35 @@ var ArbiterIngress_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetStatementStatus",
 			Handler:    _ArbiterIngress_GetStatementStatus_Handler,
 		},
+		{
+			MethodName: "AcquireSnapshotQuery",
+			Handler:    _ArbiterIngress_AcquireSnapshotQuery_Handler,
+		},
+		{
+			MethodName: "GetSnapshotQueryReservation",
+			Handler:    _ArbiterIngress_GetSnapshotQueryReservation_Handler,
+		},
+		{
+			MethodName: "ReleaseSnapshotQuery",
+			Handler:    _ArbiterIngress_ReleaseSnapshotQuery_Handler,
+		},
+		{
+			MethodName: "SubmitSnapshotQuery",
+			Handler:    _ArbiterIngress_SubmitSnapshotQuery_Handler,
+		},
+		{
+			MethodName: "GetSnapshotQueryStatus",
+			Handler:    _ArbiterIngress_GetSnapshotQueryStatus_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "arbiter.proto",
 }
 
 const (
-	SourceClaims_RegisterResultClaim_FullMethodName = "/arbiter.SourceClaims/RegisterResultClaim"
+	SourceClaims_RegisterResultClaim_FullMethodName         = "/arbiter.SourceClaims/RegisterResultClaim"
+	SourceClaims_RegisterSnapshotQueryClaim_FullMethodName  = "/arbiter.SourceClaims/RegisterSnapshotQueryClaim"
+	SourceClaims_RecordSnapshotArtifactReady_FullMethodName = "/arbiter.SourceClaims/RecordSnapshotArtifactReady"
 )
 
 // SourceClaimsClient is the client API for SourceClaims service.
@@ -194,6 +388,10 @@ const (
 type SourceClaimsClient interface {
 	// Idempotency key: statement_id (same statement, same RC → same Ack).
 	RegisterResultClaim(ctx context.Context, in *RCRecord, opts ...grpc.CallOption) (*Ack, error)
+	// Requires authenticated source identity matching the assigned source.
+	RegisterSnapshotQueryClaim(ctx context.Context, in *SnapshotQueryClaim, opts ...grpc.CallOption) (*Ack, error)
+	// Requires the authenticated publisher role and a checked signature.
+	RecordSnapshotArtifactReady(ctx context.Context, in *SnapshotArtifactReadySubmission, opts ...grpc.CallOption) (*Ack, error)
 }
 
 type sourceClaimsClient struct {
@@ -214,6 +412,26 @@ func (c *sourceClaimsClient) RegisterResultClaim(ctx context.Context, in *RCReco
 	return out, nil
 }
 
+func (c *sourceClaimsClient) RegisterSnapshotQueryClaim(ctx context.Context, in *SnapshotQueryClaim, opts ...grpc.CallOption) (*Ack, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Ack)
+	err := c.cc.Invoke(ctx, SourceClaims_RegisterSnapshotQueryClaim_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sourceClaimsClient) RecordSnapshotArtifactReady(ctx context.Context, in *SnapshotArtifactReadySubmission, opts ...grpc.CallOption) (*Ack, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Ack)
+	err := c.cc.Invoke(ctx, SourceClaims_RecordSnapshotArtifactReady_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SourceClaimsServer is the server API for SourceClaims service.
 // All implementations must embed UnimplementedSourceClaimsServer
 // for forward compatibility.
@@ -222,6 +440,10 @@ func (c *sourceClaimsClient) RegisterResultClaim(ctx context.Context, in *RCReco
 type SourceClaimsServer interface {
 	// Idempotency key: statement_id (same statement, same RC → same Ack).
 	RegisterResultClaim(context.Context, *RCRecord) (*Ack, error)
+	// Requires authenticated source identity matching the assigned source.
+	RegisterSnapshotQueryClaim(context.Context, *SnapshotQueryClaim) (*Ack, error)
+	// Requires the authenticated publisher role and a checked signature.
+	RecordSnapshotArtifactReady(context.Context, *SnapshotArtifactReadySubmission) (*Ack, error)
 	mustEmbedUnimplementedSourceClaimsServer()
 }
 
@@ -234,6 +456,12 @@ type UnimplementedSourceClaimsServer struct{}
 
 func (UnimplementedSourceClaimsServer) RegisterResultClaim(context.Context, *RCRecord) (*Ack, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterResultClaim not implemented")
+}
+func (UnimplementedSourceClaimsServer) RegisterSnapshotQueryClaim(context.Context, *SnapshotQueryClaim) (*Ack, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterSnapshotQueryClaim not implemented")
+}
+func (UnimplementedSourceClaimsServer) RecordSnapshotArtifactReady(context.Context, *SnapshotArtifactReadySubmission) (*Ack, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RecordSnapshotArtifactReady not implemented")
 }
 func (UnimplementedSourceClaimsServer) mustEmbedUnimplementedSourceClaimsServer() {}
 func (UnimplementedSourceClaimsServer) testEmbeddedByValue()                      {}
@@ -274,6 +502,42 @@ func _SourceClaims_RegisterResultClaim_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SourceClaims_RegisterSnapshotQueryClaim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SnapshotQueryClaim)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SourceClaimsServer).RegisterSnapshotQueryClaim(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SourceClaims_RegisterSnapshotQueryClaim_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SourceClaimsServer).RegisterSnapshotQueryClaim(ctx, req.(*SnapshotQueryClaim))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SourceClaims_RecordSnapshotArtifactReady_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SnapshotArtifactReadySubmission)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SourceClaimsServer).RecordSnapshotArtifactReady(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SourceClaims_RecordSnapshotArtifactReady_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SourceClaimsServer).RecordSnapshotArtifactReady(ctx, req.(*SnapshotArtifactReadySubmission))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SourceClaims_ServiceDesc is the grpc.ServiceDesc for SourceClaims service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -285,15 +549,24 @@ var SourceClaims_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "RegisterResultClaim",
 			Handler:    _SourceClaims_RegisterResultClaim_Handler,
 		},
+		{
+			MethodName: "RegisterSnapshotQueryClaim",
+			Handler:    _SourceClaims_RegisterSnapshotQueryClaim_Handler,
+		},
+		{
+			MethodName: "RecordSnapshotArtifactReady",
+			Handler:    _SourceClaims_RecordSnapshotArtifactReady_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "arbiter.proto",
 }
 
 const (
-	VerifierGateway_SubscribeVerifierDispatch_FullMethodName = "/arbiter.VerifierGateway/SubscribeVerifierDispatch"
-	VerifierGateway_SubmitAttestation_FullMethodName         = "/arbiter.VerifierGateway/SubmitAttestation"
-	VerifierGateway_SubmitByteSideScan_FullMethodName        = "/arbiter.VerifierGateway/SubmitByteSideScan"
+	VerifierGateway_SubscribeVerifierDispatch_FullMethodName      = "/arbiter.VerifierGateway/SubscribeVerifierDispatch"
+	VerifierGateway_SubmitAttestation_FullMethodName              = "/arbiter.VerifierGateway/SubmitAttestation"
+	VerifierGateway_SubmitSnapshotQueryAttestation_FullMethodName = "/arbiter.VerifierGateway/SubmitSnapshotQueryAttestation"
+	VerifierGateway_SubmitByteSideScan_FullMethodName             = "/arbiter.VerifierGateway/SubmitByteSideScan"
 )
 
 // VerifierGatewayClient is the client API for VerifierGateway service.
@@ -309,6 +582,7 @@ type VerifierGatewayClient interface {
 	// Idempotency key: (replica_id, receipt.block_seq) — one vote per replica
 	// per block (§10.3).
 	SubmitAttestation(ctx context.Context, in *ReplayAttestation, opts ...grpc.CallOption) (*Ack, error)
+	SubmitSnapshotQueryAttestation(ctx context.Context, in *SnapshotQueryAttestation, opts ...grpc.CallOption) (*Ack, error)
 	// Idempotency key: (replica_id, block_seq).
 	SubmitByteSideScan(ctx context.Context, in *ByteSideScanMsg, opts ...grpc.CallOption) (*Ack, error)
 }
@@ -350,6 +624,16 @@ func (c *verifierGatewayClient) SubmitAttestation(ctx context.Context, in *Repla
 	return out, nil
 }
 
+func (c *verifierGatewayClient) SubmitSnapshotQueryAttestation(ctx context.Context, in *SnapshotQueryAttestation, opts ...grpc.CallOption) (*Ack, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Ack)
+	err := c.cc.Invoke(ctx, VerifierGateway_SubmitSnapshotQueryAttestation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *verifierGatewayClient) SubmitByteSideScan(ctx context.Context, in *ByteSideScanMsg, opts ...grpc.CallOption) (*Ack, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Ack)
@@ -373,6 +657,7 @@ type VerifierGatewayServer interface {
 	// Idempotency key: (replica_id, receipt.block_seq) — one vote per replica
 	// per block (§10.3).
 	SubmitAttestation(context.Context, *ReplayAttestation) (*Ack, error)
+	SubmitSnapshotQueryAttestation(context.Context, *SnapshotQueryAttestation) (*Ack, error)
 	// Idempotency key: (replica_id, block_seq).
 	SubmitByteSideScan(context.Context, *ByteSideScanMsg) (*Ack, error)
 	mustEmbedUnimplementedVerifierGatewayServer()
@@ -390,6 +675,9 @@ func (UnimplementedVerifierGatewayServer) SubscribeVerifierDispatch(*VerifierHel
 }
 func (UnimplementedVerifierGatewayServer) SubmitAttestation(context.Context, *ReplayAttestation) (*Ack, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SubmitAttestation not implemented")
+}
+func (UnimplementedVerifierGatewayServer) SubmitSnapshotQueryAttestation(context.Context, *SnapshotQueryAttestation) (*Ack, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SubmitSnapshotQueryAttestation not implemented")
 }
 func (UnimplementedVerifierGatewayServer) SubmitByteSideScan(context.Context, *ByteSideScanMsg) (*Ack, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SubmitByteSideScan not implemented")
@@ -444,6 +732,24 @@ func _VerifierGateway_SubmitAttestation_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _VerifierGateway_SubmitSnapshotQueryAttestation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SnapshotQueryAttestation)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VerifierGatewayServer).SubmitSnapshotQueryAttestation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VerifierGateway_SubmitSnapshotQueryAttestation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VerifierGatewayServer).SubmitSnapshotQueryAttestation(ctx, req.(*SnapshotQueryAttestation))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _VerifierGateway_SubmitByteSideScan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ByteSideScanMsg)
 	if err := dec(in); err != nil {
@@ -472,6 +778,10 @@ var VerifierGateway_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SubmitAttestation",
 			Handler:    _VerifierGateway_SubmitAttestation_Handler,
+		},
+		{
+			MethodName: "SubmitSnapshotQueryAttestation",
+			Handler:    _VerifierGateway_SubmitSnapshotQueryAttestation_Handler,
 		},
 		{
 			MethodName: "SubmitByteSideScan",
@@ -677,10 +987,12 @@ var PromotionGateway_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	SafeState_GetSafeWatermark_FullMethodName   = "/arbiter.SafeState/GetSafeWatermark"
-	SafeState_GetManifest_FullMethodName        = "/arbiter.SafeState/GetManifest"
-	SafeState_GetManifestByBlock_FullMethodName = "/arbiter.SafeState/GetManifestByBlock"
-	SafeState_GetL3Block_FullMethodName         = "/arbiter.SafeState/GetL3Block"
+	SafeState_GetSafeWatermark_FullMethodName     = "/arbiter.SafeState/GetSafeWatermark"
+	SafeState_GetManifest_FullMethodName          = "/arbiter.SafeState/GetManifest"
+	SafeState_GetManifestByBlock_FullMethodName   = "/arbiter.SafeState/GetManifestByBlock"
+	SafeState_GetL3Block_FullMethodName           = "/arbiter.SafeState/GetL3Block"
+	SafeState_GetPublishedSnapshot_FullMethodName = "/arbiter.SafeState/GetPublishedSnapshot"
+	SafeState_GetQueryPolicy_FullMethodName       = "/arbiter.SafeState/GetQueryPolicy"
 )
 
 // SafeStateClient is the client API for SafeState service.
@@ -695,6 +1007,9 @@ type SafeStateClient interface {
 	GetManifestByBlock(ctx context.Context, in *BlockRef, opts ...grpc.CallOption) (*SafeSnapshotManifest, error)
 	// Sealed L3 block header + envelopes for auditing statements_root / ChainHash.
 	GetL3Block(ctx context.Context, in *L3BlockRef, opts ...grpc.CallOption) (*L3Block, error)
+	// Authenticated exact committed reads; missing records never imply publication.
+	GetPublishedSnapshot(ctx context.Context, in *GetPublishedSnapshotRequest, opts ...grpc.CallOption) (*PublishedSnapshot, error)
+	GetQueryPolicy(ctx context.Context, in *GetQueryPolicyRequest, opts ...grpc.CallOption) (*QueryPolicyStatus, error)
 }
 
 type safeStateClient struct {
@@ -745,6 +1060,26 @@ func (c *safeStateClient) GetL3Block(ctx context.Context, in *L3BlockRef, opts .
 	return out, nil
 }
 
+func (c *safeStateClient) GetPublishedSnapshot(ctx context.Context, in *GetPublishedSnapshotRequest, opts ...grpc.CallOption) (*PublishedSnapshot, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PublishedSnapshot)
+	err := c.cc.Invoke(ctx, SafeState_GetPublishedSnapshot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *safeStateClient) GetQueryPolicy(ctx context.Context, in *GetQueryPolicyRequest, opts ...grpc.CallOption) (*QueryPolicyStatus, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QueryPolicyStatus)
+	err := c.cc.Invoke(ctx, SafeState_GetQueryPolicy_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SafeStateServer is the server API for SafeState service.
 // All implementations must embed UnimplementedSafeStateServer
 // for forward compatibility.
@@ -757,6 +1092,9 @@ type SafeStateServer interface {
 	GetManifestByBlock(context.Context, *BlockRef) (*SafeSnapshotManifest, error)
 	// Sealed L3 block header + envelopes for auditing statements_root / ChainHash.
 	GetL3Block(context.Context, *L3BlockRef) (*L3Block, error)
+	// Authenticated exact committed reads; missing records never imply publication.
+	GetPublishedSnapshot(context.Context, *GetPublishedSnapshotRequest) (*PublishedSnapshot, error)
+	GetQueryPolicy(context.Context, *GetQueryPolicyRequest) (*QueryPolicyStatus, error)
 	mustEmbedUnimplementedSafeStateServer()
 }
 
@@ -778,6 +1116,12 @@ func (UnimplementedSafeStateServer) GetManifestByBlock(context.Context, *BlockRe
 }
 func (UnimplementedSafeStateServer) GetL3Block(context.Context, *L3BlockRef) (*L3Block, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetL3Block not implemented")
+}
+func (UnimplementedSafeStateServer) GetPublishedSnapshot(context.Context, *GetPublishedSnapshotRequest) (*PublishedSnapshot, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPublishedSnapshot not implemented")
+}
+func (UnimplementedSafeStateServer) GetQueryPolicy(context.Context, *GetQueryPolicyRequest) (*QueryPolicyStatus, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetQueryPolicy not implemented")
 }
 func (UnimplementedSafeStateServer) mustEmbedUnimplementedSafeStateServer() {}
 func (UnimplementedSafeStateServer) testEmbeddedByValue()                   {}
@@ -872,6 +1216,42 @@ func _SafeState_GetL3Block_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SafeState_GetPublishedSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPublishedSnapshotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SafeStateServer).GetPublishedSnapshot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SafeState_GetPublishedSnapshot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SafeStateServer).GetPublishedSnapshot(ctx, req.(*GetPublishedSnapshotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SafeState_GetQueryPolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetQueryPolicyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SafeStateServer).GetQueryPolicy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SafeState_GetQueryPolicy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SafeStateServer).GetQueryPolicy(ctx, req.(*GetQueryPolicyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SafeState_ServiceDesc is the grpc.ServiceDesc for SafeState service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -894,6 +1274,14 @@ var SafeState_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetL3Block",
 			Handler:    _SafeState_GetL3Block_Handler,
+		},
+		{
+			MethodName: "GetPublishedSnapshot",
+			Handler:    _SafeState_GetPublishedSnapshot_Handler,
+		},
+		{
+			MethodName: "GetQueryPolicy",
+			Handler:    _SafeState_GetQueryPolicy_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -41,6 +41,8 @@ message StatementID {
 enum StatementKind {
   STATEMENT_KIND_UNSPECIFIED = 0;
   STATEMENT_KIND_INSERT = 1;
+  // Admitted only through the separate snapshot-query RPC and v3 envelope.
+  STATEMENT_KIND_SNAPSHOT_QUERY = 2;
 }
 
 // StatementEnvelopeV2 is the signed write-statement envelope HouseGate
@@ -171,6 +173,7 @@ message VerifierDispatch {
   oneof dispatch {
     ReplayJob replay_job = 1;
     ByteSideScanRequest byte_side_scan = 2;
+    SnapshotQueryJob snapshot_query_job = 3;
   }
 }
 
@@ -432,12 +435,22 @@ service ArbiterIngress {
   rpc SubmitStatement (StatementEnvelopeV2) returns (SequencedAck) {}
   // Read-only status probe for staged-intake convergence (housegate P1e).
   rpc GetStatementStatus (GetStatementStatusRequest) returns (StatementStatus) {}
+  // New v3 lane; old SubmitStatement continues admitting only its old kinds.
+  rpc AcquireSnapshotQuery (AcquireSnapshotQueryRequest) returns (SnapshotQueryReservation) {}
+  rpc GetSnapshotQueryReservation (GetSnapshotQueryReservationRequest) returns (SnapshotQueryReservationStatus) {}
+  rpc ReleaseSnapshotQuery (ReleaseSnapshotQueryRequest) returns (SnapshotQueryReservationStatus) {}
+  rpc SubmitSnapshotQuery (SnapshotQueryEnvelope) returns (SnapshotQuerySubmitResult) {}
+  rpc GetSnapshotQueryStatus (GetSnapshotQueryStatusRequest) returns (SnapshotQueryStatus) {}
 }
 
 // SourceClaims is called by the source SNode.
 service SourceClaims {
   // Idempotency key: statement_id (same statement, same RC → same Ack).
   rpc RegisterResultClaim (RCRecord) returns (Ack) {}
+  // Requires authenticated source identity matching the assigned source.
+  rpc RegisterSnapshotQueryClaim (SnapshotQueryClaim) returns (Ack) {}
+  // Requires the authenticated publisher role and a checked signature.
+  rpc RecordSnapshotArtifactReady (SnapshotArtifactReadySubmission) returns (Ack) {}
 }
 
 // VerifierGateway is called by Verifiers (data plane dials in).
@@ -449,6 +462,7 @@ service VerifierGateway {
   // Idempotency key: (replica_id, receipt.block_seq) — one vote per replica
   // per block (§10.3).
   rpc SubmitAttestation (ReplayAttestation) returns (Ack) {}
+  rpc SubmitSnapshotQueryAttestation (SnapshotQueryAttestation) returns (Ack) {}
   // Idempotency key: (replica_id, block_seq).
   rpc SubmitByteSideScan (ByteSideScanMsg) returns (Ack) {}
 }
@@ -469,6 +483,9 @@ service SafeState {
   rpc GetManifestByBlock (BlockRef) returns (SafeSnapshotManifest) {}
   // Sealed L3 block header + envelopes for auditing statements_root / ChainHash.
   rpc GetL3Block (L3BlockRef) returns (L3Block) {}
+  // Authenticated exact committed reads; missing records never imply publication.
+  rpc GetPublishedSnapshot (GetPublishedSnapshotRequest) returns (PublishedSnapshot) {}
+  rpc GetQueryPolicy (GetQueryPolicyRequest) returns (QueryPolicyStatus) {}
 }
 
 // Membership is called by SNodes / Verifiers.
@@ -477,4 +494,144 @@ service Membership {
   // MarkActive is accepted only after snapshot sync; Active nodes enter the
   // deterministic selection pools (§4.1, §7.4).
   rpc MarkActive (NodeRef) returns (Ack) {}
+}
+
+// Signed with purpose housegate-snapshot-query-control-v1.
+// operation is acquire, lookup, or release; no client-selectable profile.
+message SnapshotQueryControlBinding {
+  string operation = 1;
+  string network_id = 2;
+  uint32 keeper_shard_id = 3;
+  string client_account = 4;
+  string statement_id = 5;
+  string request_id = 6;
+  string reservation_id = 7;
+  uint64 fencing_generation = 8;
+}
+
+// The committed active policy selects both profiles. Identical requests are
+// idempotent. A released/conflicting request fails with FAILED_PRECONDITION;
+// callers recover authenticated terminal state through the status RPC.
+message AcquireSnapshotQueryRequest {
+  string network_id = 1;
+  uint32 keeper_shard_id = 2;
+  string client_account = 3;
+  string statement_id = 4;
+  string request_id = 5;
+  string control_jws = 6;
+}
+
+// Authenticates lookup by request identity, optionally binding a known grant.
+// Empty reservation_id and zero generation are allowed for request-only lookup.
+message GetSnapshotQueryReservationRequest {
+  string network_id = 1;
+  uint32 keeper_shard_id = 2;
+  string client_account = 3;
+  string statement_id = 4;
+  string request_id = 5;
+  string control_jws = 6;
+  string reservation_id = 7;
+  uint64 fencing_generation = 8;
+}
+
+// Conditional cancellation: zero ID/generation cancels only an absent request.
+// Draining cancellation binds the exact nonzero fence with no reservation ID.
+// Consumed work can be resolved only by committed terminal authority.
+message ReleaseSnapshotQueryRequest {
+  string network_id = 1;
+  uint32 keeper_shard_id = 2;
+  string client_account = 3;
+  string statement_id = 4;
+  string request_id = 5;
+  string control_jws = 6;
+  string reservation_id = 7;
+  uint64 fencing_generation = 8;
+}
+
+// The authenticated account/statement/root lookup is scoped to network/shard.
+// Handlers require authenticated transport and leader/barrier committed reads.
+message GetSnapshotQueryStatusRequest {
+  string network_id = 1;
+  uint32 keeper_shard_id = 2;
+  string client_account = 3;
+  string statement_id = 4;
+  string expected_input_root = 5;
+  // replay.DigestString (plain SHA-256) of the exact original compact JWS
+  // bytes; never normalize or re-sign the token and never send it in this lookup.
+  // The new-lane handler must require this hash and compare it to the committed
+  // original JWS before returning accepted status. A mismatch is a conflict/refusal,
+  // never found=false or success for an older differently signed submission.
+  string expected_user_jws_hash = 6;
+}
+
+// Durable barrier state: idle, draining, granted, consumed, or resolving.
+// Request status and released tombstones persist separately after the barrier idles.
+message SnapshotBarrier {
+  string state = 1;
+  uint64 generation = 2;
+  string request_id = 3;
+  string client_account = 4;
+  string statement_id = 5;
+  SnapshotQueryReservation reservation = 6;
+  uint64 block_seq = 7;
+}
+
+// The authenticated publisher signs the snapshot-query-artifact-ready-v1 hash.
+// The record alone is not evidence of a signature-checked committed publication.
+message SnapshotArtifactReadySubmission {
+  SnapshotArtifactReady record = 1;
+  string signature = 2;
+}
+
+// Selects one exact snapshot, never an implicit latest snapshot.
+message GetPublishedSnapshotRequest {
+  string network_id = 1;
+  uint32 keeper_shard_id = 2;
+  string snapshot_id = 3;
+}
+
+// Authenticated committed publication. Handlers use leader/barrier committed
+// reads; consumers authenticate the serving authority. terminal_proof is opaque
+// committed-record evidence whose encoding and verification are owned by C1.
+// Empty proof cannot authorize success; missing data is never a negative proof.
+message PublishedSnapshot {
+  SafeSnapshotManifest manifest = 1;
+  ActiveQueryPolicy activation = 2;
+  SnapshotArtifactReadySubmission artifact_ready = 3;
+  bytes terminal_proof = 4;
+}
+
+// Selects an exact activation ID or block, or both when they agree.
+// A missing selector or unknown record never falls back to latest policy.
+message GetQueryPolicyRequest {
+  string network_id = 1;
+  uint32 keeper_shard_id = 2;
+  string activation_id = 3;
+  uint64 block_seq = 4;
+}
+
+// Historical consensus policy, not permission to admit a historical profile.
+// Handlers use leader/barrier committed reads; consumers authenticate the
+// serving authority and C1 committed-record proof. Positive records require
+// nonempty proof; negative/unknown is never inferred from missing data.
+message QueryPolicyStatus {
+  bool found = 1;
+  ActiveQueryPolicy activation = 2;
+  bytes terminal_proof = 3;
+}
+
+// Complete immutable artifact projection committed by artifact_set_root.
+message SnapshotArtifactEntry {
+  string table_id = 1;
+  string partition_id = 2;
+  string part_name = 3;
+  string part_phys_hash = 4;
+  string object_digest = 5;
+  uint64 bytes = 6;
+}
+
+// Sorted complete artifact list plus schema artifact digest. No fetch hints.
+message SnapshotArtifactSet {
+  repeated SnapshotArtifactEntry parts = 1;
+  string schema_artifact_digest = 2;
 }

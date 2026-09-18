@@ -162,5 +162,75 @@ message RaftCommand {
     MarkActiveCmd mark_active = 16;
     EvictNodeCmd evict_node = 17;
     UpdateConsensusParamsCmd update_consensus_params = 18;
+    BeginSnapshotQueryCmd begin_snapshot_query = 30;
+    GrantSnapshotQueryCmd grant_snapshot_query = 19;
+    ReleaseSnapshotQueryCmd release_snapshot_query = 20;
+    SubmitSnapshotQueryCmd submit_snapshot_query = 21;
+    AbortSnapshotQueryCmd abort_snapshot_query = 22;
+    ActivateQueryProfileCmd activate_query_profile = 23;
+    RecordSnapshotQueryClaimCmd record_snapshot_query_claim = 24;
+    RecordSnapshotQueryAttestationCmd record_snapshot_query_attestation = 25;
+    PublishExecutorProfileTransitionCmd publish_executor_profile_transition = 26;
+    RecordSnapshotArtifactReadyCmd record_snapshot_artifact_ready = 27;
   }
+}
+
+// Begins draining using the authenticated request; Apply makes no network calls.
+message BeginSnapshotQueryCmd {
+  AcquireSnapshotQueryRequest request = 1;
+}
+
+// Grants only the matching draining request after prior work is terminal.
+message GrantSnapshotQueryCmd {
+  string request_id = 1;
+  SnapshotQueryReservation reservation = 2;
+}
+
+// Checks the request/fence and persists a cancellation tombstone atomically.
+message ReleaseSnapshotQueryCmd {
+  ReleaseSnapshotQueryRequest request = 1;
+}
+
+// Durable singleton sequencing with deterministic admission and gap-proof checks.
+message SubmitSnapshotQueryCmd {
+  SnapshotQueryEnvelope envelope = 1;
+  bytes non_membership_proof = 2;
+}
+
+// An authority-authenticated terminal abort; never inferred from client cancellation.
+message AbortSnapshotQueryCmd {
+  SnapshotQueryAbortRecord record = 1;
+  string authority_jws = 2;
+}
+
+// Authority-authenticated activation of the committed profile pair.
+message ActivateQueryProfileCmd {
+  ActiveQueryPolicy activation = 1;
+  string authority_jws = 2;
+}
+
+// The authenticated source-role transport must bind the sender to the assigned
+// source before proposal. The source_node string alone provides no authentication.
+message RecordSnapshotQueryClaimCmd {
+  SnapshotQueryClaim claim = 1;
+}
+
+// Records verified new-lane attestation without changing old receipt domains.
+message RecordSnapshotQueryAttestationCmd {
+  SnapshotQueryAttestation attestation = 1;
+}
+
+// Authority-authenticated transition plus compatible manifest and receipts.
+// New authority command purposes are defined by the owning runtime task;
+// the existing promotion signature purpose remains unchanged.
+message PublishExecutorProfileTransitionCmd {
+  ExecutorProfileTransition transition = 1;
+  SafeSnapshotManifest manifest = 2;
+  repeated ExecutorProfileTransitionReceipt receipts = 3;
+  string authority_jws = 4;
+}
+
+// Stores only signature-checked readiness for this exact committed manifest.
+message RecordSnapshotArtifactReadyCmd {
+  SnapshotArtifactReadySubmission submission = 1;
 }
