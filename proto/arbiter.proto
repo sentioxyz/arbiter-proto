@@ -291,6 +291,13 @@ message PromotionAck {
   // why. The Arbiter rebases and re-issues (§8.3).
   bool applied = 7;
   string detail = 8;
+  // Complete active inventory of this safe partition after REPLACE, including
+  // previously-safe parts whose physical names/hashes may have changed.
+  // `parts` remains the candidate-only mapping. The FSM requires this list to
+  // cover exactly its committed safe parts plus those candidates, keyed by
+  // row LtHash, before replacing physical metadata. Missing inventory is only
+  // equivalent to `parts` when the partition had no previously-safe parts.
+  repeated SafePartMapping safe_partition_parts = 9;
 }
 
 message CleanupAck {

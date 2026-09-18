@@ -1588,10 +1588,17 @@ type PromotionAck struct {
 	Parts                   []*SafePartMapping `protobuf:"bytes,6,rep,name=parts,proto3" json:"parts,omitempty"`
 	// applied=false signals a dropped shadow (base CAS failed); detail says
 	// why. The Arbiter rebases and re-issues (§8.3).
-	Applied       bool   `protobuf:"varint,7,opt,name=applied,proto3" json:"applied,omitempty"`
-	Detail        string `protobuf:"bytes,8,opt,name=detail,proto3" json:"detail,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Applied bool   `protobuf:"varint,7,opt,name=applied,proto3" json:"applied,omitempty"`
+	Detail  string `protobuf:"bytes,8,opt,name=detail,proto3" json:"detail,omitempty"`
+	// Complete active inventory of this safe partition after REPLACE, including
+	// previously-safe parts whose physical names/hashes may have changed.
+	// `parts` remains the candidate-only mapping. The FSM requires this list to
+	// cover exactly its committed safe parts plus those candidates, keyed by
+	// row LtHash, before replacing physical metadata. Missing inventory is only
+	// equivalent to `parts` when the partition had no previously-safe parts.
+	SafePartitionParts []*SafePartMapping `protobuf:"bytes,9,rep,name=safe_partition_parts,json=safePartitionParts,proto3" json:"safe_partition_parts,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *PromotionAck) Reset() {
@@ -1678,6 +1685,13 @@ func (x *PromotionAck) GetDetail() string {
 		return x.Detail
 	}
 	return ""
+}
+
+func (x *PromotionAck) GetSafePartitionParts() []*SafePartMapping {
+	if x != nil {
+		return x.SafePartitionParts
+	}
+	return nil
 }
 
 type CleanupAck struct {
@@ -3724,7 +3738,7 @@ const file_arbiter_proto_rawDesc = "" +
 	"\x0fSafePartMapping\x12&\n" +
 	"\x0fpart_row_lthash\x18\x01 \x01(\tR\rpartRowLthash\x12$\n" +
 	"\x0esafe_part_name\x18\x02 \x01(\tR\fsafePartName\x12$\n" +
-	"\x0epart_phys_hash\x18\x03 \x01(\tR\fpartPhysHash\"\xa8\x02\n" +
+	"\x0epart_phys_hash\x18\x03 \x01(\tR\fpartPhysHash\"\xf4\x02\n" +
 	"\fPromotionAck\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12#\n" +
 	"\rpromotion_seq\x18\x02 \x01(\x04R\fpromotionSeq\x12\x19\n" +
@@ -3733,7 +3747,8 @@ const file_arbiter_proto_rawDesc = "" +
 	"\x19post_partition_commitment\x18\x05 \x01(\tR\x17postPartitionCommitment\x12.\n" +
 	"\x05parts\x18\x06 \x03(\v2\x18.arbiter.SafePartMappingR\x05parts\x12\x18\n" +
 	"\aapplied\x18\a \x01(\bR\aapplied\x12\x16\n" +
-	"\x06detail\x18\b \x01(\tR\x06detail\"\x88\x01\n" +
+	"\x06detail\x18\b \x01(\tR\x06detail\x12J\n" +
+	"\x14safe_partition_parts\x18\t \x03(\v2\x18.arbiter.SafePartMappingR\x12safePartitionParts\"\x88\x01\n" +
 	"\n" +
 	"CleanupAck\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12#\n" +
@@ -4054,72 +4069,73 @@ var file_arbiter_proto_depIdxs = []int32{
 	15, // 13: arbiter.PromotionCommand.promote:type_name -> arbiter.PromoteSafePartition
 	16, // 14: arbiter.PromotionCommand.cleanup:type_name -> arbiter.UnsafeCleanup
 	19, // 15: arbiter.PromotionAck.parts:type_name -> arbiter.SafePartMapping
-	22, // 16: arbiter.L3BlockHeader.l2_anchor_ref:type_name -> arbiter.AnchorRef
-	27, // 17: arbiter.L3Block.header:type_name -> arbiter.L3BlockHeader
-	4,  // 18: arbiter.L3Block.statements:type_name -> arbiter.StatementEnvelopeV2
-	2,  // 19: arbiter.NodeRegistration.roles:type_name -> arbiter.NodeRole
-	51, // 20: arbiter.SnapshotBarrier.reservation:type_name -> arbiter.SnapshotQueryReservation
-	52, // 21: arbiter.SnapshotArtifactReadySubmission.record:type_name -> arbiter.SnapshotArtifactReady
-	53, // 22: arbiter.PublishedSnapshot.manifest:type_name -> arbiter.SafeSnapshotManifest
-	54, // 23: arbiter.PublishedSnapshot.activation:type_name -> arbiter.ActiveQueryPolicy
-	42, // 24: arbiter.PublishedSnapshot.artifact_ready:type_name -> arbiter.SnapshotArtifactReadySubmission
-	54, // 25: arbiter.QueryPolicyStatus.activation:type_name -> arbiter.ActiveQueryPolicy
-	47, // 26: arbiter.SnapshotArtifactSet.parts:type_name -> arbiter.SnapshotArtifactEntry
-	4,  // 27: arbiter.ArbiterIngress.SubmitStatement:input_type -> arbiter.StatementEnvelopeV2
-	34, // 28: arbiter.ArbiterIngress.GetStatementStatus:input_type -> arbiter.GetStatementStatusRequest
-	37, // 29: arbiter.ArbiterIngress.AcquireSnapshotQuery:input_type -> arbiter.AcquireSnapshotQueryRequest
-	38, // 30: arbiter.ArbiterIngress.GetSnapshotQueryReservation:input_type -> arbiter.GetSnapshotQueryReservationRequest
-	39, // 31: arbiter.ArbiterIngress.ReleaseSnapshotQuery:input_type -> arbiter.ReleaseSnapshotQueryRequest
-	55, // 32: arbiter.ArbiterIngress.SubmitSnapshotQuery:input_type -> arbiter.SnapshotQueryEnvelope
-	40, // 33: arbiter.ArbiterIngress.GetSnapshotQueryStatus:input_type -> arbiter.GetSnapshotQueryStatusRequest
-	8,  // 34: arbiter.SourceClaims.RegisterResultClaim:input_type -> arbiter.RCRecord
-	56, // 35: arbiter.SourceClaims.RegisterSnapshotQueryClaim:input_type -> arbiter.SnapshotQueryClaim
-	42, // 36: arbiter.SourceClaims.RecordSnapshotArtifactReady:input_type -> arbiter.SnapshotArtifactReadySubmission
-	9,  // 37: arbiter.VerifierGateway.SubscribeVerifierDispatch:input_type -> arbiter.VerifierHello
-	57, // 38: arbiter.VerifierGateway.SubmitAttestation:input_type -> arbiter.ReplayAttestation
-	58, // 39: arbiter.VerifierGateway.SubmitSnapshotQueryAttestation:input_type -> arbiter.SnapshotQueryAttestation
-	13, // 40: arbiter.VerifierGateway.SubmitByteSideScan:input_type -> arbiter.ByteSideScanMsg
-	18, // 41: arbiter.PromotionGateway.SubscribePromotions:input_type -> arbiter.SNodeHello
-	20, // 42: arbiter.PromotionGateway.AckPromotion:input_type -> arbiter.PromotionAck
-	21, // 43: arbiter.PromotionGateway.AckCleanup:input_type -> arbiter.CleanupAck
-	23, // 44: arbiter.SafeState.GetSafeWatermark:input_type -> arbiter.GetSafeWatermarkRequest
-	25, // 45: arbiter.SafeState.GetManifest:input_type -> arbiter.SnapshotRef
-	26, // 46: arbiter.SafeState.GetManifestByBlock:input_type -> arbiter.BlockRef
-	28, // 47: arbiter.SafeState.GetL3Block:input_type -> arbiter.L3BlockRef
-	43, // 48: arbiter.SafeState.GetPublishedSnapshot:input_type -> arbiter.GetPublishedSnapshotRequest
-	45, // 49: arbiter.SafeState.GetQueryPolicy:input_type -> arbiter.GetQueryPolicyRequest
-	30, // 50: arbiter.Membership.RegisterNode:input_type -> arbiter.NodeRegistration
-	31, // 51: arbiter.Membership.MarkActive:input_type -> arbiter.NodeRef
-	5,  // 52: arbiter.ArbiterIngress.SubmitStatement:output_type -> arbiter.SequencedAck
-	35, // 53: arbiter.ArbiterIngress.GetStatementStatus:output_type -> arbiter.StatementStatus
-	51, // 54: arbiter.ArbiterIngress.AcquireSnapshotQuery:output_type -> arbiter.SnapshotQueryReservation
-	59, // 55: arbiter.ArbiterIngress.GetSnapshotQueryReservation:output_type -> arbiter.SnapshotQueryReservationStatus
-	59, // 56: arbiter.ArbiterIngress.ReleaseSnapshotQuery:output_type -> arbiter.SnapshotQueryReservationStatus
-	60, // 57: arbiter.ArbiterIngress.SubmitSnapshotQuery:output_type -> arbiter.SnapshotQuerySubmitResult
-	61, // 58: arbiter.ArbiterIngress.GetSnapshotQueryStatus:output_type -> arbiter.SnapshotQueryStatus
-	32, // 59: arbiter.SourceClaims.RegisterResultClaim:output_type -> arbiter.Ack
-	32, // 60: arbiter.SourceClaims.RegisterSnapshotQueryClaim:output_type -> arbiter.Ack
-	32, // 61: arbiter.SourceClaims.RecordSnapshotArtifactReady:output_type -> arbiter.Ack
-	10, // 62: arbiter.VerifierGateway.SubscribeVerifierDispatch:output_type -> arbiter.VerifierDispatch
-	32, // 63: arbiter.VerifierGateway.SubmitAttestation:output_type -> arbiter.Ack
-	32, // 64: arbiter.VerifierGateway.SubmitSnapshotQueryAttestation:output_type -> arbiter.Ack
-	32, // 65: arbiter.VerifierGateway.SubmitByteSideScan:output_type -> arbiter.Ack
-	17, // 66: arbiter.PromotionGateway.SubscribePromotions:output_type -> arbiter.PromotionCommand
-	32, // 67: arbiter.PromotionGateway.AckPromotion:output_type -> arbiter.Ack
-	32, // 68: arbiter.PromotionGateway.AckCleanup:output_type -> arbiter.Ack
-	24, // 69: arbiter.SafeState.GetSafeWatermark:output_type -> arbiter.SafeWatermark
-	53, // 70: arbiter.SafeState.GetManifest:output_type -> arbiter.SafeSnapshotManifest
-	53, // 71: arbiter.SafeState.GetManifestByBlock:output_type -> arbiter.SafeSnapshotManifest
-	29, // 72: arbiter.SafeState.GetL3Block:output_type -> arbiter.L3Block
-	44, // 73: arbiter.SafeState.GetPublishedSnapshot:output_type -> arbiter.PublishedSnapshot
-	46, // 74: arbiter.SafeState.GetQueryPolicy:output_type -> arbiter.QueryPolicyStatus
-	32, // 75: arbiter.Membership.RegisterNode:output_type -> arbiter.Ack
-	32, // 76: arbiter.Membership.MarkActive:output_type -> arbiter.Ack
-	52, // [52:77] is the sub-list for method output_type
-	27, // [27:52] is the sub-list for method input_type
-	27, // [27:27] is the sub-list for extension type_name
-	27, // [27:27] is the sub-list for extension extendee
-	0,  // [0:27] is the sub-list for field type_name
+	19, // 16: arbiter.PromotionAck.safe_partition_parts:type_name -> arbiter.SafePartMapping
+	22, // 17: arbiter.L3BlockHeader.l2_anchor_ref:type_name -> arbiter.AnchorRef
+	27, // 18: arbiter.L3Block.header:type_name -> arbiter.L3BlockHeader
+	4,  // 19: arbiter.L3Block.statements:type_name -> arbiter.StatementEnvelopeV2
+	2,  // 20: arbiter.NodeRegistration.roles:type_name -> arbiter.NodeRole
+	51, // 21: arbiter.SnapshotBarrier.reservation:type_name -> arbiter.SnapshotQueryReservation
+	52, // 22: arbiter.SnapshotArtifactReadySubmission.record:type_name -> arbiter.SnapshotArtifactReady
+	53, // 23: arbiter.PublishedSnapshot.manifest:type_name -> arbiter.SafeSnapshotManifest
+	54, // 24: arbiter.PublishedSnapshot.activation:type_name -> arbiter.ActiveQueryPolicy
+	42, // 25: arbiter.PublishedSnapshot.artifact_ready:type_name -> arbiter.SnapshotArtifactReadySubmission
+	54, // 26: arbiter.QueryPolicyStatus.activation:type_name -> arbiter.ActiveQueryPolicy
+	47, // 27: arbiter.SnapshotArtifactSet.parts:type_name -> arbiter.SnapshotArtifactEntry
+	4,  // 28: arbiter.ArbiterIngress.SubmitStatement:input_type -> arbiter.StatementEnvelopeV2
+	34, // 29: arbiter.ArbiterIngress.GetStatementStatus:input_type -> arbiter.GetStatementStatusRequest
+	37, // 30: arbiter.ArbiterIngress.AcquireSnapshotQuery:input_type -> arbiter.AcquireSnapshotQueryRequest
+	38, // 31: arbiter.ArbiterIngress.GetSnapshotQueryReservation:input_type -> arbiter.GetSnapshotQueryReservationRequest
+	39, // 32: arbiter.ArbiterIngress.ReleaseSnapshotQuery:input_type -> arbiter.ReleaseSnapshotQueryRequest
+	55, // 33: arbiter.ArbiterIngress.SubmitSnapshotQuery:input_type -> arbiter.SnapshotQueryEnvelope
+	40, // 34: arbiter.ArbiterIngress.GetSnapshotQueryStatus:input_type -> arbiter.GetSnapshotQueryStatusRequest
+	8,  // 35: arbiter.SourceClaims.RegisterResultClaim:input_type -> arbiter.RCRecord
+	56, // 36: arbiter.SourceClaims.RegisterSnapshotQueryClaim:input_type -> arbiter.SnapshotQueryClaim
+	42, // 37: arbiter.SourceClaims.RecordSnapshotArtifactReady:input_type -> arbiter.SnapshotArtifactReadySubmission
+	9,  // 38: arbiter.VerifierGateway.SubscribeVerifierDispatch:input_type -> arbiter.VerifierHello
+	57, // 39: arbiter.VerifierGateway.SubmitAttestation:input_type -> arbiter.ReplayAttestation
+	58, // 40: arbiter.VerifierGateway.SubmitSnapshotQueryAttestation:input_type -> arbiter.SnapshotQueryAttestation
+	13, // 41: arbiter.VerifierGateway.SubmitByteSideScan:input_type -> arbiter.ByteSideScanMsg
+	18, // 42: arbiter.PromotionGateway.SubscribePromotions:input_type -> arbiter.SNodeHello
+	20, // 43: arbiter.PromotionGateway.AckPromotion:input_type -> arbiter.PromotionAck
+	21, // 44: arbiter.PromotionGateway.AckCleanup:input_type -> arbiter.CleanupAck
+	23, // 45: arbiter.SafeState.GetSafeWatermark:input_type -> arbiter.GetSafeWatermarkRequest
+	25, // 46: arbiter.SafeState.GetManifest:input_type -> arbiter.SnapshotRef
+	26, // 47: arbiter.SafeState.GetManifestByBlock:input_type -> arbiter.BlockRef
+	28, // 48: arbiter.SafeState.GetL3Block:input_type -> arbiter.L3BlockRef
+	43, // 49: arbiter.SafeState.GetPublishedSnapshot:input_type -> arbiter.GetPublishedSnapshotRequest
+	45, // 50: arbiter.SafeState.GetQueryPolicy:input_type -> arbiter.GetQueryPolicyRequest
+	30, // 51: arbiter.Membership.RegisterNode:input_type -> arbiter.NodeRegistration
+	31, // 52: arbiter.Membership.MarkActive:input_type -> arbiter.NodeRef
+	5,  // 53: arbiter.ArbiterIngress.SubmitStatement:output_type -> arbiter.SequencedAck
+	35, // 54: arbiter.ArbiterIngress.GetStatementStatus:output_type -> arbiter.StatementStatus
+	51, // 55: arbiter.ArbiterIngress.AcquireSnapshotQuery:output_type -> arbiter.SnapshotQueryReservation
+	59, // 56: arbiter.ArbiterIngress.GetSnapshotQueryReservation:output_type -> arbiter.SnapshotQueryReservationStatus
+	59, // 57: arbiter.ArbiterIngress.ReleaseSnapshotQuery:output_type -> arbiter.SnapshotQueryReservationStatus
+	60, // 58: arbiter.ArbiterIngress.SubmitSnapshotQuery:output_type -> arbiter.SnapshotQuerySubmitResult
+	61, // 59: arbiter.ArbiterIngress.GetSnapshotQueryStatus:output_type -> arbiter.SnapshotQueryStatus
+	32, // 60: arbiter.SourceClaims.RegisterResultClaim:output_type -> arbiter.Ack
+	32, // 61: arbiter.SourceClaims.RegisterSnapshotQueryClaim:output_type -> arbiter.Ack
+	32, // 62: arbiter.SourceClaims.RecordSnapshotArtifactReady:output_type -> arbiter.Ack
+	10, // 63: arbiter.VerifierGateway.SubscribeVerifierDispatch:output_type -> arbiter.VerifierDispatch
+	32, // 64: arbiter.VerifierGateway.SubmitAttestation:output_type -> arbiter.Ack
+	32, // 65: arbiter.VerifierGateway.SubmitSnapshotQueryAttestation:output_type -> arbiter.Ack
+	32, // 66: arbiter.VerifierGateway.SubmitByteSideScan:output_type -> arbiter.Ack
+	17, // 67: arbiter.PromotionGateway.SubscribePromotions:output_type -> arbiter.PromotionCommand
+	32, // 68: arbiter.PromotionGateway.AckPromotion:output_type -> arbiter.Ack
+	32, // 69: arbiter.PromotionGateway.AckCleanup:output_type -> arbiter.Ack
+	24, // 70: arbiter.SafeState.GetSafeWatermark:output_type -> arbiter.SafeWatermark
+	53, // 71: arbiter.SafeState.GetManifest:output_type -> arbiter.SafeSnapshotManifest
+	53, // 72: arbiter.SafeState.GetManifestByBlock:output_type -> arbiter.SafeSnapshotManifest
+	29, // 73: arbiter.SafeState.GetL3Block:output_type -> arbiter.L3Block
+	44, // 74: arbiter.SafeState.GetPublishedSnapshot:output_type -> arbiter.PublishedSnapshot
+	46, // 75: arbiter.SafeState.GetQueryPolicy:output_type -> arbiter.QueryPolicyStatus
+	32, // 76: arbiter.Membership.RegisterNode:output_type -> arbiter.Ack
+	32, // 77: arbiter.Membership.MarkActive:output_type -> arbiter.Ack
+	53, // [53:78] is the sub-list for method output_type
+	28, // [28:53] is the sub-list for method input_type
+	28, // [28:28] is the sub-list for extension type_name
+	28, // [28:28] is the sub-list for extension extendee
+	0,  // [0:28] is the sub-list for field type_name
 }
 
 func init() { file_arbiter_proto_init() }

@@ -22,9 +22,10 @@ func TestSnapshotQueryRaftAndDispatchAllocations(t *testing.T) {
 	}
 	names := []string{"begin_snapshot_query", "grant_snapshot_query", "release_snapshot_query", "submit_snapshot_query", "abort_snapshot_query", "activate_query_profile", "record_snapshot_query_claim", "record_snapshot_query_attestation", "publish_executor_profile_transition", "record_snapshot_artifact_ready"}
 	types := []string{"BeginSnapshotQueryCmd", "GrantSnapshotQueryCmd", "ReleaseSnapshotQueryCmd", "SubmitSnapshotQueryCmd", "AbortSnapshotQueryCmd", "ActivateQueryProfileCmd", "RecordSnapshotQueryClaimCmd", "RecordSnapshotQueryAttestationCmd", "PublishExecutorProfileTransitionCmd", "RecordSnapshotArtifactReadyCmd"}
+	numbers := []protoreflect.FieldNumber{30, 19, 20, 21, 22, 23, 24, 25, 26, 27}
 	for i, name := range names {
 		t.Run(name, func(t *testing.T) {
-			assertSnapshotVariant(t, &pb.RaftCommand{}, "cmd", name, protoreflect.FieldNumber(i+18), types[i])
+			assertSnapshotVariant(t, &pb.RaftCommand{}, "cmd", name, numbers[i], types[i])
 		})
 	}
 	assertSnapshotVariant(t, &pb.VerifierDispatch{}, "dispatch", "snapshot_query_job", 3, "SnapshotQueryJob")

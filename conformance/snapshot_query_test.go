@@ -198,7 +198,12 @@ func TestSnapshotQueryPresenceAndEmptyCollections(t *testing.T) {
 
 func legacySnapshotDescriptors(t *testing.T) *descriptorpb.FileDescriptorSet {
 	t.Helper()
-	raw, err := os.ReadFile(filepath.Join(arbiterProtoModuleRoot(t), "conformance/testdata/pre_snapshot_query_descriptor.binpb"))
+	return snapshotDescriptorFixture(t, "pre_snapshot_query_descriptor.binpb")
+}
+
+func snapshotDescriptorFixture(t *testing.T, name string) *descriptorpb.FileDescriptorSet {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join(arbiterProtoModuleRoot(t), "conformance/testdata", name))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -210,9 +215,21 @@ func legacySnapshotDescriptors(t *testing.T) *descriptorpb.FileDescriptorSet {
 }
 
 func TestSnapshotQueryOldDescriptorsUnchanged(t *testing.T) {
-	current := map[string]protoreflect.FileDescriptor{"arbiter.proto": pb.File_arbiter_proto, "replay.proto": pb.File_replay_proto, "raftlog.proto": pb.File_raftlog_proto}
-	for _, old := range legacySnapshotDescriptors(t).File {
-		now := protodesc.ToFileDescriptorProto(current[old.GetName()])
+	assertSnapshotBaselineDescriptors(t, legacySnapshotDescriptors(t), true)
+}
+
+func TestSnapshotQueryMainDescriptorsUnchanged(t *testing.T) {
+	assertSnapshotBaselineDescriptors(t, snapshotDescriptorFixture(t, "main_f7d9f070_descriptor.binpb"), false)
+}
+
+func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.FileDescriptorSet, allowPromotionInventory bool) {
+	t.Helper()
+	for _, old := range baseline.File {
+		current, err := protoregistry.GlobalFiles.FindFileByPath(old.GetName())
+		if err != nil {
+			t.Fatal(err)
+		}
+		now := protodesc.ToFileDescriptorProto(current)
 		for _, m := range old.MessageType {
 			var got *descriptorpb.DescriptorProto
 			for _, n := range now.MessageType {
@@ -224,6 +241,19 @@ func TestSnapshotQueryOldDescriptorsUnchanged(t *testing.T) {
 				t.Fatalf("old message removed: %s", m.GetName())
 			}
 			if m.GetName() == "RaftCommand" || m.GetName() == "VerifierDispatch" {
+				if len(got.Field) < len(m.Field) {
+					t.Fatalf("fields removed: %s", m.GetName())
+				}
+				got.Field = got.Field[:len(m.Field)]
+			}
+			if allowPromotionInventory && m.GetName() == "PromotionAck" {
+				want := &descriptorpb.FieldDescriptorProto{
+					Name: proto.String("safe_partition_parts"), JsonName: proto.String("safePartitionParts"), Number: proto.Int32(9),
+					Label: descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum(), Type: descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(), TypeName: proto.String(".arbiter.SafePartMapping"),
+				}
+				if len(got.Field) != len(m.Field)+1 || !proto.Equal(got.Field[len(m.Field)], want) {
+					t.Fatalf("PromotionAck addition must be exactly repeated SafePartMapping safe_partition_parts = 9: %v", got)
+				}
 				got.Field = got.Field[:len(m.Field)]
 			}
 			if !proto.Equal(m, got) {
@@ -239,6 +269,9 @@ func TestSnapshotQueryOldDescriptorsUnchanged(t *testing.T) {
 			}
 			if got == nil {
 				t.Fatal("old enum removed")
+			}
+			if len(got.Value) < len(enum.Value) {
+				t.Fatalf("enum values removed: %s", enum.GetName())
 			}
 			got.Value = got.Value[:len(enum.Value)]
 			if !proto.Equal(enum, got) {
@@ -271,20 +304,27 @@ func TestSnapshotQueryOldDescriptorsUnchanged(t *testing.T) {
 }
 
 func TestSnapshotQueryUnknownVariantsStayUnknownToOldReaders(t *testing.T) {
-	files, err := protodesc.NewFiles(legacySnapshotDescriptors(t))
+	for _, fixture := range []string{"pre_snapshot_query_descriptor.binpb", "main_f7d9f070_descriptor.binpb"} {
+		t.Run(fixture, func(t *testing.T) { assertSnapshotUnknownVariants(t, snapshotDescriptorFixture(t, fixture)) })
+	}
+}
+
+func assertSnapshotUnknownVariants(t *testing.T, baseline *descriptorpb.FileDescriptorSet) {
+	t.Helper()
+	files, err := protodesc.NewFiles(baseline)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, tc := range []struct {
-		name        string
-		first, last protowire.Number
-		oneof       protoreflect.Name
-	}{{"RaftCommand", 18, 27, "cmd"}, {"VerifierDispatch", 3, 3, "dispatch"}} {
+		name    string
+		numbers []protowire.Number
+		oneof   protoreflect.Name
+	}{{"RaftCommand", []protowire.Number{30, 19, 20, 21, 22, 23, 24, 25, 26, 27}, "cmd"}, {"VerifierDispatch", []protowire.Number{3}, "dispatch"}} {
 		desc, err := files.FindDescriptorByName(protoreflect.FullName("arbiter." + tc.name))
 		if err != nil {
 			t.Fatal(err)
 		}
-		for n := tc.first; n <= tc.last; n++ {
+		for _, n := range tc.numbers {
 			// A future variant must never become an old, apparently valid command.
 			raw := protowire.AppendTag(nil, n, protowire.BytesType)
 			raw = protowire.AppendBytes(raw, []byte{10, 1, 'x'})

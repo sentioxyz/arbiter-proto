@@ -965,6 +965,7 @@ type RaftCommand struct {
 	//	*RaftCommand_RegisterNode
 	//	*RaftCommand_MarkActive
 	//	*RaftCommand_EvictNode
+	//	*RaftCommand_UpdateConsensusParams
 	//	*RaftCommand_BeginSnapshotQuery
 	//	*RaftCommand_GrantSnapshotQuery
 	//	*RaftCommand_ReleaseSnapshotQuery
@@ -1170,6 +1171,15 @@ func (x *RaftCommand) GetEvictNode() *EvictNodeCmd {
 	return nil
 }
 
+func (x *RaftCommand) GetUpdateConsensusParams() *UpdateConsensusParamsCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_UpdateConsensusParams); ok {
+			return x.UpdateConsensusParams
+		}
+	}
+	return nil
+}
+
 func (x *RaftCommand) GetBeginSnapshotQuery() *BeginSnapshotQueryCmd {
 	if x != nil {
 		if x, ok := x.Cmd.(*RaftCommand_BeginSnapshotQuery); ok {
@@ -1332,8 +1342,12 @@ type RaftCommand_EvictNode struct {
 	EvictNode *EvictNodeCmd `protobuf:"bytes,17,opt,name=evict_node,json=evictNode,proto3,oneof"`
 }
 
+type RaftCommand_UpdateConsensusParams struct {
+	UpdateConsensusParams *UpdateConsensusParamsCmd `protobuf:"bytes,18,opt,name=update_consensus_params,json=updateConsensusParams,proto3,oneof"`
+}
+
 type RaftCommand_BeginSnapshotQuery struct {
-	BeginSnapshotQuery *BeginSnapshotQueryCmd `protobuf:"bytes,18,opt,name=begin_snapshot_query,json=beginSnapshotQuery,proto3,oneof"`
+	BeginSnapshotQuery *BeginSnapshotQueryCmd `protobuf:"bytes,30,opt,name=begin_snapshot_query,json=beginSnapshotQuery,proto3,oneof"`
 }
 
 type RaftCommand_GrantSnapshotQuery struct {
@@ -1405,6 +1419,8 @@ func (*RaftCommand_RegisterNode) isRaftCommand_Cmd() {}
 func (*RaftCommand_MarkActive) isRaftCommand_Cmd() {}
 
 func (*RaftCommand_EvictNode) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_UpdateConsensusParams) isRaftCommand_Cmd() {}
 
 func (*RaftCommand_BeginSnapshotQuery) isRaftCommand_Cmd() {}
 
@@ -1939,7 +1955,7 @@ var File_raftlog_proto protoreflect.FileDescriptor
 
 const file_raftlog_proto_rawDesc = "" +
 	"\n" +
-	"\rraftlog.proto\x12\aarbiter\x1a\rarbiter.proto\x1a\freplay.proto\"\x80\x01\n" +
+	"\rraftlog.proto\x12\aarbiter\x1a\rarbiter.proto\x1a\x0fconsensus.proto\x1a\freplay.proto\"\x80\x01\n" +
 	"\x12SubmitStatementCmd\x128\n" +
 	"\benvelope\x18\x01 \x01(\v2\x1c.arbiter.StatementEnvelopeV2R\benvelope\x120\n" +
 	"\x14non_membership_proof\x18\x02 \x01(\fR\x12nonMembershipProof\"\x10\n" +
@@ -1983,7 +1999,7 @@ const file_raftlog_proto_rawDesc = "" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\"?\n" +
 	"\fEvictNodeCmd\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x16\n" +
-	"\x06reason\x18\x02 \x01(\tR\x06reason\"\xe9\x11\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\"\xc6\x12\n" +
 	"\vRaftCommand\x12H\n" +
 	"\x10submit_statement\x18\x01 \x01(\v2\x1b.arbiter.SubmitStatementCmdH\x00R\x0fsubmitStatement\x12=\n" +
 	"\rseal_l3_block\x18\x02 \x01(\v2\x17.arbiter.SealL3BlockCmdH\x00R\vsealL3Block\x12B\n" +
@@ -2005,8 +2021,9 @@ const file_raftlog_proto_rawDesc = "" +
 	"\vmark_active\x18\x10 \x01(\v2\x16.arbiter.MarkActiveCmdH\x00R\n" +
 	"markActive\x126\n" +
 	"\n" +
-	"evict_node\x18\x11 \x01(\v2\x15.arbiter.EvictNodeCmdH\x00R\tevictNode\x12R\n" +
-	"\x14begin_snapshot_query\x18\x12 \x01(\v2\x1e.arbiter.BeginSnapshotQueryCmdH\x00R\x12beginSnapshotQuery\x12R\n" +
+	"evict_node\x18\x11 \x01(\v2\x15.arbiter.EvictNodeCmdH\x00R\tevictNode\x12[\n" +
+	"\x17update_consensus_params\x18\x12 \x01(\v2!.arbiter.UpdateConsensusParamsCmdH\x00R\x15updateConsensusParams\x12R\n" +
+	"\x14begin_snapshot_query\x18\x1e \x01(\v2\x1e.arbiter.BeginSnapshotQueryCmdH\x00R\x12beginSnapshotQuery\x12R\n" +
 	"\x14grant_snapshot_query\x18\x13 \x01(\v2\x1e.arbiter.GrantSnapshotQueryCmdH\x00R\x12grantSnapshotQuery\x12X\n" +
 	"\x16release_snapshot_query\x18\x14 \x01(\v2 .arbiter.ReleaseSnapshotQueryCmdH\x00R\x14releaseSnapshotQuery\x12U\n" +
 	"\x15submit_snapshot_query\x18\x15 \x01(\v2\x1f.arbiter.SubmitSnapshotQueryCmdH\x00R\x13submitSnapshotQuery\x12R\n" +
@@ -2111,17 +2128,18 @@ var file_raftlog_proto_goTypes = []any{
 	(*UnsafeCleanup)(nil),                       // 37: arbiter.UnsafeCleanup
 	(*CleanupAck)(nil),                          // 38: arbiter.CleanupAck
 	(*NodeRegistration)(nil),                    // 39: arbiter.NodeRegistration
-	(*AcquireSnapshotQueryRequest)(nil),         // 40: arbiter.AcquireSnapshotQueryRequest
-	(*SnapshotQueryReservation)(nil),            // 41: arbiter.SnapshotQueryReservation
-	(*ReleaseSnapshotQueryRequest)(nil),         // 42: arbiter.ReleaseSnapshotQueryRequest
-	(*SnapshotQueryEnvelope)(nil),               // 43: arbiter.SnapshotQueryEnvelope
-	(*SnapshotQueryAbortRecord)(nil),            // 44: arbiter.SnapshotQueryAbortRecord
-	(*ActiveQueryPolicy)(nil),                   // 45: arbiter.ActiveQueryPolicy
-	(*SnapshotQueryClaim)(nil),                  // 46: arbiter.SnapshotQueryClaim
-	(*SnapshotQueryAttestation)(nil),            // 47: arbiter.SnapshotQueryAttestation
-	(*ExecutorProfileTransition)(nil),           // 48: arbiter.ExecutorProfileTransition
-	(*ExecutorProfileTransitionReceipt)(nil),    // 49: arbiter.ExecutorProfileTransitionReceipt
-	(*SnapshotArtifactReadySubmission)(nil),     // 50: arbiter.SnapshotArtifactReadySubmission
+	(*UpdateConsensusParamsCmd)(nil),            // 40: arbiter.UpdateConsensusParamsCmd
+	(*AcquireSnapshotQueryRequest)(nil),         // 41: arbiter.AcquireSnapshotQueryRequest
+	(*SnapshotQueryReservation)(nil),            // 42: arbiter.SnapshotQueryReservation
+	(*ReleaseSnapshotQueryRequest)(nil),         // 43: arbiter.ReleaseSnapshotQueryRequest
+	(*SnapshotQueryEnvelope)(nil),               // 44: arbiter.SnapshotQueryEnvelope
+	(*SnapshotQueryAbortRecord)(nil),            // 45: arbiter.SnapshotQueryAbortRecord
+	(*ActiveQueryPolicy)(nil),                   // 46: arbiter.ActiveQueryPolicy
+	(*SnapshotQueryClaim)(nil),                  // 47: arbiter.SnapshotQueryClaim
+	(*SnapshotQueryAttestation)(nil),            // 48: arbiter.SnapshotQueryAttestation
+	(*ExecutorProfileTransition)(nil),           // 49: arbiter.ExecutorProfileTransition
+	(*ExecutorProfileTransitionReceipt)(nil),    // 50: arbiter.ExecutorProfileTransitionReceipt
+	(*SnapshotArtifactReadySubmission)(nil),     // 51: arbiter.SnapshotArtifactReadySubmission
 }
 var file_raftlog_proto_depIdxs = []int32{
 	29, // 0: arbiter.SubmitStatementCmd.envelope:type_name -> arbiter.StatementEnvelopeV2
@@ -2153,33 +2171,34 @@ var file_raftlog_proto_depIdxs = []int32{
 	15, // 26: arbiter.RaftCommand.register_node:type_name -> arbiter.RegisterNodeCmd
 	16, // 27: arbiter.RaftCommand.mark_active:type_name -> arbiter.MarkActiveCmd
 	17, // 28: arbiter.RaftCommand.evict_node:type_name -> arbiter.EvictNodeCmd
-	19, // 29: arbiter.RaftCommand.begin_snapshot_query:type_name -> arbiter.BeginSnapshotQueryCmd
-	20, // 30: arbiter.RaftCommand.grant_snapshot_query:type_name -> arbiter.GrantSnapshotQueryCmd
-	21, // 31: arbiter.RaftCommand.release_snapshot_query:type_name -> arbiter.ReleaseSnapshotQueryCmd
-	22, // 32: arbiter.RaftCommand.submit_snapshot_query:type_name -> arbiter.SubmitSnapshotQueryCmd
-	23, // 33: arbiter.RaftCommand.abort_snapshot_query:type_name -> arbiter.AbortSnapshotQueryCmd
-	24, // 34: arbiter.RaftCommand.activate_query_profile:type_name -> arbiter.ActivateQueryProfileCmd
-	25, // 35: arbiter.RaftCommand.record_snapshot_query_claim:type_name -> arbiter.RecordSnapshotQueryClaimCmd
-	26, // 36: arbiter.RaftCommand.record_snapshot_query_attestation:type_name -> arbiter.RecordSnapshotQueryAttestationCmd
-	27, // 37: arbiter.RaftCommand.publish_executor_profile_transition:type_name -> arbiter.PublishExecutorProfileTransitionCmd
-	28, // 38: arbiter.RaftCommand.record_snapshot_artifact_ready:type_name -> arbiter.RecordSnapshotArtifactReadyCmd
-	40, // 39: arbiter.BeginSnapshotQueryCmd.request:type_name -> arbiter.AcquireSnapshotQueryRequest
-	41, // 40: arbiter.GrantSnapshotQueryCmd.reservation:type_name -> arbiter.SnapshotQueryReservation
-	42, // 41: arbiter.ReleaseSnapshotQueryCmd.request:type_name -> arbiter.ReleaseSnapshotQueryRequest
-	43, // 42: arbiter.SubmitSnapshotQueryCmd.envelope:type_name -> arbiter.SnapshotQueryEnvelope
-	44, // 43: arbiter.AbortSnapshotQueryCmd.record:type_name -> arbiter.SnapshotQueryAbortRecord
-	45, // 44: arbiter.ActivateQueryProfileCmd.activation:type_name -> arbiter.ActiveQueryPolicy
-	46, // 45: arbiter.RecordSnapshotQueryClaimCmd.claim:type_name -> arbiter.SnapshotQueryClaim
-	47, // 46: arbiter.RecordSnapshotQueryAttestationCmd.attestation:type_name -> arbiter.SnapshotQueryAttestation
-	48, // 47: arbiter.PublishExecutorProfileTransitionCmd.transition:type_name -> arbiter.ExecutorProfileTransition
-	36, // 48: arbiter.PublishExecutorProfileTransitionCmd.manifest:type_name -> arbiter.SafeSnapshotManifest
-	49, // 49: arbiter.PublishExecutorProfileTransitionCmd.receipts:type_name -> arbiter.ExecutorProfileTransitionReceipt
-	50, // 50: arbiter.RecordSnapshotArtifactReadyCmd.submission:type_name -> arbiter.SnapshotArtifactReadySubmission
-	51, // [51:51] is the sub-list for method output_type
-	51, // [51:51] is the sub-list for method input_type
-	51, // [51:51] is the sub-list for extension type_name
-	51, // [51:51] is the sub-list for extension extendee
-	0,  // [0:51] is the sub-list for field type_name
+	40, // 29: arbiter.RaftCommand.update_consensus_params:type_name -> arbiter.UpdateConsensusParamsCmd
+	19, // 30: arbiter.RaftCommand.begin_snapshot_query:type_name -> arbiter.BeginSnapshotQueryCmd
+	20, // 31: arbiter.RaftCommand.grant_snapshot_query:type_name -> arbiter.GrantSnapshotQueryCmd
+	21, // 32: arbiter.RaftCommand.release_snapshot_query:type_name -> arbiter.ReleaseSnapshotQueryCmd
+	22, // 33: arbiter.RaftCommand.submit_snapshot_query:type_name -> arbiter.SubmitSnapshotQueryCmd
+	23, // 34: arbiter.RaftCommand.abort_snapshot_query:type_name -> arbiter.AbortSnapshotQueryCmd
+	24, // 35: arbiter.RaftCommand.activate_query_profile:type_name -> arbiter.ActivateQueryProfileCmd
+	25, // 36: arbiter.RaftCommand.record_snapshot_query_claim:type_name -> arbiter.RecordSnapshotQueryClaimCmd
+	26, // 37: arbiter.RaftCommand.record_snapshot_query_attestation:type_name -> arbiter.RecordSnapshotQueryAttestationCmd
+	27, // 38: arbiter.RaftCommand.publish_executor_profile_transition:type_name -> arbiter.PublishExecutorProfileTransitionCmd
+	28, // 39: arbiter.RaftCommand.record_snapshot_artifact_ready:type_name -> arbiter.RecordSnapshotArtifactReadyCmd
+	41, // 40: arbiter.BeginSnapshotQueryCmd.request:type_name -> arbiter.AcquireSnapshotQueryRequest
+	42, // 41: arbiter.GrantSnapshotQueryCmd.reservation:type_name -> arbiter.SnapshotQueryReservation
+	43, // 42: arbiter.ReleaseSnapshotQueryCmd.request:type_name -> arbiter.ReleaseSnapshotQueryRequest
+	44, // 43: arbiter.SubmitSnapshotQueryCmd.envelope:type_name -> arbiter.SnapshotQueryEnvelope
+	45, // 44: arbiter.AbortSnapshotQueryCmd.record:type_name -> arbiter.SnapshotQueryAbortRecord
+	46, // 45: arbiter.ActivateQueryProfileCmd.activation:type_name -> arbiter.ActiveQueryPolicy
+	47, // 46: arbiter.RecordSnapshotQueryClaimCmd.claim:type_name -> arbiter.SnapshotQueryClaim
+	48, // 47: arbiter.RecordSnapshotQueryAttestationCmd.attestation:type_name -> arbiter.SnapshotQueryAttestation
+	49, // 48: arbiter.PublishExecutorProfileTransitionCmd.transition:type_name -> arbiter.ExecutorProfileTransition
+	36, // 49: arbiter.PublishExecutorProfileTransitionCmd.manifest:type_name -> arbiter.SafeSnapshotManifest
+	50, // 50: arbiter.PublishExecutorProfileTransitionCmd.receipts:type_name -> arbiter.ExecutorProfileTransitionReceipt
+	51, // 51: arbiter.RecordSnapshotArtifactReadyCmd.submission:type_name -> arbiter.SnapshotArtifactReadySubmission
+	52, // [52:52] is the sub-list for method output_type
+	52, // [52:52] is the sub-list for method input_type
+	52, // [52:52] is the sub-list for extension type_name
+	52, // [52:52] is the sub-list for extension extendee
+	0,  // [0:52] is the sub-list for field type_name
 }
 
 func init() { file_raftlog_proto_init() }
@@ -2188,6 +2207,7 @@ func file_raftlog_proto_init() {
 		return
 	}
 	file_arbiter_proto_init()
+	file_consensus_proto_init()
 	file_replay_proto_init()
 	file_raftlog_proto_msgTypes[17].OneofWrappers = []any{
 		(*RaftCommand_SubmitStatement)(nil),
@@ -2207,6 +2227,7 @@ func file_raftlog_proto_init() {
 		(*RaftCommand_RegisterNode)(nil),
 		(*RaftCommand_MarkActive)(nil),
 		(*RaftCommand_EvictNode)(nil),
+		(*RaftCommand_UpdateConsensusParams)(nil),
 		(*RaftCommand_BeginSnapshotQuery)(nil),
 		(*RaftCommand_GrantSnapshotQuery)(nil),
 		(*RaftCommand_ReleaseSnapshotQuery)(nil),

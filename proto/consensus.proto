@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+// Consensus administration changes replicated mutable parameters. Upgrade
+// every voter before enabling updates: an old follower cannot apply the new
+// Raft command even though the protobuf extension is wire-compatible.
+package arbiter;
+option go_package = "github.com/sentioxyz/arbiter-proto/gen/pb;pb";
+
+import "google/protobuf/empty.proto";
+import "arbiter.proto";
+
+// ConsensusMutableParams is a complete authority set and writer limit, not
+// a patch. Bootstrap values remain the original trust root on every restart;
+// current values change only through committed, signed transitions.
+message ConsensusMutableParams {
+  repeated string authority_addresses = 1;
+  uint64 max_writers = 2;
+}
+
+// ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
+// Authority addresses are lowercase, sorted and deduplicated before hashing.
+// authority_jws covers every field; it uses a dedicated versioned purpose
+// and CanonicalDigest domain, never protobuf serialization.
+message ConsensusParamsUpdate {
+  string network_id = 1;
+  string genesis_snapshot_id = 2;
+  uint64 expected_epoch = 3;
+  string previous_params_digest = 4;
+  repeated string authority_addresses = 5;
+  uint64 max_writers = 6;
+  // CAS against the last issued promotion sequence. This also binds the
+  // authorization epoch boundary retained in snapshot history.
+  uint64 expected_promotion_seq = 7;
+}
+
+// UpdateConsensusParamsCmd is both the administration request and the
+// replicated command. Epoch, digest, and promotion-sequence preconditions
+// are checked atomically by the FSM; consumed epochs are rejected on retry.
+message UpdateConsensusParamsCmd {
+  ConsensusParamsUpdate update = 1;
+  string authority_jws = 2;
+}
+
+// ProtocolInfo describes the directly contacted node, including followers.
+// protocol_version=1 supports the ConsensusAdmin service and update command.
+message ProtocolInfo {
+  string node_id = 1;
+  uint32 protocol_version = 2;
+  bool updates_enabled = 3;
+}
+
+// ConsensusParamsState is a leader-barrier view used to prepare the next
+// signed update or resolve the outcome of an uncertain previous request.
+message ConsensusParamsState {
+  uint32 protocol_version = 1;
+  string network_id = 2;
+  string genesis_snapshot_id = 3;
+  ConsensusMutableParams bootstrap = 4;
+  ConsensusMutableParams current = 5;
+  uint64 epoch = 6;
+  // Digest of the full current consensus parameters, including immutable
+  // fields; this is not only a digest of ConsensusMutableParams.
+  string params_digest = 7;
+  uint64 promotion_seq = 8;
+}
+
+service ConsensusAdmin {
+  // Local static capability probe: no leader redirection or Raft barrier.
+  rpc GetProtocolInfo (google.protobuf.Empty) returns (ProtocolInfo) {}
+  // Leader-only read with a barrier; followers return NotLeader details.
+  rpc GetConsensusParams (google.protobuf.Empty) returns (ConsensusParamsState) {}
+  // Leader-only, explicitly enabled mutation. Ack means committed success;
+  // unlike idempotent data-plane writes, a consumed epoch is an error.
+  rpc UpdateConsensusParams (UpdateConsensusParamsCmd) returns (Ack) {}
+}
