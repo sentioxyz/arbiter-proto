@@ -892,6 +892,75 @@ func (x *ArtifactDispositionResolveObligationV1) GetObligationSeq() uint64 {
 	return 0
 }
 
+// ArtifactDispositionGrantReservationV1 requests the one atomic C2 grant
+// transition.  The enclosing command carries the fixed network, shard,
+// request ID, and expected revision; this action adds only the immutable
+// query identity and the digest of the already-authenticated control binding.
+//
+// In particular, the caller cannot select a reservation ID, fencing
+// generation, pin, profile, activation, assignment, obligation, capacity
+// allowance ordinal, allocator decision, or drain/barrier result.  Those are
+// committed, server-owned results of the transition.
+type ArtifactDispositionGrantReservationV1 struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	ClientAccount        string                 `protobuf:"bytes,1,opt,name=client_account,json=clientAccount,proto3" json:"client_account,omitempty"`
+	StatementId          string                 `protobuf:"bytes,2,opt,name=statement_id,json=statementId,proto3" json:"statement_id,omitempty"`
+	ControlBindingDigest string                 `protobuf:"bytes,3,opt,name=control_binding_digest,json=controlBindingDigest,proto3" json:"control_binding_digest,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *ArtifactDispositionGrantReservationV1) Reset() {
+	*x = ArtifactDispositionGrantReservationV1{}
+	mi := &file_artifact_disposition_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ArtifactDispositionGrantReservationV1) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ArtifactDispositionGrantReservationV1) ProtoMessage() {}
+
+func (x *ArtifactDispositionGrantReservationV1) ProtoReflect() protoreflect.Message {
+	mi := &file_artifact_disposition_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ArtifactDispositionGrantReservationV1.ProtoReflect.Descriptor instead.
+func (*ArtifactDispositionGrantReservationV1) Descriptor() ([]byte, []int) {
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ArtifactDispositionGrantReservationV1) GetClientAccount() string {
+	if x != nil {
+		return x.ClientAccount
+	}
+	return ""
+}
+
+func (x *ArtifactDispositionGrantReservationV1) GetStatementId() string {
+	if x != nil {
+		return x.StatementId
+	}
+	return ""
+}
+
+func (x *ArtifactDispositionGrantReservationV1) GetControlBindingDigest() string {
+	if x != nil {
+		return x.ControlBindingDigest
+	}
+	return ""
+}
+
 type ArtifactDispositionActionV1 struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Action:
@@ -907,6 +976,7 @@ type ArtifactDispositionActionV1 struct {
 	//	*ArtifactDispositionActionV1_CloseUse
 	//	*ArtifactDispositionActionV1_OpenChallenge
 	//	*ArtifactDispositionActionV1_ResolveObligation
+	//	*ArtifactDispositionActionV1_GrantReservation
 	Action        isArtifactDispositionActionV1_Action `protobuf_oneof:"action"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -914,7 +984,7 @@ type ArtifactDispositionActionV1 struct {
 
 func (x *ArtifactDispositionActionV1) Reset() {
 	*x = ArtifactDispositionActionV1{}
-	mi := &file_artifact_disposition_proto_msgTypes[13]
+	mi := &file_artifact_disposition_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -926,7 +996,7 @@ func (x *ArtifactDispositionActionV1) String() string {
 func (*ArtifactDispositionActionV1) ProtoMessage() {}
 
 func (x *ArtifactDispositionActionV1) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[13]
+	mi := &file_artifact_disposition_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -939,7 +1009,7 @@ func (x *ArtifactDispositionActionV1) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArtifactDispositionActionV1.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionActionV1) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{13}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ArtifactDispositionActionV1) GetAction() isArtifactDispositionActionV1_Action {
@@ -1048,6 +1118,15 @@ func (x *ArtifactDispositionActionV1) GetResolveObligation() *ArtifactDispositio
 	return nil
 }
 
+func (x *ArtifactDispositionActionV1) GetGrantReservation() *ArtifactDispositionGrantReservationV1 {
+	if x != nil {
+		if x, ok := x.Action.(*ArtifactDispositionActionV1_GrantReservation); ok {
+			return x.GrantReservation
+		}
+	}
+	return nil
+}
+
 type isArtifactDispositionActionV1_Action interface {
 	isArtifactDispositionActionV1_Action()
 }
@@ -1096,6 +1175,10 @@ type ArtifactDispositionActionV1_ResolveObligation struct {
 	ResolveObligation *ArtifactDispositionResolveObligationV1 `protobuf:"bytes,11,opt,name=resolve_obligation,json=resolveObligation,proto3,oneof"`
 }
 
+type ArtifactDispositionActionV1_GrantReservation struct {
+	GrantReservation *ArtifactDispositionGrantReservationV1 `protobuf:"bytes,12,opt,name=grant_reservation,json=grantReservation,proto3,oneof"`
+}
+
 func (*ArtifactDispositionActionV1_BindPolicy) isArtifactDispositionActionV1_Action() {}
 
 func (*ArtifactDispositionActionV1_RegisterCandidate) isArtifactDispositionActionV1_Action() {}
@@ -1118,6 +1201,8 @@ func (*ArtifactDispositionActionV1_OpenChallenge) isArtifactDispositionActionV1_
 
 func (*ArtifactDispositionActionV1_ResolveObligation) isArtifactDispositionActionV1_Action() {}
 
+func (*ArtifactDispositionActionV1_GrantReservation) isArtifactDispositionActionV1_Action() {}
+
 type ArtifactDispositionCommandV1 struct {
 	state            protoimpl.MessageState       `protogen:"open.v1"`
 	Version          uint32                       `protobuf:"varint,1,opt,name=version,proto3" json:"version,omitempty"`
@@ -1133,7 +1218,7 @@ type ArtifactDispositionCommandV1 struct {
 
 func (x *ArtifactDispositionCommandV1) Reset() {
 	*x = ArtifactDispositionCommandV1{}
-	mi := &file_artifact_disposition_proto_msgTypes[14]
+	mi := &file_artifact_disposition_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1145,7 +1230,7 @@ func (x *ArtifactDispositionCommandV1) String() string {
 func (*ArtifactDispositionCommandV1) ProtoMessage() {}
 
 func (x *ArtifactDispositionCommandV1) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[14]
+	mi := &file_artifact_disposition_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1158,7 +1243,7 @@ func (x *ArtifactDispositionCommandV1) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArtifactDispositionCommandV1.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionCommandV1) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{14}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ArtifactDispositionCommandV1) GetVersion() uint32 {
@@ -1224,7 +1309,7 @@ type ArtifactDispositionRegistryObservationV1 struct {
 
 func (x *ArtifactDispositionRegistryObservationV1) Reset() {
 	*x = ArtifactDispositionRegistryObservationV1{}
-	mi := &file_artifact_disposition_proto_msgTypes[15]
+	mi := &file_artifact_disposition_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1236,7 +1321,7 @@ func (x *ArtifactDispositionRegistryObservationV1) String() string {
 func (*ArtifactDispositionRegistryObservationV1) ProtoMessage() {}
 
 func (x *ArtifactDispositionRegistryObservationV1) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[15]
+	mi := &file_artifact_disposition_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1249,7 +1334,7 @@ func (x *ArtifactDispositionRegistryObservationV1) ProtoReflect() protoreflect.M
 
 // Deprecated: Use ArtifactDispositionRegistryObservationV1.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionRegistryObservationV1) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{15}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ArtifactDispositionRegistryObservationV1) GetReferenceId() string {
@@ -1307,7 +1392,7 @@ type ArtifactDispositionSourceObservationV1 struct {
 
 func (x *ArtifactDispositionSourceObservationV1) Reset() {
 	*x = ArtifactDispositionSourceObservationV1{}
-	mi := &file_artifact_disposition_proto_msgTypes[16]
+	mi := &file_artifact_disposition_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1319,7 +1404,7 @@ func (x *ArtifactDispositionSourceObservationV1) String() string {
 func (*ArtifactDispositionSourceObservationV1) ProtoMessage() {}
 
 func (x *ArtifactDispositionSourceObservationV1) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[16]
+	mi := &file_artifact_disposition_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1332,7 +1417,7 @@ func (x *ArtifactDispositionSourceObservationV1) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use ArtifactDispositionSourceObservationV1.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionSourceObservationV1) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{16}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ArtifactDispositionSourceObservationV1) GetObligationSeq() uint64 {
@@ -1386,7 +1471,7 @@ type ArtifactDispositionValidationV1 struct {
 
 func (x *ArtifactDispositionValidationV1) Reset() {
 	*x = ArtifactDispositionValidationV1{}
-	mi := &file_artifact_disposition_proto_msgTypes[17]
+	mi := &file_artifact_disposition_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1398,7 +1483,7 @@ func (x *ArtifactDispositionValidationV1) String() string {
 func (*ArtifactDispositionValidationV1) ProtoMessage() {}
 
 func (x *ArtifactDispositionValidationV1) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[17]
+	mi := &file_artifact_disposition_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1411,7 +1496,7 @@ func (x *ArtifactDispositionValidationV1) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArtifactDispositionValidationV1.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionValidationV1) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{17}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ArtifactDispositionValidationV1) GetVersion() uint32 {
@@ -1481,7 +1566,7 @@ type ApplyArtifactDispositionRequest struct {
 
 func (x *ApplyArtifactDispositionRequest) Reset() {
 	*x = ApplyArtifactDispositionRequest{}
-	mi := &file_artifact_disposition_proto_msgTypes[18]
+	mi := &file_artifact_disposition_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1493,7 +1578,7 @@ func (x *ApplyArtifactDispositionRequest) String() string {
 func (*ApplyArtifactDispositionRequest) ProtoMessage() {}
 
 func (x *ApplyArtifactDispositionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[18]
+	mi := &file_artifact_disposition_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1506,7 +1591,7 @@ func (x *ApplyArtifactDispositionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApplyArtifactDispositionRequest.ProtoReflect.Descriptor instead.
 func (*ApplyArtifactDispositionRequest) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{18}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ApplyArtifactDispositionRequest) GetCommand() *ArtifactDispositionCommandV1 {
@@ -1541,7 +1626,7 @@ type ArtifactDispositionCmd struct {
 
 func (x *ArtifactDispositionCmd) Reset() {
 	*x = ArtifactDispositionCmd{}
-	mi := &file_artifact_disposition_proto_msgTypes[19]
+	mi := &file_artifact_disposition_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1553,7 +1638,7 @@ func (x *ArtifactDispositionCmd) String() string {
 func (*ArtifactDispositionCmd) ProtoMessage() {}
 
 func (x *ArtifactDispositionCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[19]
+	mi := &file_artifact_disposition_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1566,7 +1651,7 @@ func (x *ArtifactDispositionCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArtifactDispositionCmd.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionCmd) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{19}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ArtifactDispositionCmd) GetCommand() *ArtifactDispositionCommandV1 {
@@ -1601,7 +1686,7 @@ type ArtifactDispositionRequestKeyV1 struct {
 
 func (x *ArtifactDispositionRequestKeyV1) Reset() {
 	*x = ArtifactDispositionRequestKeyV1{}
-	mi := &file_artifact_disposition_proto_msgTypes[20]
+	mi := &file_artifact_disposition_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1613,7 +1698,7 @@ func (x *ArtifactDispositionRequestKeyV1) String() string {
 func (*ArtifactDispositionRequestKeyV1) ProtoMessage() {}
 
 func (x *ArtifactDispositionRequestKeyV1) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[20]
+	mi := &file_artifact_disposition_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1626,7 +1711,7 @@ func (x *ArtifactDispositionRequestKeyV1) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArtifactDispositionRequestKeyV1.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionRequestKeyV1) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{20}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ArtifactDispositionRequestKeyV1) GetActorId() string {
@@ -1661,7 +1746,7 @@ type ArtifactDispositionObligationOwnerV1 struct {
 
 func (x *ArtifactDispositionObligationOwnerV1) Reset() {
 	*x = ArtifactDispositionObligationOwnerV1{}
-	mi := &file_artifact_disposition_proto_msgTypes[21]
+	mi := &file_artifact_disposition_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1673,7 +1758,7 @@ func (x *ArtifactDispositionObligationOwnerV1) String() string {
 func (*ArtifactDispositionObligationOwnerV1) ProtoMessage() {}
 
 func (x *ArtifactDispositionObligationOwnerV1) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[21]
+	mi := &file_artifact_disposition_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1686,7 +1771,7 @@ func (x *ArtifactDispositionObligationOwnerV1) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use ArtifactDispositionObligationOwnerV1.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionObligationOwnerV1) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{21}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ArtifactDispositionObligationOwnerV1) GetPin() *SnapshotPin {
@@ -1728,7 +1813,7 @@ type ArtifactDispositionSelectorV1 struct {
 
 func (x *ArtifactDispositionSelectorV1) Reset() {
 	*x = ArtifactDispositionSelectorV1{}
-	mi := &file_artifact_disposition_proto_msgTypes[22]
+	mi := &file_artifact_disposition_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1740,7 +1825,7 @@ func (x *ArtifactDispositionSelectorV1) String() string {
 func (*ArtifactDispositionSelectorV1) ProtoMessage() {}
 
 func (x *ArtifactDispositionSelectorV1) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[22]
+	mi := &file_artifact_disposition_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1753,7 +1838,7 @@ func (x *ArtifactDispositionSelectorV1) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArtifactDispositionSelectorV1.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionSelectorV1) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{22}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ArtifactDispositionSelectorV1) GetSelector() isArtifactDispositionSelectorV1_Selector {
@@ -1886,7 +1971,7 @@ type GetArtifactDispositionRequest struct {
 
 func (x *GetArtifactDispositionRequest) Reset() {
 	*x = GetArtifactDispositionRequest{}
-	mi := &file_artifact_disposition_proto_msgTypes[23]
+	mi := &file_artifact_disposition_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1898,7 +1983,7 @@ func (x *GetArtifactDispositionRequest) String() string {
 func (*GetArtifactDispositionRequest) ProtoMessage() {}
 
 func (x *GetArtifactDispositionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[23]
+	mi := &file_artifact_disposition_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1911,7 +1996,7 @@ func (x *GetArtifactDispositionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetArtifactDispositionRequest.ProtoReflect.Descriptor instead.
 func (*GetArtifactDispositionRequest) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{23}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *GetArtifactDispositionRequest) GetVersion() uint32 {
@@ -1967,7 +2052,7 @@ type ArtifactDispositionPolicyRecordV1 struct {
 
 func (x *ArtifactDispositionPolicyRecordV1) Reset() {
 	*x = ArtifactDispositionPolicyRecordV1{}
-	mi := &file_artifact_disposition_proto_msgTypes[24]
+	mi := &file_artifact_disposition_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1979,7 +2064,7 @@ func (x *ArtifactDispositionPolicyRecordV1) String() string {
 func (*ArtifactDispositionPolicyRecordV1) ProtoMessage() {}
 
 func (x *ArtifactDispositionPolicyRecordV1) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[24]
+	mi := &file_artifact_disposition_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1992,7 +2077,7 @@ func (x *ArtifactDispositionPolicyRecordV1) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use ArtifactDispositionPolicyRecordV1.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionPolicyRecordV1) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{24}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ArtifactDispositionPolicyRecordV1) GetPolicy() *ArtifactDispositionPolicyV1 {
@@ -2036,7 +2121,7 @@ type ArtifactDispositionCandidateRecordV1 struct {
 
 func (x *ArtifactDispositionCandidateRecordV1) Reset() {
 	*x = ArtifactDispositionCandidateRecordV1{}
-	mi := &file_artifact_disposition_proto_msgTypes[25]
+	mi := &file_artifact_disposition_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2048,7 +2133,7 @@ func (x *ArtifactDispositionCandidateRecordV1) String() string {
 func (*ArtifactDispositionCandidateRecordV1) ProtoMessage() {}
 
 func (x *ArtifactDispositionCandidateRecordV1) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[25]
+	mi := &file_artifact_disposition_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2061,7 +2146,7 @@ func (x *ArtifactDispositionCandidateRecordV1) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use ArtifactDispositionCandidateRecordV1.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionCandidateRecordV1) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{25}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ArtifactDispositionCandidateRecordV1) GetCandidateSeq() uint64 {
@@ -2165,7 +2250,7 @@ type ArtifactDispositionRetirementRecordV1 struct {
 
 func (x *ArtifactDispositionRetirementRecordV1) Reset() {
 	*x = ArtifactDispositionRetirementRecordV1{}
-	mi := &file_artifact_disposition_proto_msgTypes[26]
+	mi := &file_artifact_disposition_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2177,7 +2262,7 @@ func (x *ArtifactDispositionRetirementRecordV1) String() string {
 func (*ArtifactDispositionRetirementRecordV1) ProtoMessage() {}
 
 func (x *ArtifactDispositionRetirementRecordV1) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[26]
+	mi := &file_artifact_disposition_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2190,7 +2275,7 @@ func (x *ArtifactDispositionRetirementRecordV1) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use ArtifactDispositionRetirementRecordV1.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionRetirementRecordV1) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{26}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ArtifactDispositionRetirementRecordV1) GetPin() *SnapshotPin {
@@ -2271,7 +2356,7 @@ type ArtifactDispositionUseRecordV1 struct {
 
 func (x *ArtifactDispositionUseRecordV1) Reset() {
 	*x = ArtifactDispositionUseRecordV1{}
-	mi := &file_artifact_disposition_proto_msgTypes[27]
+	mi := &file_artifact_disposition_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2283,7 +2368,7 @@ func (x *ArtifactDispositionUseRecordV1) String() string {
 func (*ArtifactDispositionUseRecordV1) ProtoMessage() {}
 
 func (x *ArtifactDispositionUseRecordV1) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[27]
+	mi := &file_artifact_disposition_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2296,7 +2381,7 @@ func (x *ArtifactDispositionUseRecordV1) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArtifactDispositionUseRecordV1.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionUseRecordV1) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{27}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ArtifactDispositionUseRecordV1) GetUse() *ArtifactDispositionUseV1 {
@@ -2367,7 +2452,7 @@ type ArtifactDispositionObligationRecordV1 struct {
 
 func (x *ArtifactDispositionObligationRecordV1) Reset() {
 	*x = ArtifactDispositionObligationRecordV1{}
-	mi := &file_artifact_disposition_proto_msgTypes[28]
+	mi := &file_artifact_disposition_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2379,7 +2464,7 @@ func (x *ArtifactDispositionObligationRecordV1) String() string {
 func (*ArtifactDispositionObligationRecordV1) ProtoMessage() {}
 
 func (x *ArtifactDispositionObligationRecordV1) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[28]
+	mi := &file_artifact_disposition_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2392,7 +2477,7 @@ func (x *ArtifactDispositionObligationRecordV1) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use ArtifactDispositionObligationRecordV1.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionObligationRecordV1) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{28}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ArtifactDispositionObligationRecordV1) GetObligationSeq() uint64 {
@@ -2487,7 +2572,7 @@ type ArtifactDispositionResultV1 struct {
 
 func (x *ArtifactDispositionResultV1) Reset() {
 	*x = ArtifactDispositionResultV1{}
-	mi := &file_artifact_disposition_proto_msgTypes[29]
+	mi := &file_artifact_disposition_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2499,7 +2584,7 @@ func (x *ArtifactDispositionResultV1) String() string {
 func (*ArtifactDispositionResultV1) ProtoMessage() {}
 
 func (x *ArtifactDispositionResultV1) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[29]
+	mi := &file_artifact_disposition_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2512,7 +2597,7 @@ func (x *ArtifactDispositionResultV1) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArtifactDispositionResultV1.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionResultV1) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{29}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ArtifactDispositionResultV1) GetActorId() string {
@@ -2580,7 +2665,7 @@ type ArtifactDispositionRecordV1 struct {
 
 func (x *ArtifactDispositionRecordV1) Reset() {
 	*x = ArtifactDispositionRecordV1{}
-	mi := &file_artifact_disposition_proto_msgTypes[30]
+	mi := &file_artifact_disposition_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2592,7 +2677,7 @@ func (x *ArtifactDispositionRecordV1) String() string {
 func (*ArtifactDispositionRecordV1) ProtoMessage() {}
 
 func (x *ArtifactDispositionRecordV1) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[30]
+	mi := &file_artifact_disposition_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2605,7 +2690,7 @@ func (x *ArtifactDispositionRecordV1) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArtifactDispositionRecordV1.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionRecordV1) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{30}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ArtifactDispositionRecordV1) GetRecord() isArtifactDispositionRecordV1_Record {
@@ -2712,7 +2797,7 @@ type ArtifactDispositionReplyBodyV1 struct {
 
 func (x *ArtifactDispositionReplyBodyV1) Reset() {
 	*x = ArtifactDispositionReplyBodyV1{}
-	mi := &file_artifact_disposition_proto_msgTypes[31]
+	mi := &file_artifact_disposition_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2724,7 +2809,7 @@ func (x *ArtifactDispositionReplyBodyV1) String() string {
 func (*ArtifactDispositionReplyBodyV1) ProtoMessage() {}
 
 func (x *ArtifactDispositionReplyBodyV1) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[31]
+	mi := &file_artifact_disposition_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2737,7 +2822,7 @@ func (x *ArtifactDispositionReplyBodyV1) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArtifactDispositionReplyBodyV1.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionReplyBodyV1) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{31}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *ArtifactDispositionReplyBodyV1) GetVersion() uint32 {
@@ -2821,7 +2906,7 @@ type ArtifactDispositionReadProofV1 struct {
 
 func (x *ArtifactDispositionReadProofV1) Reset() {
 	*x = ArtifactDispositionReadProofV1{}
-	mi := &file_artifact_disposition_proto_msgTypes[32]
+	mi := &file_artifact_disposition_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2833,7 +2918,7 @@ func (x *ArtifactDispositionReadProofV1) String() string {
 func (*ArtifactDispositionReadProofV1) ProtoMessage() {}
 
 func (x *ArtifactDispositionReadProofV1) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[32]
+	mi := &file_artifact_disposition_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2846,7 +2931,7 @@ func (x *ArtifactDispositionReadProofV1) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArtifactDispositionReadProofV1.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionReadProofV1) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{32}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *ArtifactDispositionReadProofV1) GetVersion() uint32 {
@@ -2880,7 +2965,7 @@ type ArtifactDispositionReply struct {
 
 func (x *ArtifactDispositionReply) Reset() {
 	*x = ArtifactDispositionReply{}
-	mi := &file_artifact_disposition_proto_msgTypes[33]
+	mi := &file_artifact_disposition_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2892,7 +2977,7 @@ func (x *ArtifactDispositionReply) String() string {
 func (*ArtifactDispositionReply) ProtoMessage() {}
 
 func (x *ArtifactDispositionReply) ProtoReflect() protoreflect.Message {
-	mi := &file_artifact_disposition_proto_msgTypes[33]
+	mi := &file_artifact_disposition_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2905,7 +2990,7 @@ func (x *ArtifactDispositionReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArtifactDispositionReply.ProtoReflect.Descriptor instead.
 func (*ArtifactDispositionReply) Descriptor() ([]byte, []int) {
-	return file_artifact_disposition_proto_rawDescGZIP(), []int{33}
+	return file_artifact_disposition_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *ArtifactDispositionReply) GetBody() *ArtifactDispositionReplyBodyV1 {
@@ -2998,7 +3083,11 @@ const file_artifact_disposition_proto_rawDesc = "" +
 	"\n" +
 	"replay_use\x18\x04 \x01(\v2!.arbiter.ArtifactDispositionUseV1R\treplayUse\"O\n" +
 	"&ArtifactDispositionResolveObligationV1\x12%\n" +
-	"\x0eobligation_seq\x18\x01 \x01(\x04R\robligationSeq\"\xe3\a\n" +
+	"\x0eobligation_seq\x18\x01 \x01(\x04R\robligationSeq\"\xa7\x01\n" +
+	"%ArtifactDispositionGrantReservationV1\x12%\n" +
+	"\x0eclient_account\x18\x01 \x01(\tR\rclientAccount\x12!\n" +
+	"\fstatement_id\x18\x02 \x01(\tR\vstatementId\x124\n" +
+	"\x16control_binding_digest\x18\x03 \x01(\tR\x14controlBindingDigest\"\xc2\b\n" +
 	"\x1bArtifactDispositionActionV1\x12K\n" +
 	"\vbind_policy\x18\x01 \x01(\v2(.arbiter.ArtifactDispositionBindPolicyV1H\x00R\n" +
 	"bindPolicy\x12`\n" +
@@ -3012,7 +3101,8 @@ const file_artifact_disposition_proto_rawDesc = "" +
 	"\tclose_use\x18\t \x01(\v2&.arbiter.ArtifactDispositionCloseUseV1H\x00R\bcloseUse\x12T\n" +
 	"\x0eopen_challenge\x18\n" +
 	" \x01(\v2+.arbiter.ArtifactDispositionOpenChallengeV1H\x00R\ropenChallenge\x12`\n" +
-	"\x12resolve_obligation\x18\v \x01(\v2/.arbiter.ArtifactDispositionResolveObligationV1H\x00R\x11resolveObligationB\b\n" +
+	"\x12resolve_obligation\x18\v \x01(\v2/.arbiter.ArtifactDispositionResolveObligationV1H\x00R\x11resolveObligation\x12]\n" +
+	"\x11grant_reservation\x18\f \x01(\v2..arbiter.ArtifactDispositionGrantReservationV1H\x00R\x10grantReservationB\b\n" +
 	"\x06action\"\xa4\x02\n" +
 	"\x1cArtifactDispositionCommandV1\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\rR\aversion\x12\x1d\n" +
@@ -3197,7 +3287,7 @@ func file_artifact_disposition_proto_rawDescGZIP() []byte {
 	return file_artifact_disposition_proto_rawDescData
 }
 
-var file_artifact_disposition_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
+var file_artifact_disposition_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
 var file_artifact_disposition_proto_goTypes = []any{
 	(*ArtifactDispositionPolicyV1)(nil),              // 0: arbiter.ArtifactDispositionPolicyV1
 	(*ArtifactDispositionOriginV1)(nil),              // 1: arbiter.ArtifactDispositionOriginV1
@@ -3212,51 +3302,52 @@ var file_artifact_disposition_proto_goTypes = []any{
 	(*ArtifactDispositionCloseUseV1)(nil),            // 10: arbiter.ArtifactDispositionCloseUseV1
 	(*ArtifactDispositionOpenChallengeV1)(nil),       // 11: arbiter.ArtifactDispositionOpenChallengeV1
 	(*ArtifactDispositionResolveObligationV1)(nil),   // 12: arbiter.ArtifactDispositionResolveObligationV1
-	(*ArtifactDispositionActionV1)(nil),              // 13: arbiter.ArtifactDispositionActionV1
-	(*ArtifactDispositionCommandV1)(nil),             // 14: arbiter.ArtifactDispositionCommandV1
-	(*ArtifactDispositionRegistryObservationV1)(nil), // 15: arbiter.ArtifactDispositionRegistryObservationV1
-	(*ArtifactDispositionSourceObservationV1)(nil),   // 16: arbiter.ArtifactDispositionSourceObservationV1
-	(*ArtifactDispositionValidationV1)(nil),          // 17: arbiter.ArtifactDispositionValidationV1
-	(*ApplyArtifactDispositionRequest)(nil),          // 18: arbiter.ApplyArtifactDispositionRequest
-	(*ArtifactDispositionCmd)(nil),                   // 19: arbiter.ArtifactDispositionCmd
-	(*ArtifactDispositionRequestKeyV1)(nil),          // 20: arbiter.ArtifactDispositionRequestKeyV1
-	(*ArtifactDispositionObligationOwnerV1)(nil),     // 21: arbiter.ArtifactDispositionObligationOwnerV1
-	(*ArtifactDispositionSelectorV1)(nil),            // 22: arbiter.ArtifactDispositionSelectorV1
-	(*GetArtifactDispositionRequest)(nil),            // 23: arbiter.GetArtifactDispositionRequest
-	(*ArtifactDispositionPolicyRecordV1)(nil),        // 24: arbiter.ArtifactDispositionPolicyRecordV1
-	(*ArtifactDispositionCandidateRecordV1)(nil),     // 25: arbiter.ArtifactDispositionCandidateRecordV1
-	(*ArtifactDispositionRetirementRecordV1)(nil),    // 26: arbiter.ArtifactDispositionRetirementRecordV1
-	(*ArtifactDispositionUseRecordV1)(nil),           // 27: arbiter.ArtifactDispositionUseRecordV1
-	(*ArtifactDispositionObligationRecordV1)(nil),    // 28: arbiter.ArtifactDispositionObligationRecordV1
-	(*ArtifactDispositionResultV1)(nil),              // 29: arbiter.ArtifactDispositionResultV1
-	(*ArtifactDispositionRecordV1)(nil),              // 30: arbiter.ArtifactDispositionRecordV1
-	(*ArtifactDispositionReplyBodyV1)(nil),           // 31: arbiter.ArtifactDispositionReplyBodyV1
-	(*ArtifactDispositionReadProofV1)(nil),           // 32: arbiter.ArtifactDispositionReadProofV1
-	(*ArtifactDispositionReply)(nil),                 // 33: arbiter.ArtifactDispositionReply
-	(*SnapshotPin)(nil),                              // 34: arbiter.SnapshotPin
-	(*SafeSnapshotManifest)(nil),                     // 35: arbiter.SafeSnapshotManifest
-	(*SnapshotArtifactReadySubmission)(nil),          // 36: arbiter.SnapshotArtifactReadySubmission
-	(*ExecutorProfileTransition)(nil),                // 37: arbiter.ExecutorProfileTransition
-	(*ExecutorProfileTransitionReceipt)(nil),         // 38: arbiter.ExecutorProfileTransitionReceipt
-	(*SnapshotQueryAttestation)(nil),                 // 39: arbiter.SnapshotQueryAttestation
+	(*ArtifactDispositionGrantReservationV1)(nil),    // 13: arbiter.ArtifactDispositionGrantReservationV1
+	(*ArtifactDispositionActionV1)(nil),              // 14: arbiter.ArtifactDispositionActionV1
+	(*ArtifactDispositionCommandV1)(nil),             // 15: arbiter.ArtifactDispositionCommandV1
+	(*ArtifactDispositionRegistryObservationV1)(nil), // 16: arbiter.ArtifactDispositionRegistryObservationV1
+	(*ArtifactDispositionSourceObservationV1)(nil),   // 17: arbiter.ArtifactDispositionSourceObservationV1
+	(*ArtifactDispositionValidationV1)(nil),          // 18: arbiter.ArtifactDispositionValidationV1
+	(*ApplyArtifactDispositionRequest)(nil),          // 19: arbiter.ApplyArtifactDispositionRequest
+	(*ArtifactDispositionCmd)(nil),                   // 20: arbiter.ArtifactDispositionCmd
+	(*ArtifactDispositionRequestKeyV1)(nil),          // 21: arbiter.ArtifactDispositionRequestKeyV1
+	(*ArtifactDispositionObligationOwnerV1)(nil),     // 22: arbiter.ArtifactDispositionObligationOwnerV1
+	(*ArtifactDispositionSelectorV1)(nil),            // 23: arbiter.ArtifactDispositionSelectorV1
+	(*GetArtifactDispositionRequest)(nil),            // 24: arbiter.GetArtifactDispositionRequest
+	(*ArtifactDispositionPolicyRecordV1)(nil),        // 25: arbiter.ArtifactDispositionPolicyRecordV1
+	(*ArtifactDispositionCandidateRecordV1)(nil),     // 26: arbiter.ArtifactDispositionCandidateRecordV1
+	(*ArtifactDispositionRetirementRecordV1)(nil),    // 27: arbiter.ArtifactDispositionRetirementRecordV1
+	(*ArtifactDispositionUseRecordV1)(nil),           // 28: arbiter.ArtifactDispositionUseRecordV1
+	(*ArtifactDispositionObligationRecordV1)(nil),    // 29: arbiter.ArtifactDispositionObligationRecordV1
+	(*ArtifactDispositionResultV1)(nil),              // 30: arbiter.ArtifactDispositionResultV1
+	(*ArtifactDispositionRecordV1)(nil),              // 31: arbiter.ArtifactDispositionRecordV1
+	(*ArtifactDispositionReplyBodyV1)(nil),           // 32: arbiter.ArtifactDispositionReplyBodyV1
+	(*ArtifactDispositionReadProofV1)(nil),           // 33: arbiter.ArtifactDispositionReadProofV1
+	(*ArtifactDispositionReply)(nil),                 // 34: arbiter.ArtifactDispositionReply
+	(*SnapshotPin)(nil),                              // 35: arbiter.SnapshotPin
+	(*SafeSnapshotManifest)(nil),                     // 36: arbiter.SafeSnapshotManifest
+	(*SnapshotArtifactReadySubmission)(nil),          // 37: arbiter.SnapshotArtifactReadySubmission
+	(*ExecutorProfileTransition)(nil),                // 38: arbiter.ExecutorProfileTransition
+	(*ExecutorProfileTransitionReceipt)(nil),         // 39: arbiter.ExecutorProfileTransitionReceipt
+	(*SnapshotQueryAttestation)(nil),                 // 40: arbiter.SnapshotQueryAttestation
 }
 var file_artifact_disposition_proto_depIdxs = []int32{
-	34, // 0: arbiter.ArtifactDispositionUseV1.pin:type_name -> arbiter.SnapshotPin
+	35, // 0: arbiter.ArtifactDispositionUseV1.pin:type_name -> arbiter.SnapshotPin
 	1,  // 1: arbiter.ArtifactDispositionUseV1.origin:type_name -> arbiter.ArtifactDispositionOriginV1
 	0,  // 2: arbiter.ArtifactDispositionBindPolicyV1.policy:type_name -> arbiter.ArtifactDispositionPolicyV1
-	34, // 3: arbiter.ArtifactDispositionRegisterCandidateV1.pin:type_name -> arbiter.SnapshotPin
-	35, // 4: arbiter.ArtifactDispositionRegisterCandidateV1.manifest:type_name -> arbiter.SafeSnapshotManifest
+	35, // 3: arbiter.ArtifactDispositionRegisterCandidateV1.pin:type_name -> arbiter.SnapshotPin
+	36, // 4: arbiter.ArtifactDispositionRegisterCandidateV1.manifest:type_name -> arbiter.SafeSnapshotManifest
 	1,  // 5: arbiter.ArtifactDispositionRegisterCandidateV1.origin:type_name -> arbiter.ArtifactDispositionOriginV1
-	36, // 6: arbiter.ArtifactDispositionRecordReadyV1.submission:type_name -> arbiter.SnapshotArtifactReadySubmission
-	35, // 7: arbiter.ArtifactDispositionPublishCandidateV1.manifest:type_name -> arbiter.SafeSnapshotManifest
-	37, // 8: arbiter.ArtifactDispositionPublishCandidateV1.transition:type_name -> arbiter.ExecutorProfileTransition
-	38, // 9: arbiter.ArtifactDispositionPublishCandidateV1.transition_receipts:type_name -> arbiter.ExecutorProfileTransitionReceipt
-	34, // 10: arbiter.ArtifactDispositionRetirementTargetV1.pin:type_name -> arbiter.SnapshotPin
+	37, // 6: arbiter.ArtifactDispositionRecordReadyV1.submission:type_name -> arbiter.SnapshotArtifactReadySubmission
+	36, // 7: arbiter.ArtifactDispositionPublishCandidateV1.manifest:type_name -> arbiter.SafeSnapshotManifest
+	38, // 8: arbiter.ArtifactDispositionPublishCandidateV1.transition:type_name -> arbiter.ExecutorProfileTransition
+	39, // 9: arbiter.ArtifactDispositionPublishCandidateV1.transition_receipts:type_name -> arbiter.ExecutorProfileTransitionReceipt
+	35, // 10: arbiter.ArtifactDispositionRetirementTargetV1.pin:type_name -> arbiter.SnapshotPin
 	2,  // 11: arbiter.ArtifactDispositionAdmitUseV1.use:type_name -> arbiter.ArtifactDispositionUseV1
 	2,  // 12: arbiter.ArtifactDispositionCloseUseV1.use:type_name -> arbiter.ArtifactDispositionUseV1
-	34, // 13: arbiter.ArtifactDispositionOpenChallengeV1.pin:type_name -> arbiter.SnapshotPin
+	35, // 13: arbiter.ArtifactDispositionOpenChallengeV1.pin:type_name -> arbiter.SnapshotPin
 	1,  // 14: arbiter.ArtifactDispositionOpenChallengeV1.origin:type_name -> arbiter.ArtifactDispositionOriginV1
-	39, // 15: arbiter.ArtifactDispositionOpenChallengeV1.attestation:type_name -> arbiter.SnapshotQueryAttestation
+	40, // 15: arbiter.ArtifactDispositionOpenChallengeV1.attestation:type_name -> arbiter.SnapshotQueryAttestation
 	2,  // 16: arbiter.ArtifactDispositionOpenChallengeV1.replay_use:type_name -> arbiter.ArtifactDispositionUseV1
 	3,  // 17: arbiter.ArtifactDispositionActionV1.bind_policy:type_name -> arbiter.ArtifactDispositionBindPolicyV1
 	4,  // 18: arbiter.ArtifactDispositionActionV1.register_candidate:type_name -> arbiter.ArtifactDispositionRegisterCandidateV1
@@ -3269,50 +3360,51 @@ var file_artifact_disposition_proto_depIdxs = []int32{
 	10, // 25: arbiter.ArtifactDispositionActionV1.close_use:type_name -> arbiter.ArtifactDispositionCloseUseV1
 	11, // 26: arbiter.ArtifactDispositionActionV1.open_challenge:type_name -> arbiter.ArtifactDispositionOpenChallengeV1
 	12, // 27: arbiter.ArtifactDispositionActionV1.resolve_obligation:type_name -> arbiter.ArtifactDispositionResolveObligationV1
-	13, // 28: arbiter.ArtifactDispositionCommandV1.action:type_name -> arbiter.ArtifactDispositionActionV1
-	34, // 29: arbiter.ArtifactDispositionRegistryObservationV1.pin:type_name -> arbiter.SnapshotPin
-	1,  // 30: arbiter.ArtifactDispositionSourceObservationV1.source_identity:type_name -> arbiter.ArtifactDispositionOriginV1
-	15, // 31: arbiter.ArtifactDispositionValidationV1.registry_observations:type_name -> arbiter.ArtifactDispositionRegistryObservationV1
-	16, // 32: arbiter.ArtifactDispositionValidationV1.source_observations:type_name -> arbiter.ArtifactDispositionSourceObservationV1
-	14, // 33: arbiter.ApplyArtifactDispositionRequest.command:type_name -> arbiter.ArtifactDispositionCommandV1
-	14, // 34: arbiter.ArtifactDispositionCmd.command:type_name -> arbiter.ArtifactDispositionCommandV1
-	17, // 35: arbiter.ArtifactDispositionCmd.validation:type_name -> arbiter.ArtifactDispositionValidationV1
-	34, // 36: arbiter.ArtifactDispositionObligationOwnerV1.pin:type_name -> arbiter.SnapshotPin
-	1,  // 37: arbiter.ArtifactDispositionObligationOwnerV1.origin:type_name -> arbiter.ArtifactDispositionOriginV1
-	8,  // 38: arbiter.ArtifactDispositionSelectorV1.retirement:type_name -> arbiter.ArtifactDispositionRetirementTargetV1
-	2,  // 39: arbiter.ArtifactDispositionSelectorV1.use:type_name -> arbiter.ArtifactDispositionUseV1
-	20, // 40: arbiter.ArtifactDispositionSelectorV1.operation:type_name -> arbiter.ArtifactDispositionRequestKeyV1
-	21, // 41: arbiter.ArtifactDispositionSelectorV1.obligation_owner:type_name -> arbiter.ArtifactDispositionObligationOwnerV1
-	22, // 42: arbiter.GetArtifactDispositionRequest.selector:type_name -> arbiter.ArtifactDispositionSelectorV1
-	0,  // 43: arbiter.ArtifactDispositionPolicyRecordV1.policy:type_name -> arbiter.ArtifactDispositionPolicyV1
-	34, // 44: arbiter.ArtifactDispositionCandidateRecordV1.pin:type_name -> arbiter.SnapshotPin
-	1,  // 45: arbiter.ArtifactDispositionCandidateRecordV1.origin:type_name -> arbiter.ArtifactDispositionOriginV1
-	36, // 46: arbiter.ArtifactDispositionCandidateRecordV1.ready:type_name -> arbiter.SnapshotArtifactReadySubmission
-	34, // 47: arbiter.ArtifactDispositionRetirementRecordV1.pin:type_name -> arbiter.SnapshotPin
-	2,  // 48: arbiter.ArtifactDispositionUseRecordV1.use:type_name -> arbiter.ArtifactDispositionUseV1
-	34, // 49: arbiter.ArtifactDispositionObligationRecordV1.pin:type_name -> arbiter.SnapshotPin
-	1,  // 50: arbiter.ArtifactDispositionObligationRecordV1.origin:type_name -> arbiter.ArtifactDispositionOriginV1
-	16, // 51: arbiter.ArtifactDispositionObligationRecordV1.resolution_source_observations:type_name -> arbiter.ArtifactDispositionSourceObservationV1
-	22, // 52: arbiter.ArtifactDispositionResultV1.target:type_name -> arbiter.ArtifactDispositionSelectorV1
-	24, // 53: arbiter.ArtifactDispositionRecordV1.policy:type_name -> arbiter.ArtifactDispositionPolicyRecordV1
-	25, // 54: arbiter.ArtifactDispositionRecordV1.candidate:type_name -> arbiter.ArtifactDispositionCandidateRecordV1
-	26, // 55: arbiter.ArtifactDispositionRecordV1.retirement:type_name -> arbiter.ArtifactDispositionRetirementRecordV1
-	27, // 56: arbiter.ArtifactDispositionRecordV1.use:type_name -> arbiter.ArtifactDispositionUseRecordV1
-	28, // 57: arbiter.ArtifactDispositionRecordV1.obligation:type_name -> arbiter.ArtifactDispositionObligationRecordV1
-	22, // 58: arbiter.ArtifactDispositionReplyBodyV1.selector:type_name -> arbiter.ArtifactDispositionSelectorV1
-	29, // 59: arbiter.ArtifactDispositionReplyBodyV1.operation_result:type_name -> arbiter.ArtifactDispositionResultV1
-	30, // 60: arbiter.ArtifactDispositionReplyBodyV1.record:type_name -> arbiter.ArtifactDispositionRecordV1
-	31, // 61: arbiter.ArtifactDispositionReadProofV1.body:type_name -> arbiter.ArtifactDispositionReplyBodyV1
-	31, // 62: arbiter.ArtifactDispositionReply.body:type_name -> arbiter.ArtifactDispositionReplyBodyV1
-	18, // 63: arbiter.ArtifactDispositionControl.ApplyArtifactDisposition:input_type -> arbiter.ApplyArtifactDispositionRequest
-	23, // 64: arbiter.ArtifactDispositionControl.GetArtifactDisposition:input_type -> arbiter.GetArtifactDispositionRequest
-	33, // 65: arbiter.ArtifactDispositionControl.ApplyArtifactDisposition:output_type -> arbiter.ArtifactDispositionReply
-	33, // 66: arbiter.ArtifactDispositionControl.GetArtifactDisposition:output_type -> arbiter.ArtifactDispositionReply
-	65, // [65:67] is the sub-list for method output_type
-	63, // [63:65] is the sub-list for method input_type
-	63, // [63:63] is the sub-list for extension type_name
-	63, // [63:63] is the sub-list for extension extendee
-	0,  // [0:63] is the sub-list for field type_name
+	13, // 28: arbiter.ArtifactDispositionActionV1.grant_reservation:type_name -> arbiter.ArtifactDispositionGrantReservationV1
+	14, // 29: arbiter.ArtifactDispositionCommandV1.action:type_name -> arbiter.ArtifactDispositionActionV1
+	35, // 30: arbiter.ArtifactDispositionRegistryObservationV1.pin:type_name -> arbiter.SnapshotPin
+	1,  // 31: arbiter.ArtifactDispositionSourceObservationV1.source_identity:type_name -> arbiter.ArtifactDispositionOriginV1
+	16, // 32: arbiter.ArtifactDispositionValidationV1.registry_observations:type_name -> arbiter.ArtifactDispositionRegistryObservationV1
+	17, // 33: arbiter.ArtifactDispositionValidationV1.source_observations:type_name -> arbiter.ArtifactDispositionSourceObservationV1
+	15, // 34: arbiter.ApplyArtifactDispositionRequest.command:type_name -> arbiter.ArtifactDispositionCommandV1
+	15, // 35: arbiter.ArtifactDispositionCmd.command:type_name -> arbiter.ArtifactDispositionCommandV1
+	18, // 36: arbiter.ArtifactDispositionCmd.validation:type_name -> arbiter.ArtifactDispositionValidationV1
+	35, // 37: arbiter.ArtifactDispositionObligationOwnerV1.pin:type_name -> arbiter.SnapshotPin
+	1,  // 38: arbiter.ArtifactDispositionObligationOwnerV1.origin:type_name -> arbiter.ArtifactDispositionOriginV1
+	8,  // 39: arbiter.ArtifactDispositionSelectorV1.retirement:type_name -> arbiter.ArtifactDispositionRetirementTargetV1
+	2,  // 40: arbiter.ArtifactDispositionSelectorV1.use:type_name -> arbiter.ArtifactDispositionUseV1
+	21, // 41: arbiter.ArtifactDispositionSelectorV1.operation:type_name -> arbiter.ArtifactDispositionRequestKeyV1
+	22, // 42: arbiter.ArtifactDispositionSelectorV1.obligation_owner:type_name -> arbiter.ArtifactDispositionObligationOwnerV1
+	23, // 43: arbiter.GetArtifactDispositionRequest.selector:type_name -> arbiter.ArtifactDispositionSelectorV1
+	0,  // 44: arbiter.ArtifactDispositionPolicyRecordV1.policy:type_name -> arbiter.ArtifactDispositionPolicyV1
+	35, // 45: arbiter.ArtifactDispositionCandidateRecordV1.pin:type_name -> arbiter.SnapshotPin
+	1,  // 46: arbiter.ArtifactDispositionCandidateRecordV1.origin:type_name -> arbiter.ArtifactDispositionOriginV1
+	37, // 47: arbiter.ArtifactDispositionCandidateRecordV1.ready:type_name -> arbiter.SnapshotArtifactReadySubmission
+	35, // 48: arbiter.ArtifactDispositionRetirementRecordV1.pin:type_name -> arbiter.SnapshotPin
+	2,  // 49: arbiter.ArtifactDispositionUseRecordV1.use:type_name -> arbiter.ArtifactDispositionUseV1
+	35, // 50: arbiter.ArtifactDispositionObligationRecordV1.pin:type_name -> arbiter.SnapshotPin
+	1,  // 51: arbiter.ArtifactDispositionObligationRecordV1.origin:type_name -> arbiter.ArtifactDispositionOriginV1
+	17, // 52: arbiter.ArtifactDispositionObligationRecordV1.resolution_source_observations:type_name -> arbiter.ArtifactDispositionSourceObservationV1
+	23, // 53: arbiter.ArtifactDispositionResultV1.target:type_name -> arbiter.ArtifactDispositionSelectorV1
+	25, // 54: arbiter.ArtifactDispositionRecordV1.policy:type_name -> arbiter.ArtifactDispositionPolicyRecordV1
+	26, // 55: arbiter.ArtifactDispositionRecordV1.candidate:type_name -> arbiter.ArtifactDispositionCandidateRecordV1
+	27, // 56: arbiter.ArtifactDispositionRecordV1.retirement:type_name -> arbiter.ArtifactDispositionRetirementRecordV1
+	28, // 57: arbiter.ArtifactDispositionRecordV1.use:type_name -> arbiter.ArtifactDispositionUseRecordV1
+	29, // 58: arbiter.ArtifactDispositionRecordV1.obligation:type_name -> arbiter.ArtifactDispositionObligationRecordV1
+	23, // 59: arbiter.ArtifactDispositionReplyBodyV1.selector:type_name -> arbiter.ArtifactDispositionSelectorV1
+	30, // 60: arbiter.ArtifactDispositionReplyBodyV1.operation_result:type_name -> arbiter.ArtifactDispositionResultV1
+	31, // 61: arbiter.ArtifactDispositionReplyBodyV1.record:type_name -> arbiter.ArtifactDispositionRecordV1
+	32, // 62: arbiter.ArtifactDispositionReadProofV1.body:type_name -> arbiter.ArtifactDispositionReplyBodyV1
+	32, // 63: arbiter.ArtifactDispositionReply.body:type_name -> arbiter.ArtifactDispositionReplyBodyV1
+	19, // 64: arbiter.ArtifactDispositionControl.ApplyArtifactDisposition:input_type -> arbiter.ApplyArtifactDispositionRequest
+	24, // 65: arbiter.ArtifactDispositionControl.GetArtifactDisposition:input_type -> arbiter.GetArtifactDispositionRequest
+	34, // 66: arbiter.ArtifactDispositionControl.ApplyArtifactDisposition:output_type -> arbiter.ArtifactDispositionReply
+	34, // 67: arbiter.ArtifactDispositionControl.GetArtifactDisposition:output_type -> arbiter.ArtifactDispositionReply
+	66, // [66:68] is the sub-list for method output_type
+	64, // [64:66] is the sub-list for method input_type
+	64, // [64:64] is the sub-list for extension type_name
+	64, // [64:64] is the sub-list for extension extendee
+	0,  // [0:64] is the sub-list for field type_name
 }
 
 func init() { file_artifact_disposition_proto_init() }
@@ -3322,7 +3414,7 @@ func file_artifact_disposition_proto_init() {
 	}
 	file_arbiter_proto_init()
 	file_replay_proto_init()
-	file_artifact_disposition_proto_msgTypes[13].OneofWrappers = []any{
+	file_artifact_disposition_proto_msgTypes[14].OneofWrappers = []any{
 		(*ArtifactDispositionActionV1_BindPolicy)(nil),
 		(*ArtifactDispositionActionV1_RegisterCandidate)(nil),
 		(*ArtifactDispositionActionV1_RecordReady)(nil),
@@ -3334,8 +3426,9 @@ func file_artifact_disposition_proto_init() {
 		(*ArtifactDispositionActionV1_CloseUse)(nil),
 		(*ArtifactDispositionActionV1_OpenChallenge)(nil),
 		(*ArtifactDispositionActionV1_ResolveObligation)(nil),
+		(*ArtifactDispositionActionV1_GrantReservation)(nil),
 	}
-	file_artifact_disposition_proto_msgTypes[22].OneofWrappers = []any{
+	file_artifact_disposition_proto_msgTypes[23].OneofWrappers = []any{
 		(*ArtifactDispositionSelectorV1_PolicyId)(nil),
 		(*ArtifactDispositionSelectorV1_CandidateSeq)(nil),
 		(*ArtifactDispositionSelectorV1_Retirement)(nil),
@@ -3344,7 +3437,7 @@ func file_artifact_disposition_proto_init() {
 		(*ArtifactDispositionSelectorV1_Operation)(nil),
 		(*ArtifactDispositionSelectorV1_ObligationOwner)(nil),
 	}
-	file_artifact_disposition_proto_msgTypes[30].OneofWrappers = []any{
+	file_artifact_disposition_proto_msgTypes[31].OneofWrappers = []any{
 		(*ArtifactDispositionRecordV1_Policy)(nil),
 		(*ArtifactDispositionRecordV1_Candidate)(nil),
 		(*ArtifactDispositionRecordV1_Retirement)(nil),
@@ -3357,7 +3450,7 @@ func file_artifact_disposition_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_artifact_disposition_proto_rawDesc), len(file_artifact_disposition_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   34,
+			NumMessages:   35,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

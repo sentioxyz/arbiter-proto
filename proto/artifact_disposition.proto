@@ -97,6 +97,21 @@ message ArtifactDispositionResolveObligationV1 {
   uint64 obligation_seq = 1;
 }
 
+// ArtifactDispositionGrantReservationV1 requests the one atomic C2 grant
+// transition.  The enclosing command carries the fixed network, shard,
+// request ID, and expected revision; this action adds only the immutable
+// query identity and the digest of the already-authenticated control binding.
+//
+// In particular, the caller cannot select a reservation ID, fencing
+// generation, pin, profile, activation, assignment, obligation, capacity
+// allowance ordinal, allocator decision, or drain/barrier result.  Those are
+// committed, server-owned results of the transition.
+message ArtifactDispositionGrantReservationV1 {
+  string client_account = 1;
+  string statement_id = 2;
+  string control_binding_digest = 3;
+}
+
 message ArtifactDispositionActionV1 {
   oneof action {
     ArtifactDispositionBindPolicyV1 bind_policy = 1;
@@ -110,6 +125,7 @@ message ArtifactDispositionActionV1 {
     ArtifactDispositionCloseUseV1 close_use = 9;
     ArtifactDispositionOpenChallengeV1 open_challenge = 10;
     ArtifactDispositionResolveObligationV1 resolve_obligation = 11;
+    ArtifactDispositionGrantReservationV1 grant_reservation = 12;
   }
 }
 
