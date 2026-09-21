@@ -8,6 +8,7 @@ option go_package = "github.com/sentioxyz/arbiter-proto/gen/pb;pb";
 
 import "google/protobuf/empty.proto";
 import "arbiter.proto";
+import "replay.proto";
 
 // ConsensusMutableParams is a complete authority set and writer limit, not
 // a patch. Bootstrap values remain the original trust root on every restart;
@@ -38,6 +39,23 @@ message ConsensusParamsUpdate {
 // are checked atomically by the FSM; consumed epochs are rejected on retry.
 message UpdateConsensusParamsCmd {
   ConsensusParamsUpdate update = 1;
+  string authority_jws = 2;
+}
+
+// Identity of one sequenced snapshot query whose consumed reservation an
+// authority intends to abort. Version 1 uses keeper_shard_id 0.
+message GetSnapshotQueryAbortCandidateRequest {
+  string network_id = 1;
+  uint32 keeper_shard_id = 2;
+  string client_account = 3;
+  string statement_id = 4;
+}
+
+// An authority-authenticated terminal abort of a sequenced snapshot query.
+// The record must equal the replica-derived candidate except reason_code;
+// never inferred from client cancellation or a local timeout.
+message AbortSnapshotQueryRequest {
+  SnapshotQueryAbortRecord record = 1;
   string authority_jws = 2;
 }
 
@@ -72,4 +90,12 @@ service ConsensusAdmin {
   // Leader-only, explicitly enabled mutation. Ack means committed success;
   // unlike idempotent data-plane writes, a consumed epoch is an error.
   rpc UpdateConsensusParams (UpdateConsensusParamsCmd) returns (Ack) {}
+  // Leader-only read with a barrier: the replica-derived abort record for the
+  // consumed reservation of one account/statement, with reason_code and
+  // cleanup_authorization_root left empty for the authority to fill and sign.
+  // NotFound when that identity holds no consumed reservation.
+  rpc GetSnapshotQueryAbortCandidate (GetSnapshotQueryAbortCandidateRequest) returns (SnapshotQueryAbortRecord) {}
+  // Leader-only, authority-authenticated terminal abort; returns the terminal
+  // status (lifecycle "terminal", execution_outcome "aborted", terminal_proof).
+  rpc AbortSnapshotQuery (AbortSnapshotQueryRequest) returns (SnapshotQueryStatus) {}
 }
