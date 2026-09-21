@@ -24,9 +24,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ConsensusAdmin_GetProtocolInfo_FullMethodName       = "/arbiter.ConsensusAdmin/GetProtocolInfo"
-	ConsensusAdmin_GetConsensusParams_FullMethodName    = "/arbiter.ConsensusAdmin/GetConsensusParams"
-	ConsensusAdmin_UpdateConsensusParams_FullMethodName = "/arbiter.ConsensusAdmin/UpdateConsensusParams"
+	ConsensusAdmin_GetProtocolInfo_FullMethodName                = "/arbiter.ConsensusAdmin/GetProtocolInfo"
+	ConsensusAdmin_GetConsensusParams_FullMethodName             = "/arbiter.ConsensusAdmin/GetConsensusParams"
+	ConsensusAdmin_UpdateConsensusParams_FullMethodName          = "/arbiter.ConsensusAdmin/UpdateConsensusParams"
+	ConsensusAdmin_GetSnapshotQueryAbortCandidate_FullMethodName = "/arbiter.ConsensusAdmin/GetSnapshotQueryAbortCandidate"
+	ConsensusAdmin_AbortSnapshotQuery_FullMethodName             = "/arbiter.ConsensusAdmin/AbortSnapshotQuery"
 )
 
 // ConsensusAdminClient is the client API for ConsensusAdmin service.
@@ -40,6 +42,14 @@ type ConsensusAdminClient interface {
 	// Leader-only, explicitly enabled mutation. Ack means committed success;
 	// unlike idempotent data-plane writes, a consumed epoch is an error.
 	UpdateConsensusParams(ctx context.Context, in *UpdateConsensusParamsCmd, opts ...grpc.CallOption) (*Ack, error)
+	// Leader-only read with a barrier: the replica-derived abort record for the
+	// consumed reservation of one account/statement, with reason_code and
+	// cleanup_authorization_root left empty for the authority to fill and sign.
+	// NotFound when that identity holds no consumed reservation.
+	GetSnapshotQueryAbortCandidate(ctx context.Context, in *GetSnapshotQueryAbortCandidateRequest, opts ...grpc.CallOption) (*SnapshotQueryAbortRecord, error)
+	// Leader-only, authority-authenticated terminal abort; returns the terminal
+	// status (lifecycle "terminal", execution_outcome "aborted", terminal_proof).
+	AbortSnapshotQuery(ctx context.Context, in *AbortSnapshotQueryRequest, opts ...grpc.CallOption) (*SnapshotQueryStatus, error)
 }
 
 type consensusAdminClient struct {
@@ -80,6 +90,26 @@ func (c *consensusAdminClient) UpdateConsensusParams(ctx context.Context, in *Up
 	return out, nil
 }
 
+func (c *consensusAdminClient) GetSnapshotQueryAbortCandidate(ctx context.Context, in *GetSnapshotQueryAbortCandidateRequest, opts ...grpc.CallOption) (*SnapshotQueryAbortRecord, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SnapshotQueryAbortRecord)
+	err := c.cc.Invoke(ctx, ConsensusAdmin_GetSnapshotQueryAbortCandidate_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consensusAdminClient) AbortSnapshotQuery(ctx context.Context, in *AbortSnapshotQueryRequest, opts ...grpc.CallOption) (*SnapshotQueryStatus, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SnapshotQueryStatus)
+	err := c.cc.Invoke(ctx, ConsensusAdmin_AbortSnapshotQuery_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsensusAdminServer is the server API for ConsensusAdmin service.
 // All implementations must embed UnimplementedConsensusAdminServer
 // for forward compatibility.
@@ -91,6 +121,14 @@ type ConsensusAdminServer interface {
 	// Leader-only, explicitly enabled mutation. Ack means committed success;
 	// unlike idempotent data-plane writes, a consumed epoch is an error.
 	UpdateConsensusParams(context.Context, *UpdateConsensusParamsCmd) (*Ack, error)
+	// Leader-only read with a barrier: the replica-derived abort record for the
+	// consumed reservation of one account/statement, with reason_code and
+	// cleanup_authorization_root left empty for the authority to fill and sign.
+	// NotFound when that identity holds no consumed reservation.
+	GetSnapshotQueryAbortCandidate(context.Context, *GetSnapshotQueryAbortCandidateRequest) (*SnapshotQueryAbortRecord, error)
+	// Leader-only, authority-authenticated terminal abort; returns the terminal
+	// status (lifecycle "terminal", execution_outcome "aborted", terminal_proof).
+	AbortSnapshotQuery(context.Context, *AbortSnapshotQueryRequest) (*SnapshotQueryStatus, error)
 	mustEmbedUnimplementedConsensusAdminServer()
 }
 
@@ -109,6 +147,12 @@ func (UnimplementedConsensusAdminServer) GetConsensusParams(context.Context, *em
 }
 func (UnimplementedConsensusAdminServer) UpdateConsensusParams(context.Context, *UpdateConsensusParamsCmd) (*Ack, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateConsensusParams not implemented")
+}
+func (UnimplementedConsensusAdminServer) GetSnapshotQueryAbortCandidate(context.Context, *GetSnapshotQueryAbortCandidateRequest) (*SnapshotQueryAbortRecord, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSnapshotQueryAbortCandidate not implemented")
+}
+func (UnimplementedConsensusAdminServer) AbortSnapshotQuery(context.Context, *AbortSnapshotQueryRequest) (*SnapshotQueryStatus, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AbortSnapshotQuery not implemented")
 }
 func (UnimplementedConsensusAdminServer) mustEmbedUnimplementedConsensusAdminServer() {}
 func (UnimplementedConsensusAdminServer) testEmbeddedByValue()                        {}
@@ -185,6 +229,42 @@ func _ConsensusAdmin_UpdateConsensusParams_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConsensusAdmin_GetSnapshotQueryAbortCandidate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSnapshotQueryAbortCandidateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusAdminServer).GetSnapshotQueryAbortCandidate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusAdmin_GetSnapshotQueryAbortCandidate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusAdminServer).GetSnapshotQueryAbortCandidate(ctx, req.(*GetSnapshotQueryAbortCandidateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConsensusAdmin_AbortSnapshotQuery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AbortSnapshotQueryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusAdminServer).AbortSnapshotQuery(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusAdmin_AbortSnapshotQuery_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusAdminServer).AbortSnapshotQuery(ctx, req.(*AbortSnapshotQueryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConsensusAdmin_ServiceDesc is the grpc.ServiceDesc for ConsensusAdmin service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -203,6 +283,14 @@ var ConsensusAdmin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateConsensusParams",
 			Handler:    _ConsensusAdmin_UpdateConsensusParams_Handler,
+		},
+		{
+			MethodName: "GetSnapshotQueryAbortCandidate",
+			Handler:    _ConsensusAdmin_GetSnapshotQueryAbortCandidate_Handler,
+		},
+		{
+			MethodName: "AbortSnapshotQuery",
+			Handler:    _ConsensusAdmin_AbortSnapshotQuery_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

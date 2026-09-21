@@ -70,3 +70,7 @@ Begin30/Update18 wire keys, and main consensus payload round trips including
 repeated addresses and maximum counters. Main's slot18 conformance tests remain
 unchanged. Protobuf unknown-field retention is a transport property, not runtime
 admission; strict consumer decoding remains a separate responsibility.
+
+## Wave 1a-2b: ConsensusAdmin abort RPCs
+
+Wave 1a-2b adds `ConsensusAdmin.GetSnapshotQueryAbortCandidate` and `ConsensusAdmin.AbortSnapshotQuery` (no new Raft tag; tag 22 remains `abort_snapshot_query`); both are unimplemented until arbiter installs the default-off sequencing dependency.

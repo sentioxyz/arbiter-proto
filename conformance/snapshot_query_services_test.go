@@ -67,10 +67,17 @@ func TestSnapshotQueryServicesRemainUnimplemented(t *testing.T) {
 		{"VerifierGateway", "SubmitSnapshotQueryAttestation", "SnapshotQueryAttestation", "Ack", pb.UnimplementedVerifierGatewayServer{}},
 		{"SafeState", "GetPublishedSnapshot", "GetPublishedSnapshotRequest", "PublishedSnapshot", pb.UnimplementedSafeStateServer{}},
 		{"SafeState", "GetQueryPolicy", "GetQueryPolicyRequest", "QueryPolicyStatus", pb.UnimplementedSafeStateServer{}},
+		{"ConsensusAdmin", "GetSnapshotQueryAbortCandidate", "GetSnapshotQueryAbortCandidateRequest", "SnapshotQueryAbortRecord", pb.UnimplementedConsensusAdminServer{}},
+		{"ConsensusAdmin", "AbortSnapshotQuery", "AbortSnapshotQueryRequest", "SnapshotQueryStatus", pb.UnimplementedConsensusAdminServer{}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.service+"/"+tc.method, func(t *testing.T) {
 			svc := pb.File_arbiter_proto.Services().ByName(protoreflect.Name(tc.service))
+			if svc == nil {
+				// ConsensusAdmin lives in consensus.proto, a separate file in the
+				// same arbiter package; fall back to it by file.
+				svc = pb.File_consensus_proto.Services().ByName(protoreflect.Name(tc.service))
+			}
 			if svc == nil {
 				t.Fatal("service missing")
 			}
