@@ -16,6 +16,8 @@ import "replay.proto";
 message ConsensusMutableParams {
   repeated string authority_addresses = 1;
   uint64 max_writers = 2;
+  // 0 keeps artifact disposition (Raft tag 28) refused; 1 enables it. Monotone.
+  uint32 artifact_disposition_capability = 3;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -32,6 +34,8 @@ message ConsensusParamsUpdate {
   // CAS against the last issued promotion sequence. This also binds the
   // authorization epoch boundary retained in snapshot history.
   uint64 expected_promotion_seq = 7;
+  // Governs the C1 artifact-disposition lane; 0 or 1, never lowered.
+  uint32 artifact_disposition_capability = 8;
 }
 
 // UpdateConsensusParamsCmd is both the administration request and the

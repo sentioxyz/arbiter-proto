@@ -33,8 +33,10 @@ type ConsensusMutableParams struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
 	AuthorityAddresses []string               `protobuf:"bytes,1,rep,name=authority_addresses,json=authorityAddresses,proto3" json:"authority_addresses,omitempty"`
 	MaxWriters         uint64                 `protobuf:"varint,2,opt,name=max_writers,json=maxWriters,proto3" json:"max_writers,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// 0 keeps artifact disposition (Raft tag 28) refused; 1 enables it. Monotone.
+	ArtifactDispositionCapability uint32 `protobuf:"varint,3,opt,name=artifact_disposition_capability,json=artifactDispositionCapability,proto3" json:"artifact_disposition_capability,omitempty"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *ConsensusMutableParams) Reset() {
@@ -81,6 +83,13 @@ func (x *ConsensusMutableParams) GetMaxWriters() uint64 {
 	return 0
 }
 
+func (x *ConsensusMutableParams) GetArtifactDispositionCapability() uint32 {
+	if x != nil {
+		return x.ArtifactDispositionCapability
+	}
+	return 0
+}
+
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
 // Authority addresses are lowercase, sorted and deduplicated before hashing.
 // authority_jws covers every field; it uses a dedicated versioned purpose
@@ -96,8 +105,10 @@ type ConsensusParamsUpdate struct {
 	// CAS against the last issued promotion sequence. This also binds the
 	// authorization epoch boundary retained in snapshot history.
 	ExpectedPromotionSeq uint64 `protobuf:"varint,7,opt,name=expected_promotion_seq,json=expectedPromotionSeq,proto3" json:"expected_promotion_seq,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// Governs the C1 artifact-disposition lane; 0 or 1, never lowered.
+	ArtifactDispositionCapability uint32 `protobuf:"varint,8,opt,name=artifact_disposition_capability,json=artifactDispositionCapability,proto3" json:"artifact_disposition_capability,omitempty"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *ConsensusParamsUpdate) Reset() {
@@ -175,6 +186,13 @@ func (x *ConsensusParamsUpdate) GetMaxWriters() uint64 {
 func (x *ConsensusParamsUpdate) GetExpectedPromotionSeq() uint64 {
 	if x != nil {
 		return x.ExpectedPromotionSeq
+	}
+	return 0
+}
+
+func (x *ConsensusParamsUpdate) GetArtifactDispositionCapability() uint32 {
+	if x != nil {
+		return x.ArtifactDispositionCapability
 	}
 	return 0
 }
@@ -529,11 +547,12 @@ var File_consensus_proto protoreflect.FileDescriptor
 
 const file_consensus_proto_rawDesc = "" +
 	"\n" +
-	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\"j\n" +
+	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\"\xb2\x01\n" +
 	"\x16ConsensusMutableParams\x12/\n" +
 	"\x13authority_addresses\x18\x01 \x03(\tR\x12authorityAddresses\x12\x1f\n" +
 	"\vmax_writers\x18\x02 \x01(\x04R\n" +
-	"maxWriters\"\xcb\x02\n" +
+	"maxWriters\x12F\n" +
+	"\x1fartifact_disposition_capability\x18\x03 \x01(\rR\x1dartifactDispositionCapability\"\x93\x03\n" +
 	"\x15ConsensusParamsUpdate\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12.\n" +
@@ -543,7 +562,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\x13authority_addresses\x18\x05 \x03(\tR\x12authorityAddresses\x12\x1f\n" +
 	"\vmax_writers\x18\x06 \x01(\x04R\n" +
 	"maxWriters\x124\n" +
-	"\x16expected_promotion_seq\x18\a \x01(\x04R\x14expectedPromotionSeq\"w\n" +
+	"\x16expected_promotion_seq\x18\a \x01(\x04R\x14expectedPromotionSeq\x12F\n" +
+	"\x1fartifact_disposition_capability\x18\b \x01(\rR\x1dartifactDispositionCapability\"w\n" +
 	"\x18UpdateConsensusParamsCmd\x126\n" +
 	"\x06update\x18\x01 \x01(\v2\x1e.arbiter.ConsensusParamsUpdateR\x06update\x12#\n" +
 	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"\xb8\x01\n" +

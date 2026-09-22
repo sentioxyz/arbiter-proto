@@ -15,14 +15,14 @@ func TestConsensusUpdateContract(t *testing.T) {
 		kinds   []protoreflect.Kind
 	}{
 		{&pb.ConsensusParamsUpdate{},
-			[]protoreflect.Name{"network_id", "genesis_snapshot_id", "expected_epoch", "previous_params_digest", "authority_addresses", "max_writers", "expected_promotion_seq"},
-			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.StringKind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.Uint64Kind}},
+			[]protoreflect.Name{"network_id", "genesis_snapshot_id", "expected_epoch", "previous_params_digest", "authority_addresses", "max_writers", "expected_promotion_seq", "artifact_disposition_capability"},
+			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.StringKind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.Uint64Kind, protoreflect.Uint32Kind}},
 		{&pb.UpdateConsensusParamsCmd{},
 			[]protoreflect.Name{"update", "authority_jws"},
 			[]protoreflect.Kind{protoreflect.MessageKind, protoreflect.StringKind}},
 		{&pb.ConsensusMutableParams{},
-			[]protoreflect.Name{"authority_addresses", "max_writers"},
-			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.Uint64Kind}},
+			[]protoreflect.Name{"authority_addresses", "max_writers", "artifact_disposition_capability"},
+			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.Uint32Kind}},
 		{&pb.ProtocolInfo{},
 			[]protoreflect.Name{"node_id", "protocol_version", "updates_enabled"},
 			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.Uint32Kind, protoreflect.BoolKind}},

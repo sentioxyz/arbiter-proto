@@ -222,6 +222,16 @@ func TestSnapshotQueryMainDescriptorsUnchanged(t *testing.T) {
 	assertSnapshotBaselineDescriptors(t, snapshotDescriptorFixture(t, "main_f7d9f070_descriptor.binpb"), false)
 }
 
+// artifactDispositionCapabilityFieldNumbers pins the exact field number the
+// Wave 1a-3-c1 governance switch (uint32 artifact_disposition_capability)
+// occupies on each message it was appended to. Every existing baseline
+// predates this addition, so the exemption below applies unconditionally,
+// unlike the PromotionAck allowance which is specific to one baseline.
+var artifactDispositionCapabilityFieldNumbers = map[string]int32{
+	"ConsensusMutableParams": 3,
+	"ConsensusParamsUpdate":  8,
+}
+
 func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.FileDescriptorSet, allowPromotionInventory bool) {
 	t.Helper()
 	for _, old := range baseline.File {
@@ -253,6 +263,16 @@ func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.File
 				}
 				if len(got.Field) != len(m.Field)+1 || !proto.Equal(got.Field[len(m.Field)], want) {
 					t.Fatalf("PromotionAck addition must be exactly repeated SafePartMapping safe_partition_parts = 9: %v", got)
+				}
+				got.Field = got.Field[:len(m.Field)]
+			}
+			if num, ok := artifactDispositionCapabilityFieldNumbers[m.GetName()]; ok {
+				want := &descriptorpb.FieldDescriptorProto{
+					Name: proto.String("artifact_disposition_capability"), JsonName: proto.String("artifactDispositionCapability"), Number: proto.Int32(num),
+					Label: descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(), Type: descriptorpb.FieldDescriptorProto_TYPE_UINT32.Enum(),
+				}
+				if len(got.Field) != len(m.Field)+1 || !proto.Equal(got.Field[len(m.Field)], want) {
+					t.Fatalf("%s addition must be exactly uint32 artifact_disposition_capability = %d: %v", m.GetName(), num, got)
 				}
 				got.Field = got.Field[:len(m.Field)]
 			}
