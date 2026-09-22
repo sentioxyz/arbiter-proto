@@ -29,6 +29,7 @@ const (
 	ConsensusAdmin_UpdateConsensusParams_FullMethodName          = "/arbiter.ConsensusAdmin/UpdateConsensusParams"
 	ConsensusAdmin_GetSnapshotQueryAbortCandidate_FullMethodName = "/arbiter.ConsensusAdmin/GetSnapshotQueryAbortCandidate"
 	ConsensusAdmin_AbortSnapshotQuery_FullMethodName             = "/arbiter.ConsensusAdmin/AbortSnapshotQuery"
+	ConsensusAdmin_ActivateQueryProfile_FullMethodName           = "/arbiter.ConsensusAdmin/ActivateQueryProfile"
 )
 
 // ConsensusAdminClient is the client API for ConsensusAdmin service.
@@ -50,6 +51,8 @@ type ConsensusAdminClient interface {
 	// Leader-only, authority-authenticated terminal abort; returns the terminal
 	// status (lifecycle "terminal", execution_outcome "aborted", terminal_proof).
 	AbortSnapshotQuery(ctx context.Context, in *AbortSnapshotQueryRequest, opts ...grpc.CallOption) (*SnapshotQueryStatus, error)
+	// Leader-only, explicitly enabled mutation: proposes Raft tag 23.
+	ActivateQueryProfile(ctx context.Context, in *ActivateQueryProfileRequest, opts ...grpc.CallOption) (*Ack, error)
 }
 
 type consensusAdminClient struct {
@@ -110,6 +113,16 @@ func (c *consensusAdminClient) AbortSnapshotQuery(ctx context.Context, in *Abort
 	return out, nil
 }
 
+func (c *consensusAdminClient) ActivateQueryProfile(ctx context.Context, in *ActivateQueryProfileRequest, opts ...grpc.CallOption) (*Ack, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Ack)
+	err := c.cc.Invoke(ctx, ConsensusAdmin_ActivateQueryProfile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsensusAdminServer is the server API for ConsensusAdmin service.
 // All implementations must embed UnimplementedConsensusAdminServer
 // for forward compatibility.
@@ -129,6 +142,8 @@ type ConsensusAdminServer interface {
 	// Leader-only, authority-authenticated terminal abort; returns the terminal
 	// status (lifecycle "terminal", execution_outcome "aborted", terminal_proof).
 	AbortSnapshotQuery(context.Context, *AbortSnapshotQueryRequest) (*SnapshotQueryStatus, error)
+	// Leader-only, explicitly enabled mutation: proposes Raft tag 23.
+	ActivateQueryProfile(context.Context, *ActivateQueryProfileRequest) (*Ack, error)
 	mustEmbedUnimplementedConsensusAdminServer()
 }
 
@@ -153,6 +168,9 @@ func (UnimplementedConsensusAdminServer) GetSnapshotQueryAbortCandidate(context.
 }
 func (UnimplementedConsensusAdminServer) AbortSnapshotQuery(context.Context, *AbortSnapshotQueryRequest) (*SnapshotQueryStatus, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AbortSnapshotQuery not implemented")
+}
+func (UnimplementedConsensusAdminServer) ActivateQueryProfile(context.Context, *ActivateQueryProfileRequest) (*Ack, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ActivateQueryProfile not implemented")
 }
 func (UnimplementedConsensusAdminServer) mustEmbedUnimplementedConsensusAdminServer() {}
 func (UnimplementedConsensusAdminServer) testEmbeddedByValue()                        {}
@@ -265,6 +283,24 @@ func _ConsensusAdmin_AbortSnapshotQuery_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConsensusAdmin_ActivateQueryProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ActivateQueryProfileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusAdminServer).ActivateQueryProfile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusAdmin_ActivateQueryProfile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusAdminServer).ActivateQueryProfile(ctx, req.(*ActivateQueryProfileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConsensusAdmin_ServiceDesc is the grpc.ServiceDesc for ConsensusAdmin service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -291,6 +327,10 @@ var ConsensusAdmin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AbortSnapshotQuery",
 			Handler:    _ConsensusAdmin_AbortSnapshotQuery_Handler,
+		},
+		{
+			MethodName: "ActivateQueryProfile",
+			Handler:    _ConsensusAdmin_ActivateQueryProfile_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

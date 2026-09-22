@@ -78,3 +78,7 @@ Wave 1a-2b adds `ConsensusAdmin.GetSnapshotQueryAbortCandidate` and `ConsensusAd
 ## Wave 1a-3-c1: artifact disposition capability
 
 Wave 1a-3-c1 adds `artifact_disposition_capability` to `ConsensusMutableParams` (field 3) and `ConsensusParamsUpdate` (field 8). Tag 18's message (`update_consensus_params`) gains this field; no new Raft tag is allocated. The field is a monotone 0/1 governance switch gating the C1 artifact-disposition lane (Raft tag 28); it is carried but not yet enforced by this change.
+
+## Wave 1a-3b: ConsensusAdmin ActivateQueryProfile RPC
+
+Wave 1a-3b adds `ConsensusAdmin.ActivateQueryProfile`, the proposer RPC for the previously-unproposed Raft tag 23 (`activate_query_profile`); no new Raft tag is allocated.
