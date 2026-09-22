@@ -377,6 +377,62 @@ func (x *AbortSnapshotQueryRequest) GetAuthorityJws() string {
 	return ""
 }
 
+// Authority-signed activation of a query profile for the current executor
+// profile (Raft tag 23). Leader-only, explicitly enabled; refused by the FSM
+// while the artifact disposition capability is enabled, where activation
+// belongs to the candidate-bound publication.
+type ActivateQueryProfileRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Activation    *ActiveQueryPolicy     `protobuf:"bytes,1,opt,name=activation,proto3" json:"activation,omitempty"`
+	AuthorityJws  string                 `protobuf:"bytes,2,opt,name=authority_jws,json=authorityJws,proto3" json:"authority_jws,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ActivateQueryProfileRequest) Reset() {
+	*x = ActivateQueryProfileRequest{}
+	mi := &file_consensus_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ActivateQueryProfileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ActivateQueryProfileRequest) ProtoMessage() {}
+
+func (x *ActivateQueryProfileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_consensus_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ActivateQueryProfileRequest.ProtoReflect.Descriptor instead.
+func (*ActivateQueryProfileRequest) Descriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ActivateQueryProfileRequest) GetActivation() *ActiveQueryPolicy {
+	if x != nil {
+		return x.Activation
+	}
+	return nil
+}
+
+func (x *ActivateQueryProfileRequest) GetAuthorityJws() string {
+	if x != nil {
+		return x.AuthorityJws
+	}
+	return ""
+}
+
 // ProtocolInfo describes the directly contacted node, including followers.
 // protocol_version=1 supports the ConsensusAdmin service and update command.
 type ProtocolInfo struct {
@@ -390,7 +446,7 @@ type ProtocolInfo struct {
 
 func (x *ProtocolInfo) Reset() {
 	*x = ProtocolInfo{}
-	mi := &file_consensus_proto_msgTypes[5]
+	mi := &file_consensus_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -402,7 +458,7 @@ func (x *ProtocolInfo) String() string {
 func (*ProtocolInfo) ProtoMessage() {}
 
 func (x *ProtocolInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[5]
+	mi := &file_consensus_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -415,7 +471,7 @@ func (x *ProtocolInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProtocolInfo.ProtoReflect.Descriptor instead.
 func (*ProtocolInfo) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{5}
+	return file_consensus_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ProtocolInfo) GetNodeId() string {
@@ -459,7 +515,7 @@ type ConsensusParamsState struct {
 
 func (x *ConsensusParamsState) Reset() {
 	*x = ConsensusParamsState{}
-	mi := &file_consensus_proto_msgTypes[6]
+	mi := &file_consensus_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -471,7 +527,7 @@ func (x *ConsensusParamsState) String() string {
 func (*ConsensusParamsState) ProtoMessage() {}
 
 func (x *ConsensusParamsState) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[6]
+	mi := &file_consensus_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -484,7 +540,7 @@ func (x *ConsensusParamsState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConsensusParamsState.ProtoReflect.Descriptor instead.
 func (*ConsensusParamsState) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{6}
+	return file_consensus_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ConsensusParamsState) GetProtocolVersion() uint32 {
@@ -575,6 +631,11 @@ const file_consensus_proto_rawDesc = "" +
 	"\fstatement_id\x18\x04 \x01(\tR\vstatementId\"{\n" +
 	"\x19AbortSnapshotQueryRequest\x129\n" +
 	"\x06record\x18\x01 \x01(\v2!.arbiter.SnapshotQueryAbortRecordR\x06record\x12#\n" +
+	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"~\n" +
+	"\x1bActivateQueryProfileRequest\x12:\n" +
+	"\n" +
+	"activation\x18\x01 \x01(\v2\x1a.arbiter.ActiveQueryPolicyR\n" +
+	"activation\x12#\n" +
 	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"{\n" +
 	"\fProtocolInfo\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12)\n" +
@@ -589,13 +650,14 @@ const file_consensus_proto_rawDesc = "" +
 	"\acurrent\x18\x05 \x01(\v2\x1f.arbiter.ConsensusMutableParamsR\acurrent\x12\x14\n" +
 	"\x05epoch\x18\x06 \x01(\x04R\x05epoch\x12#\n" +
 	"\rparams_digest\x18\a \x01(\tR\fparamsDigest\x12#\n" +
-	"\rpromotion_seq\x18\b \x01(\x04R\fpromotionSeq2\xc0\x03\n" +
+	"\rpromotion_seq\x18\b \x01(\x04R\fpromotionSeq2\x8e\x04\n" +
 	"\x0eConsensusAdmin\x12B\n" +
 	"\x0fGetProtocolInfo\x12\x16.google.protobuf.Empty\x1a\x15.arbiter.ProtocolInfo\"\x00\x12M\n" +
 	"\x12GetConsensusParams\x12\x16.google.protobuf.Empty\x1a\x1d.arbiter.ConsensusParamsState\"\x00\x12J\n" +
 	"\x15UpdateConsensusParams\x12!.arbiter.UpdateConsensusParamsCmd\x1a\f.arbiter.Ack\"\x00\x12u\n" +
 	"\x1eGetSnapshotQueryAbortCandidate\x12..arbiter.GetSnapshotQueryAbortCandidateRequest\x1a!.arbiter.SnapshotQueryAbortRecord\"\x00\x12X\n" +
-	"\x12AbortSnapshotQuery\x12\".arbiter.AbortSnapshotQueryRequest\x1a\x1c.arbiter.SnapshotQueryStatus\"\x00B.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
+	"\x12AbortSnapshotQuery\x12\".arbiter.AbortSnapshotQueryRequest\x1a\x1c.arbiter.SnapshotQueryStatus\"\x00\x12L\n" +
+	"\x14ActivateQueryProfile\x12$.arbiter.ActivateQueryProfileRequest\x1a\f.arbiter.Ack\"\x00B.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
 
 var (
 	file_consensus_proto_rawDescOnce sync.Once
@@ -609,40 +671,45 @@ func file_consensus_proto_rawDescGZIP() []byte {
 	return file_consensus_proto_rawDescData
 }
 
-var file_consensus_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_consensus_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_consensus_proto_goTypes = []any{
 	(*ConsensusMutableParams)(nil),                // 0: arbiter.ConsensusMutableParams
 	(*ConsensusParamsUpdate)(nil),                 // 1: arbiter.ConsensusParamsUpdate
 	(*UpdateConsensusParamsCmd)(nil),              // 2: arbiter.UpdateConsensusParamsCmd
 	(*GetSnapshotQueryAbortCandidateRequest)(nil), // 3: arbiter.GetSnapshotQueryAbortCandidateRequest
 	(*AbortSnapshotQueryRequest)(nil),             // 4: arbiter.AbortSnapshotQueryRequest
-	(*ProtocolInfo)(nil),                          // 5: arbiter.ProtocolInfo
-	(*ConsensusParamsState)(nil),                  // 6: arbiter.ConsensusParamsState
-	(*SnapshotQueryAbortRecord)(nil),              // 7: arbiter.SnapshotQueryAbortRecord
-	(*emptypb.Empty)(nil),                         // 8: google.protobuf.Empty
-	(*Ack)(nil),                                   // 9: arbiter.Ack
-	(*SnapshotQueryStatus)(nil),                   // 10: arbiter.SnapshotQueryStatus
+	(*ActivateQueryProfileRequest)(nil),           // 5: arbiter.ActivateQueryProfileRequest
+	(*ProtocolInfo)(nil),                          // 6: arbiter.ProtocolInfo
+	(*ConsensusParamsState)(nil),                  // 7: arbiter.ConsensusParamsState
+	(*SnapshotQueryAbortRecord)(nil),              // 8: arbiter.SnapshotQueryAbortRecord
+	(*ActiveQueryPolicy)(nil),                     // 9: arbiter.ActiveQueryPolicy
+	(*emptypb.Empty)(nil),                         // 10: google.protobuf.Empty
+	(*Ack)(nil),                                   // 11: arbiter.Ack
+	(*SnapshotQueryStatus)(nil),                   // 12: arbiter.SnapshotQueryStatus
 }
 var file_consensus_proto_depIdxs = []int32{
 	1,  // 0: arbiter.UpdateConsensusParamsCmd.update:type_name -> arbiter.ConsensusParamsUpdate
-	7,  // 1: arbiter.AbortSnapshotQueryRequest.record:type_name -> arbiter.SnapshotQueryAbortRecord
-	0,  // 2: arbiter.ConsensusParamsState.bootstrap:type_name -> arbiter.ConsensusMutableParams
-	0,  // 3: arbiter.ConsensusParamsState.current:type_name -> arbiter.ConsensusMutableParams
-	8,  // 4: arbiter.ConsensusAdmin.GetProtocolInfo:input_type -> google.protobuf.Empty
-	8,  // 5: arbiter.ConsensusAdmin.GetConsensusParams:input_type -> google.protobuf.Empty
-	2,  // 6: arbiter.ConsensusAdmin.UpdateConsensusParams:input_type -> arbiter.UpdateConsensusParamsCmd
-	3,  // 7: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:input_type -> arbiter.GetSnapshotQueryAbortCandidateRequest
-	4,  // 8: arbiter.ConsensusAdmin.AbortSnapshotQuery:input_type -> arbiter.AbortSnapshotQueryRequest
-	5,  // 9: arbiter.ConsensusAdmin.GetProtocolInfo:output_type -> arbiter.ProtocolInfo
-	6,  // 10: arbiter.ConsensusAdmin.GetConsensusParams:output_type -> arbiter.ConsensusParamsState
-	9,  // 11: arbiter.ConsensusAdmin.UpdateConsensusParams:output_type -> arbiter.Ack
-	7,  // 12: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:output_type -> arbiter.SnapshotQueryAbortRecord
-	10, // 13: arbiter.ConsensusAdmin.AbortSnapshotQuery:output_type -> arbiter.SnapshotQueryStatus
-	9,  // [9:14] is the sub-list for method output_type
-	4,  // [4:9] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	8,  // 1: arbiter.AbortSnapshotQueryRequest.record:type_name -> arbiter.SnapshotQueryAbortRecord
+	9,  // 2: arbiter.ActivateQueryProfileRequest.activation:type_name -> arbiter.ActiveQueryPolicy
+	0,  // 3: arbiter.ConsensusParamsState.bootstrap:type_name -> arbiter.ConsensusMutableParams
+	0,  // 4: arbiter.ConsensusParamsState.current:type_name -> arbiter.ConsensusMutableParams
+	10, // 5: arbiter.ConsensusAdmin.GetProtocolInfo:input_type -> google.protobuf.Empty
+	10, // 6: arbiter.ConsensusAdmin.GetConsensusParams:input_type -> google.protobuf.Empty
+	2,  // 7: arbiter.ConsensusAdmin.UpdateConsensusParams:input_type -> arbiter.UpdateConsensusParamsCmd
+	3,  // 8: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:input_type -> arbiter.GetSnapshotQueryAbortCandidateRequest
+	4,  // 9: arbiter.ConsensusAdmin.AbortSnapshotQuery:input_type -> arbiter.AbortSnapshotQueryRequest
+	5,  // 10: arbiter.ConsensusAdmin.ActivateQueryProfile:input_type -> arbiter.ActivateQueryProfileRequest
+	6,  // 11: arbiter.ConsensusAdmin.GetProtocolInfo:output_type -> arbiter.ProtocolInfo
+	7,  // 12: arbiter.ConsensusAdmin.GetConsensusParams:output_type -> arbiter.ConsensusParamsState
+	11, // 13: arbiter.ConsensusAdmin.UpdateConsensusParams:output_type -> arbiter.Ack
+	8,  // 14: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:output_type -> arbiter.SnapshotQueryAbortRecord
+	12, // 15: arbiter.ConsensusAdmin.AbortSnapshotQuery:output_type -> arbiter.SnapshotQueryStatus
+	11, // 16: arbiter.ConsensusAdmin.ActivateQueryProfile:output_type -> arbiter.Ack
+	11, // [11:17] is the sub-list for method output_type
+	5,  // [5:11] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_consensus_proto_init() }
@@ -658,7 +725,7 @@ func file_consensus_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_consensus_proto_rawDesc), len(file_consensus_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

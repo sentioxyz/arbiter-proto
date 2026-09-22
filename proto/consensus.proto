@@ -63,6 +63,15 @@ message AbortSnapshotQueryRequest {
   string authority_jws = 2;
 }
 
+// Authority-signed activation of a query profile for the current executor
+// profile (Raft tag 23). Leader-only, explicitly enabled; refused by the FSM
+// while the artifact disposition capability is enabled, where activation
+// belongs to the candidate-bound publication.
+message ActivateQueryProfileRequest {
+  ActiveQueryPolicy activation = 1;
+  string authority_jws = 2;
+}
+
 // ProtocolInfo describes the directly contacted node, including followers.
 // protocol_version=1 supports the ConsensusAdmin service and update command.
 message ProtocolInfo {
@@ -102,4 +111,6 @@ service ConsensusAdmin {
   // Leader-only, authority-authenticated terminal abort; returns the terminal
   // status (lifecycle "terminal", execution_outcome "aborted", terminal_proof).
   rpc AbortSnapshotQuery (AbortSnapshotQueryRequest) returns (SnapshotQueryStatus) {}
+  // Leader-only, explicitly enabled mutation: proposes Raft tag 23.
+  rpc ActivateQueryProfile (ActivateQueryProfileRequest) returns (Ack) {}
 }
