@@ -54,6 +54,30 @@ message ReplayJob {
   // compares each verifier's computed_state_root against this (§7.3).
   string source_claim_root = 6;
   repeated Statement statements = 7;
+  // Dynamic SI table set (sub-project 2b). Set only for a zero-statement
+  // table-set transition block; such a job carries no statements and an
+  // empty source_claim_root.
+  ReplayTableSetTransition table_set_transition = 8;
+  // Schemas of the chain-origin tables the job's statements target, sorted by
+  // table_id, so a verifier needs no registry access.
+  repeated ReplayTableSchema table_schemas = 9;
+}
+
+// ReplayTableSchema is one registry-committed table schema
+// (pkg/replay.ReplayTableSchema): schema_json is the payloadexec.TableSchema
+// JSON verbatim; the verifier recomputes its hash.
+message ReplayTableSchema {
+  string table_id = 1;
+  string schema_json = 2;
+}
+
+// ReplayTableSetTransition is a transition block's table-set change
+// (pkg/replay.ReplayTableSetTransition): adds sorted by table_id, retires
+// ascending and disjoint from adds, new_schema_root over the resulting set.
+message ReplayTableSetTransition {
+  repeated ReplayTableSchema adds = 1;
+  repeated string retires = 2;
+  string new_schema_root = 3;
 }
 
 // PartitionCommitment is the post-replay commitment for one table partition
