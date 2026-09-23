@@ -9,6 +9,7 @@ option go_package = "github.com/sentioxyz/arbiter-proto/gen/pb;pb";
 import "google/protobuf/empty.proto";
 import "arbiter.proto";
 import "replay.proto";
+import "table_registry.proto";
 
 // ConsensusMutableParams is a complete authority set and writer limit, not
 // a patch. Bootstrap values remain the original trust root on every restart;
@@ -18,6 +19,9 @@ message ConsensusMutableParams {
   uint64 max_writers = 2;
   // 0 keeps artifact disposition (Raft tag 28) refused; 1 enables it. Monotone.
   uint32 artifact_disposition_capability = 3;
+  // Set once by a signed update and then carried unchanged by every later
+  // update; absent means the dynamic table registry is disabled.
+  TableRegistryParams table_registry = 4;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -36,6 +40,8 @@ message ConsensusParamsUpdate {
   uint64 expected_promotion_seq = 7;
   // Governs the C1 artifact-disposition lane; 0 or 1, never lowered.
   uint32 artifact_disposition_capability = 8;
+  // Absent keeps the registry disabled. Once set it must be resent unchanged.
+  TableRegistryParams table_registry = 9;
 }
 
 // UpdateConsensusParamsCmd is both the administration request and the

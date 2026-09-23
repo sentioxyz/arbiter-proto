@@ -977,6 +977,11 @@ type RaftCommand struct {
 	//	*RaftCommand_PublishExecutorProfileTransition
 	//	*RaftCommand_RecordSnapshotArtifactReady
 	//	*RaftCommand_ArtifactDisposition
+	//	*RaftCommand_SeedLegacyTables
+	//	*RaftCommand_AddTable
+	//	*RaftCommand_RetireTables
+	//	*RaftCommand_AdvanceL2Cursor
+	//	*RaftCommand_RecordTablePurged
 	Cmd           isRaftCommand_Cmd `protobuf_oneof:"cmd"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1280,6 +1285,51 @@ func (x *RaftCommand) GetArtifactDisposition() *ArtifactDispositionCmd {
 	return nil
 }
 
+func (x *RaftCommand) GetSeedLegacyTables() *SeedLegacyTablesCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_SeedLegacyTables); ok {
+			return x.SeedLegacyTables
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetAddTable() *AddTableCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_AddTable); ok {
+			return x.AddTable
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetRetireTables() *RetireTablesCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_RetireTables); ok {
+			return x.RetireTables
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetAdvanceL2Cursor() *AdvanceL2CursorCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_AdvanceL2Cursor); ok {
+			return x.AdvanceL2Cursor
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetRecordTablePurged() *RecordTablePurgedCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_RecordTablePurged); ok {
+			return x.RecordTablePurged
+		}
+	}
+	return nil
+}
+
 type isRaftCommand_Cmd interface {
 	isRaftCommand_Cmd()
 }
@@ -1400,6 +1450,27 @@ type RaftCommand_ArtifactDisposition struct {
 	ArtifactDisposition *ArtifactDispositionCmd `protobuf:"bytes,28,opt,name=artifact_disposition,json=artifactDisposition,proto3,oneof"`
 }
 
+type RaftCommand_SeedLegacyTables struct {
+	// Dynamic SI table registry (tags 31-35; 29 stays unused).
+	SeedLegacyTables *SeedLegacyTablesCmd `protobuf:"bytes,31,opt,name=seed_legacy_tables,json=seedLegacyTables,proto3,oneof"`
+}
+
+type RaftCommand_AddTable struct {
+	AddTable *AddTableCmd `protobuf:"bytes,32,opt,name=add_table,json=addTable,proto3,oneof"`
+}
+
+type RaftCommand_RetireTables struct {
+	RetireTables *RetireTablesCmd `protobuf:"bytes,33,opt,name=retire_tables,json=retireTables,proto3,oneof"`
+}
+
+type RaftCommand_AdvanceL2Cursor struct {
+	AdvanceL2Cursor *AdvanceL2CursorCmd `protobuf:"bytes,34,opt,name=advance_l2_cursor,json=advanceL2Cursor,proto3,oneof"`
+}
+
+type RaftCommand_RecordTablePurged struct {
+	RecordTablePurged *RecordTablePurgedCmd `protobuf:"bytes,35,opt,name=record_table_purged,json=recordTablePurged,proto3,oneof"`
+}
+
 func (*RaftCommand_SubmitStatement) isRaftCommand_Cmd() {}
 
 func (*RaftCommand_SealL3Block) isRaftCommand_Cmd() {}
@@ -1457,6 +1528,16 @@ func (*RaftCommand_PublishExecutorProfileTransition) isRaftCommand_Cmd() {}
 func (*RaftCommand_RecordSnapshotArtifactReady) isRaftCommand_Cmd() {}
 
 func (*RaftCommand_ArtifactDisposition) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_SeedLegacyTables) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_AddTable) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_RetireTables) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_AdvanceL2Cursor) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_RecordTablePurged) isRaftCommand_Cmd() {}
 
 // Begins draining using the authenticated request; Apply makes no network calls.
 type BeginSnapshotQueryCmd struct {
@@ -1971,7 +2052,7 @@ var File_raftlog_proto protoreflect.FileDescriptor
 
 const file_raftlog_proto_rawDesc = "" +
 	"\n" +
-	"\rraftlog.proto\x12\aarbiter\x1a\rarbiter.proto\x1a\x1aartifact_disposition.proto\x1a\x0fconsensus.proto\x1a\freplay.proto\"\x80\x01\n" +
+	"\rraftlog.proto\x12\aarbiter\x1a\rarbiter.proto\x1a\x1aartifact_disposition.proto\x1a\x0fconsensus.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\x80\x01\n" +
 	"\x12SubmitStatementCmd\x128\n" +
 	"\benvelope\x18\x01 \x01(\v2\x1c.arbiter.StatementEnvelopeV2R\benvelope\x120\n" +
 	"\x14non_membership_proof\x18\x02 \x01(\fR\x12nonMembershipProof\"\x10\n" +
@@ -2015,7 +2096,7 @@ const file_raftlog_proto_rawDesc = "" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\"?\n" +
 	"\fEvictNodeCmd\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x16\n" +
-	"\x06reason\x18\x02 \x01(\tR\x06reason\"\x9c\x13\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\"\xfc\x15\n" +
 	"\vRaftCommand\x12H\n" +
 	"\x10submit_statement\x18\x01 \x01(\v2\x1b.arbiter.SubmitStatementCmdH\x00R\x0fsubmitStatement\x12=\n" +
 	"\rseal_l3_block\x18\x02 \x01(\v2\x17.arbiter.SealL3BlockCmdH\x00R\vsealL3Block\x12B\n" +
@@ -2049,7 +2130,12 @@ const file_raftlog_proto_rawDesc = "" +
 	"!record_snapshot_query_attestation\x18\x19 \x01(\v2*.arbiter.RecordSnapshotQueryAttestationCmdH\x00R\x1erecordSnapshotQueryAttestation\x12}\n" +
 	"#publish_executor_profile_transition\x18\x1a \x01(\v2,.arbiter.PublishExecutorProfileTransitionCmdH\x00R publishExecutorProfileTransition\x12n\n" +
 	"\x1erecord_snapshot_artifact_ready\x18\x1b \x01(\v2'.arbiter.RecordSnapshotArtifactReadyCmdH\x00R\x1brecordSnapshotArtifactReady\x12T\n" +
-	"\x14artifact_disposition\x18\x1c \x01(\v2\x1f.arbiter.ArtifactDispositionCmdH\x00R\x13artifactDispositionB\x05\n" +
+	"\x14artifact_disposition\x18\x1c \x01(\v2\x1f.arbiter.ArtifactDispositionCmdH\x00R\x13artifactDisposition\x12L\n" +
+	"\x12seed_legacy_tables\x18\x1f \x01(\v2\x1c.arbiter.SeedLegacyTablesCmdH\x00R\x10seedLegacyTables\x123\n" +
+	"\tadd_table\x18  \x01(\v2\x14.arbiter.AddTableCmdH\x00R\baddTable\x12?\n" +
+	"\rretire_tables\x18! \x01(\v2\x18.arbiter.RetireTablesCmdH\x00R\fretireTables\x12I\n" +
+	"\x11advance_l2_cursor\x18\" \x01(\v2\x1b.arbiter.AdvanceL2CursorCmdH\x00R\x0fadvanceL2Cursor\x12O\n" +
+	"\x13record_table_purged\x18# \x01(\v2\x1d.arbiter.RecordTablePurgedCmdH\x00R\x11recordTablePurgedB\x05\n" +
 	"\x03cmd\"W\n" +
 	"\x15BeginSnapshotQueryCmd\x12>\n" +
 	"\arequest\x18\x01 \x01(\v2$.arbiter.AcquireSnapshotQueryRequestR\arequest\"{\n" +
@@ -2147,17 +2233,22 @@ var file_raftlog_proto_goTypes = []any{
 	(*NodeRegistration)(nil),                    // 39: arbiter.NodeRegistration
 	(*UpdateConsensusParamsCmd)(nil),            // 40: arbiter.UpdateConsensusParamsCmd
 	(*ArtifactDispositionCmd)(nil),              // 41: arbiter.ArtifactDispositionCmd
-	(*AcquireSnapshotQueryRequest)(nil),         // 42: arbiter.AcquireSnapshotQueryRequest
-	(*SnapshotQueryReservation)(nil),            // 43: arbiter.SnapshotQueryReservation
-	(*ReleaseSnapshotQueryRequest)(nil),         // 44: arbiter.ReleaseSnapshotQueryRequest
-	(*SnapshotQueryEnvelope)(nil),               // 45: arbiter.SnapshotQueryEnvelope
-	(*SnapshotQueryAbortRecord)(nil),            // 46: arbiter.SnapshotQueryAbortRecord
-	(*ActiveQueryPolicy)(nil),                   // 47: arbiter.ActiveQueryPolicy
-	(*SnapshotQueryClaim)(nil),                  // 48: arbiter.SnapshotQueryClaim
-	(*SnapshotQueryAttestation)(nil),            // 49: arbiter.SnapshotQueryAttestation
-	(*ExecutorProfileTransition)(nil),           // 50: arbiter.ExecutorProfileTransition
-	(*ExecutorProfileTransitionReceipt)(nil),    // 51: arbiter.ExecutorProfileTransitionReceipt
-	(*SnapshotArtifactReadySubmission)(nil),     // 52: arbiter.SnapshotArtifactReadySubmission
+	(*SeedLegacyTablesCmd)(nil),                 // 42: arbiter.SeedLegacyTablesCmd
+	(*AddTableCmd)(nil),                         // 43: arbiter.AddTableCmd
+	(*RetireTablesCmd)(nil),                     // 44: arbiter.RetireTablesCmd
+	(*AdvanceL2CursorCmd)(nil),                  // 45: arbiter.AdvanceL2CursorCmd
+	(*RecordTablePurgedCmd)(nil),                // 46: arbiter.RecordTablePurgedCmd
+	(*AcquireSnapshotQueryRequest)(nil),         // 47: arbiter.AcquireSnapshotQueryRequest
+	(*SnapshotQueryReservation)(nil),            // 48: arbiter.SnapshotQueryReservation
+	(*ReleaseSnapshotQueryRequest)(nil),         // 49: arbiter.ReleaseSnapshotQueryRequest
+	(*SnapshotQueryEnvelope)(nil),               // 50: arbiter.SnapshotQueryEnvelope
+	(*SnapshotQueryAbortRecord)(nil),            // 51: arbiter.SnapshotQueryAbortRecord
+	(*ActiveQueryPolicy)(nil),                   // 52: arbiter.ActiveQueryPolicy
+	(*SnapshotQueryClaim)(nil),                  // 53: arbiter.SnapshotQueryClaim
+	(*SnapshotQueryAttestation)(nil),            // 54: arbiter.SnapshotQueryAttestation
+	(*ExecutorProfileTransition)(nil),           // 55: arbiter.ExecutorProfileTransition
+	(*ExecutorProfileTransitionReceipt)(nil),    // 56: arbiter.ExecutorProfileTransitionReceipt
+	(*SnapshotArtifactReadySubmission)(nil),     // 57: arbiter.SnapshotArtifactReadySubmission
 }
 var file_raftlog_proto_depIdxs = []int32{
 	29, // 0: arbiter.SubmitStatementCmd.envelope:type_name -> arbiter.StatementEnvelopeV2
@@ -2201,23 +2292,28 @@ var file_raftlog_proto_depIdxs = []int32{
 	27, // 38: arbiter.RaftCommand.publish_executor_profile_transition:type_name -> arbiter.PublishExecutorProfileTransitionCmd
 	28, // 39: arbiter.RaftCommand.record_snapshot_artifact_ready:type_name -> arbiter.RecordSnapshotArtifactReadyCmd
 	41, // 40: arbiter.RaftCommand.artifact_disposition:type_name -> arbiter.ArtifactDispositionCmd
-	42, // 41: arbiter.BeginSnapshotQueryCmd.request:type_name -> arbiter.AcquireSnapshotQueryRequest
-	43, // 42: arbiter.GrantSnapshotQueryCmd.reservation:type_name -> arbiter.SnapshotQueryReservation
-	44, // 43: arbiter.ReleaseSnapshotQueryCmd.request:type_name -> arbiter.ReleaseSnapshotQueryRequest
-	45, // 44: arbiter.SubmitSnapshotQueryCmd.envelope:type_name -> arbiter.SnapshotQueryEnvelope
-	46, // 45: arbiter.AbortSnapshotQueryCmd.record:type_name -> arbiter.SnapshotQueryAbortRecord
-	47, // 46: arbiter.ActivateQueryProfileCmd.activation:type_name -> arbiter.ActiveQueryPolicy
-	48, // 47: arbiter.RecordSnapshotQueryClaimCmd.claim:type_name -> arbiter.SnapshotQueryClaim
-	49, // 48: arbiter.RecordSnapshotQueryAttestationCmd.attestation:type_name -> arbiter.SnapshotQueryAttestation
-	50, // 49: arbiter.PublishExecutorProfileTransitionCmd.transition:type_name -> arbiter.ExecutorProfileTransition
-	36, // 50: arbiter.PublishExecutorProfileTransitionCmd.manifest:type_name -> arbiter.SafeSnapshotManifest
-	51, // 51: arbiter.PublishExecutorProfileTransitionCmd.receipts:type_name -> arbiter.ExecutorProfileTransitionReceipt
-	52, // 52: arbiter.RecordSnapshotArtifactReadyCmd.submission:type_name -> arbiter.SnapshotArtifactReadySubmission
-	53, // [53:53] is the sub-list for method output_type
-	53, // [53:53] is the sub-list for method input_type
-	53, // [53:53] is the sub-list for extension type_name
-	53, // [53:53] is the sub-list for extension extendee
-	0,  // [0:53] is the sub-list for field type_name
+	42, // 41: arbiter.RaftCommand.seed_legacy_tables:type_name -> arbiter.SeedLegacyTablesCmd
+	43, // 42: arbiter.RaftCommand.add_table:type_name -> arbiter.AddTableCmd
+	44, // 43: arbiter.RaftCommand.retire_tables:type_name -> arbiter.RetireTablesCmd
+	45, // 44: arbiter.RaftCommand.advance_l2_cursor:type_name -> arbiter.AdvanceL2CursorCmd
+	46, // 45: arbiter.RaftCommand.record_table_purged:type_name -> arbiter.RecordTablePurgedCmd
+	47, // 46: arbiter.BeginSnapshotQueryCmd.request:type_name -> arbiter.AcquireSnapshotQueryRequest
+	48, // 47: arbiter.GrantSnapshotQueryCmd.reservation:type_name -> arbiter.SnapshotQueryReservation
+	49, // 48: arbiter.ReleaseSnapshotQueryCmd.request:type_name -> arbiter.ReleaseSnapshotQueryRequest
+	50, // 49: arbiter.SubmitSnapshotQueryCmd.envelope:type_name -> arbiter.SnapshotQueryEnvelope
+	51, // 50: arbiter.AbortSnapshotQueryCmd.record:type_name -> arbiter.SnapshotQueryAbortRecord
+	52, // 51: arbiter.ActivateQueryProfileCmd.activation:type_name -> arbiter.ActiveQueryPolicy
+	53, // 52: arbiter.RecordSnapshotQueryClaimCmd.claim:type_name -> arbiter.SnapshotQueryClaim
+	54, // 53: arbiter.RecordSnapshotQueryAttestationCmd.attestation:type_name -> arbiter.SnapshotQueryAttestation
+	55, // 54: arbiter.PublishExecutorProfileTransitionCmd.transition:type_name -> arbiter.ExecutorProfileTransition
+	36, // 55: arbiter.PublishExecutorProfileTransitionCmd.manifest:type_name -> arbiter.SafeSnapshotManifest
+	56, // 56: arbiter.PublishExecutorProfileTransitionCmd.receipts:type_name -> arbiter.ExecutorProfileTransitionReceipt
+	57, // 57: arbiter.RecordSnapshotArtifactReadyCmd.submission:type_name -> arbiter.SnapshotArtifactReadySubmission
+	58, // [58:58] is the sub-list for method output_type
+	58, // [58:58] is the sub-list for method input_type
+	58, // [58:58] is the sub-list for extension type_name
+	58, // [58:58] is the sub-list for extension extendee
+	0,  // [0:58] is the sub-list for field type_name
 }
 
 func init() { file_raftlog_proto_init() }
@@ -2229,6 +2325,7 @@ func file_raftlog_proto_init() {
 	file_artifact_disposition_proto_init()
 	file_consensus_proto_init()
 	file_replay_proto_init()
+	file_table_registry_proto_init()
 	file_raftlog_proto_msgTypes[17].OneofWrappers = []any{
 		(*RaftCommand_SubmitStatement)(nil),
 		(*RaftCommand_SealL3Block)(nil),
@@ -2259,6 +2356,11 @@ func file_raftlog_proto_init() {
 		(*RaftCommand_PublishExecutorProfileTransition)(nil),
 		(*RaftCommand_RecordSnapshotArtifactReady)(nil),
 		(*RaftCommand_ArtifactDisposition)(nil),
+		(*RaftCommand_SeedLegacyTables)(nil),
+		(*RaftCommand_AddTable)(nil),
+		(*RaftCommand_RetireTables)(nil),
+		(*RaftCommand_AdvanceL2Cursor)(nil),
+		(*RaftCommand_RecordTablePurged)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

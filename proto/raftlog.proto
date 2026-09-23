@@ -21,6 +21,7 @@ import "arbiter.proto";
 import "artifact_disposition.proto";
 import "consensus.proto";
 import "replay.proto";
+import "table_registry.proto";
 
 // SubmitStatementCmd → Sequenced. Deterministic admission in Apply: verify
 // envelope signature, verify the carried non-membership proof against the
@@ -174,6 +175,12 @@ message RaftCommand {
     PublishExecutorProfileTransitionCmd publish_executor_profile_transition = 26;
     RecordSnapshotArtifactReadyCmd record_snapshot_artifact_ready = 27;
     ArtifactDispositionCmd artifact_disposition = 28;
+    // Dynamic SI table registry (tags 31-35; 29 stays unused).
+    SeedLegacyTablesCmd seed_legacy_tables = 31;
+    AddTableCmd add_table = 32;
+    RetireTablesCmd retire_tables = 33;
+    AdvanceL2CursorCmd advance_l2_cursor = 34;
+    RecordTablePurgedCmd record_table_purged = 35;
   }
 }
 

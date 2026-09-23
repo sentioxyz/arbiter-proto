@@ -232,6 +232,17 @@ var artifactDispositionCapabilityFieldNumbers = map[string]int32{
 	"ConsensusParamsUpdate":  8,
 }
 
+// tableRegistryFieldNumbers pins the exact field number the dynamic SI table
+// registry parameter (TableRegistryParams table_registry) occupies on each
+// message it was appended to. It is the last field on both messages — after
+// artifact_disposition_capability — so it is stripped before that exemption
+// runs below. Every existing baseline predates this addition, so the
+// exemption applies unconditionally, same as artifact_disposition_capability.
+var tableRegistryFieldNumbers = map[string]int32{
+	"ConsensusMutableParams": 4,
+	"ConsensusParamsUpdate":  9,
+}
+
 func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.FileDescriptorSet, allowPromotionInventory bool) {
 	t.Helper()
 	for _, old := range baseline.File {
@@ -265,6 +276,20 @@ func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.File
 					t.Fatalf("PromotionAck addition must be exactly repeated SafePartMapping safe_partition_parts = 9: %v", got)
 				}
 				got.Field = got.Field[:len(m.Field)]
+			}
+			if num, ok := tableRegistryFieldNumbers[m.GetName()]; ok {
+				if len(got.Field) == 0 {
+					t.Fatalf("%s missing fields entirely", m.GetName())
+				}
+				last := got.Field[len(got.Field)-1]
+				want := &descriptorpb.FieldDescriptorProto{
+					Name: proto.String("table_registry"), JsonName: proto.String("tableRegistry"), Number: proto.Int32(num),
+					Label: descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(), Type: descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(), TypeName: proto.String(".arbiter.TableRegistryParams"),
+				}
+				if last.GetNumber() != num || !proto.Equal(last, want) {
+					t.Fatalf("%s addition must be exactly TableRegistryParams table_registry = %d: %v", m.GetName(), num, got)
+				}
+				got.Field = got.Field[:len(got.Field)-1]
 			}
 			if num, ok := artifactDispositionCapabilityFieldNumbers[m.GetName()]; ok {
 				want := &descriptorpb.FieldDescriptorProto{

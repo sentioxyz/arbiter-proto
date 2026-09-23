@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+// table_registry — the dynamic storage-integrity table set (design
+// housegate docs/superpowers/specs/2026-09-23-dynamic-si-table-set-design.md).
+// The leader observes the L2 Databases contract and proposes these commands
+// with the chain evidence; Apply only checks them deterministically.
+package arbiter;
+option go_package = "github.com/sentioxyz/arbiter-proto/gen/pb;pb";
+
+// TableRegistryParams is set once through a signed consensus update and never
+// changed. confirmation is "finalized" or "safe".
+message TableRegistryParams {
+  uint64 chain_id = 1;
+  string databases_contract = 2;
+  uint64 si_indexer_id = 3;
+  uint64 activation_block = 4;
+  string confirmation = 5;
+}
+
+message L2BlockRef {
+  uint64 number = 1;
+  string hash = 2;
+}
+
+// L2EventRef locates one contract log. (block_number, log_index) orders events.
+message L2EventRef {
+  uint64 block_number = 1;
+  string block_hash = 2;
+  uint64 log_index = 3;
+  string tx_hash = 4;
+}
+
+message LegacyTable {
+  string database_id = 1;
+  string table_id = 2;
+  L2EventRef created = 3;
+}
+
+enum TableRetireReason {
+  TABLE_RETIRE_REASON_UNSPECIFIED = 0;
+  TABLE_RETIRE_REASON_TABLE_DELETED = 1;
+  TABLE_RETIRE_REASON_DATABASE_DELETED = 2;
+}
+
+// Once, at activation_block - 1: every table active on the SI indexer.
+message SeedLegacyTablesCmd {
+  L2BlockRef at_block = 1;
+  repeated LegacyTable tables = 2;
+}
+
+// One SI incarnation: its TableCreated plus the first TableSchemaSet after it.
+message AddTableCmd {
+  string database_id = 1;
+  string table_id = 2;
+  L2EventRef created = 3;
+  L2EventRef schema = 4;
+  uint32 schema_version = 5;
+  string schema_hash = 6;
+  string schema_json = 7;
+}
+
+// A TableDeleted (one table) or a database deletion (every live table of the
+// database, table_ids sorted ascending).
+message RetireTablesCmd {
+  string database_id = 1;
+  repeated string table_ids = 2;
+  L2EventRef deleted = 3;
+  TableRetireReason reason = 4;
+}
+
+// Marks every log up to and including block `to` consumed.
+message AdvanceL2CursorCmd {
+  L2BlockRef to = 1;
+}
+
+// A data-plane role dropped its hg_* tables for this incarnation.
+message RecordTablePurgedCmd {
+  string node_id = 1;
+  uint64 incarnation_seq = 2;
+}

@@ -35,8 +35,11 @@ type ConsensusMutableParams struct {
 	MaxWriters         uint64                 `protobuf:"varint,2,opt,name=max_writers,json=maxWriters,proto3" json:"max_writers,omitempty"`
 	// 0 keeps artifact disposition (Raft tag 28) refused; 1 enables it. Monotone.
 	ArtifactDispositionCapability uint32 `protobuf:"varint,3,opt,name=artifact_disposition_capability,json=artifactDispositionCapability,proto3" json:"artifact_disposition_capability,omitempty"`
-	unknownFields                 protoimpl.UnknownFields
-	sizeCache                     protoimpl.SizeCache
+	// Set once by a signed update and then carried unchanged by every later
+	// update; absent means the dynamic table registry is disabled.
+	TableRegistry *TableRegistryParams `protobuf:"bytes,4,opt,name=table_registry,json=tableRegistry,proto3" json:"table_registry,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ConsensusMutableParams) Reset() {
@@ -90,6 +93,13 @@ func (x *ConsensusMutableParams) GetArtifactDispositionCapability() uint32 {
 	return 0
 }
 
+func (x *ConsensusMutableParams) GetTableRegistry() *TableRegistryParams {
+	if x != nil {
+		return x.TableRegistry
+	}
+	return nil
+}
+
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
 // Authority addresses are lowercase, sorted and deduplicated before hashing.
 // authority_jws covers every field; it uses a dedicated versioned purpose
@@ -107,8 +117,10 @@ type ConsensusParamsUpdate struct {
 	ExpectedPromotionSeq uint64 `protobuf:"varint,7,opt,name=expected_promotion_seq,json=expectedPromotionSeq,proto3" json:"expected_promotion_seq,omitempty"`
 	// Governs the C1 artifact-disposition lane; 0 or 1, never lowered.
 	ArtifactDispositionCapability uint32 `protobuf:"varint,8,opt,name=artifact_disposition_capability,json=artifactDispositionCapability,proto3" json:"artifact_disposition_capability,omitempty"`
-	unknownFields                 protoimpl.UnknownFields
-	sizeCache                     protoimpl.SizeCache
+	// Absent keeps the registry disabled. Once set it must be resent unchanged.
+	TableRegistry *TableRegistryParams `protobuf:"bytes,9,opt,name=table_registry,json=tableRegistry,proto3" json:"table_registry,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ConsensusParamsUpdate) Reset() {
@@ -195,6 +207,13 @@ func (x *ConsensusParamsUpdate) GetArtifactDispositionCapability() uint32 {
 		return x.ArtifactDispositionCapability
 	}
 	return 0
+}
+
+func (x *ConsensusParamsUpdate) GetTableRegistry() *TableRegistryParams {
+	if x != nil {
+		return x.TableRegistry
+	}
+	return nil
 }
 
 // UpdateConsensusParamsCmd is both the administration request and the
@@ -603,12 +622,13 @@ var File_consensus_proto protoreflect.FileDescriptor
 
 const file_consensus_proto_rawDesc = "" +
 	"\n" +
-	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\"\xb2\x01\n" +
+	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xf7\x01\n" +
 	"\x16ConsensusMutableParams\x12/\n" +
 	"\x13authority_addresses\x18\x01 \x03(\tR\x12authorityAddresses\x12\x1f\n" +
 	"\vmax_writers\x18\x02 \x01(\x04R\n" +
 	"maxWriters\x12F\n" +
-	"\x1fartifact_disposition_capability\x18\x03 \x01(\rR\x1dartifactDispositionCapability\"\x93\x03\n" +
+	"\x1fartifact_disposition_capability\x18\x03 \x01(\rR\x1dartifactDispositionCapability\x12C\n" +
+	"\x0etable_registry\x18\x04 \x01(\v2\x1c.arbiter.TableRegistryParamsR\rtableRegistry\"\xd8\x03\n" +
 	"\x15ConsensusParamsUpdate\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12.\n" +
@@ -619,7 +639,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\vmax_writers\x18\x06 \x01(\x04R\n" +
 	"maxWriters\x124\n" +
 	"\x16expected_promotion_seq\x18\a \x01(\x04R\x14expectedPromotionSeq\x12F\n" +
-	"\x1fartifact_disposition_capability\x18\b \x01(\rR\x1dartifactDispositionCapability\"w\n" +
+	"\x1fartifact_disposition_capability\x18\b \x01(\rR\x1dartifactDispositionCapability\x12C\n" +
+	"\x0etable_registry\x18\t \x01(\v2\x1c.arbiter.TableRegistryParamsR\rtableRegistry\"w\n" +
 	"\x18UpdateConsensusParamsCmd\x126\n" +
 	"\x06update\x18\x01 \x01(\v2\x1e.arbiter.ConsensusParamsUpdateR\x06update\x12#\n" +
 	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"\xb8\x01\n" +
@@ -681,35 +702,38 @@ var file_consensus_proto_goTypes = []any{
 	(*ActivateQueryProfileRequest)(nil),           // 5: arbiter.ActivateQueryProfileRequest
 	(*ProtocolInfo)(nil),                          // 6: arbiter.ProtocolInfo
 	(*ConsensusParamsState)(nil),                  // 7: arbiter.ConsensusParamsState
-	(*SnapshotQueryAbortRecord)(nil),              // 8: arbiter.SnapshotQueryAbortRecord
-	(*ActiveQueryPolicy)(nil),                     // 9: arbiter.ActiveQueryPolicy
-	(*emptypb.Empty)(nil),                         // 10: google.protobuf.Empty
-	(*Ack)(nil),                                   // 11: arbiter.Ack
-	(*SnapshotQueryStatus)(nil),                   // 12: arbiter.SnapshotQueryStatus
+	(*TableRegistryParams)(nil),                   // 8: arbiter.TableRegistryParams
+	(*SnapshotQueryAbortRecord)(nil),              // 9: arbiter.SnapshotQueryAbortRecord
+	(*ActiveQueryPolicy)(nil),                     // 10: arbiter.ActiveQueryPolicy
+	(*emptypb.Empty)(nil),                         // 11: google.protobuf.Empty
+	(*Ack)(nil),                                   // 12: arbiter.Ack
+	(*SnapshotQueryStatus)(nil),                   // 13: arbiter.SnapshotQueryStatus
 }
 var file_consensus_proto_depIdxs = []int32{
-	1,  // 0: arbiter.UpdateConsensusParamsCmd.update:type_name -> arbiter.ConsensusParamsUpdate
-	8,  // 1: arbiter.AbortSnapshotQueryRequest.record:type_name -> arbiter.SnapshotQueryAbortRecord
-	9,  // 2: arbiter.ActivateQueryProfileRequest.activation:type_name -> arbiter.ActiveQueryPolicy
-	0,  // 3: arbiter.ConsensusParamsState.bootstrap:type_name -> arbiter.ConsensusMutableParams
-	0,  // 4: arbiter.ConsensusParamsState.current:type_name -> arbiter.ConsensusMutableParams
-	10, // 5: arbiter.ConsensusAdmin.GetProtocolInfo:input_type -> google.protobuf.Empty
-	10, // 6: arbiter.ConsensusAdmin.GetConsensusParams:input_type -> google.protobuf.Empty
-	2,  // 7: arbiter.ConsensusAdmin.UpdateConsensusParams:input_type -> arbiter.UpdateConsensusParamsCmd
-	3,  // 8: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:input_type -> arbiter.GetSnapshotQueryAbortCandidateRequest
-	4,  // 9: arbiter.ConsensusAdmin.AbortSnapshotQuery:input_type -> arbiter.AbortSnapshotQueryRequest
-	5,  // 10: arbiter.ConsensusAdmin.ActivateQueryProfile:input_type -> arbiter.ActivateQueryProfileRequest
-	6,  // 11: arbiter.ConsensusAdmin.GetProtocolInfo:output_type -> arbiter.ProtocolInfo
-	7,  // 12: arbiter.ConsensusAdmin.GetConsensusParams:output_type -> arbiter.ConsensusParamsState
-	11, // 13: arbiter.ConsensusAdmin.UpdateConsensusParams:output_type -> arbiter.Ack
-	8,  // 14: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:output_type -> arbiter.SnapshotQueryAbortRecord
-	12, // 15: arbiter.ConsensusAdmin.AbortSnapshotQuery:output_type -> arbiter.SnapshotQueryStatus
-	11, // 16: arbiter.ConsensusAdmin.ActivateQueryProfile:output_type -> arbiter.Ack
-	11, // [11:17] is the sub-list for method output_type
-	5,  // [5:11] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	8,  // 0: arbiter.ConsensusMutableParams.table_registry:type_name -> arbiter.TableRegistryParams
+	8,  // 1: arbiter.ConsensusParamsUpdate.table_registry:type_name -> arbiter.TableRegistryParams
+	1,  // 2: arbiter.UpdateConsensusParamsCmd.update:type_name -> arbiter.ConsensusParamsUpdate
+	9,  // 3: arbiter.AbortSnapshotQueryRequest.record:type_name -> arbiter.SnapshotQueryAbortRecord
+	10, // 4: arbiter.ActivateQueryProfileRequest.activation:type_name -> arbiter.ActiveQueryPolicy
+	0,  // 5: arbiter.ConsensusParamsState.bootstrap:type_name -> arbiter.ConsensusMutableParams
+	0,  // 6: arbiter.ConsensusParamsState.current:type_name -> arbiter.ConsensusMutableParams
+	11, // 7: arbiter.ConsensusAdmin.GetProtocolInfo:input_type -> google.protobuf.Empty
+	11, // 8: arbiter.ConsensusAdmin.GetConsensusParams:input_type -> google.protobuf.Empty
+	2,  // 9: arbiter.ConsensusAdmin.UpdateConsensusParams:input_type -> arbiter.UpdateConsensusParamsCmd
+	3,  // 10: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:input_type -> arbiter.GetSnapshotQueryAbortCandidateRequest
+	4,  // 11: arbiter.ConsensusAdmin.AbortSnapshotQuery:input_type -> arbiter.AbortSnapshotQueryRequest
+	5,  // 12: arbiter.ConsensusAdmin.ActivateQueryProfile:input_type -> arbiter.ActivateQueryProfileRequest
+	6,  // 13: arbiter.ConsensusAdmin.GetProtocolInfo:output_type -> arbiter.ProtocolInfo
+	7,  // 14: arbiter.ConsensusAdmin.GetConsensusParams:output_type -> arbiter.ConsensusParamsState
+	12, // 15: arbiter.ConsensusAdmin.UpdateConsensusParams:output_type -> arbiter.Ack
+	9,  // 16: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:output_type -> arbiter.SnapshotQueryAbortRecord
+	13, // 17: arbiter.ConsensusAdmin.AbortSnapshotQuery:output_type -> arbiter.SnapshotQueryStatus
+	12, // 18: arbiter.ConsensusAdmin.ActivateQueryProfile:output_type -> arbiter.Ack
+	13, // [13:19] is the sub-list for method output_type
+	7,  // [7:13] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_consensus_proto_init() }
@@ -719,6 +743,7 @@ func file_consensus_proto_init() {
 	}
 	file_arbiter_proto_init()
 	file_replay_proto_init()
+	file_table_registry_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
