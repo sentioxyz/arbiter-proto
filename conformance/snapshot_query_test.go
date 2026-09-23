@@ -243,6 +243,23 @@ var tableRegistryFieldNumbers = map[string]int32{
 	"ConsensusParamsUpdate":  9,
 }
 
+// replayJobTableSetFields pins the exact two fields sub-project 2b appended
+// to ReplayJob (task 3 of the dynamic SI table set): table_set_transition
+// (message ReplayTableSetTransition) and table_schemas (repeated message
+// ReplayTableSchema), fields 8 and 9 in that order. Every existing baseline
+// predates this addition, so the exemption applies unconditionally, same as
+// artifact_disposition_capability and table_registry above.
+var replayJobTableSetFields = []*descriptorpb.FieldDescriptorProto{
+	{
+		Name: proto.String("table_set_transition"), JsonName: proto.String("tableSetTransition"), Number: proto.Int32(8),
+		Label: descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(), Type: descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(), TypeName: proto.String(".arbiter.ReplayTableSetTransition"),
+	},
+	{
+		Name: proto.String("table_schemas"), JsonName: proto.String("tableSchemas"), Number: proto.Int32(9),
+		Label: descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum(), Type: descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(), TypeName: proto.String(".arbiter.ReplayTableSchema"),
+	},
+}
+
 func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.FileDescriptorSet, allowPromotionInventory bool) {
 	t.Helper()
 	for _, old := range baseline.File {
@@ -274,6 +291,17 @@ func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.File
 				}
 				if len(got.Field) != len(m.Field)+1 || !proto.Equal(got.Field[len(m.Field)], want) {
 					t.Fatalf("PromotionAck addition must be exactly repeated SafePartMapping safe_partition_parts = 9: %v", got)
+				}
+				got.Field = got.Field[:len(m.Field)]
+			}
+			if m.GetName() == "ReplayJob" {
+				if len(got.Field) != len(m.Field)+len(replayJobTableSetFields) {
+					t.Fatalf("ReplayJob addition must be exactly table_set_transition = 8 and table_schemas = 9: %v", got)
+				}
+				for i, want := range replayJobTableSetFields {
+					if !proto.Equal(got.Field[len(m.Field)+i], want) {
+						t.Fatalf("ReplayJob addition must be exactly table_set_transition = 8 and table_schemas = 9: %v", got)
+					}
 				}
 				got.Field = got.Field[:len(m.Field)]
 			}

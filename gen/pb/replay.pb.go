@@ -198,8 +198,15 @@ type ReplayJob struct {
 	// compares each verifier's computed_state_root against this (§7.3).
 	SourceClaimRoot string       `protobuf:"bytes,6,opt,name=source_claim_root,json=sourceClaimRoot,proto3" json:"source_claim_root,omitempty"`
 	Statements      []*Statement `protobuf:"bytes,7,rep,name=statements,proto3" json:"statements,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Dynamic SI table set (sub-project 2b). Set only for a zero-statement
+	// table-set transition block; such a job carries no statements and an
+	// empty source_claim_root.
+	TableSetTransition *ReplayTableSetTransition `protobuf:"bytes,8,opt,name=table_set_transition,json=tableSetTransition,proto3" json:"table_set_transition,omitempty"`
+	// Schemas of the chain-origin tables the job's statements target, sorted by
+	// table_id, so a verifier needs no registry access.
+	TableSchemas  []*ReplayTableSchema `protobuf:"bytes,9,rep,name=table_schemas,json=tableSchemas,proto3" json:"table_schemas,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ReplayJob) Reset() {
@@ -281,6 +288,138 @@ func (x *ReplayJob) GetStatements() []*Statement {
 	return nil
 }
 
+func (x *ReplayJob) GetTableSetTransition() *ReplayTableSetTransition {
+	if x != nil {
+		return x.TableSetTransition
+	}
+	return nil
+}
+
+func (x *ReplayJob) GetTableSchemas() []*ReplayTableSchema {
+	if x != nil {
+		return x.TableSchemas
+	}
+	return nil
+}
+
+// ReplayTableSchema is one registry-committed table schema
+// (pkg/replay.ReplayTableSchema): schema_json is the payloadexec.TableSchema
+// JSON verbatim; the verifier recomputes its hash.
+type ReplayTableSchema struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TableId       string                 `protobuf:"bytes,1,opt,name=table_id,json=tableId,proto3" json:"table_id,omitempty"`
+	SchemaJson    string                 `protobuf:"bytes,2,opt,name=schema_json,json=schemaJson,proto3" json:"schema_json,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReplayTableSchema) Reset() {
+	*x = ReplayTableSchema{}
+	mi := &file_replay_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReplayTableSchema) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReplayTableSchema) ProtoMessage() {}
+
+func (x *ReplayTableSchema) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReplayTableSchema.ProtoReflect.Descriptor instead.
+func (*ReplayTableSchema) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ReplayTableSchema) GetTableId() string {
+	if x != nil {
+		return x.TableId
+	}
+	return ""
+}
+
+func (x *ReplayTableSchema) GetSchemaJson() string {
+	if x != nil {
+		return x.SchemaJson
+	}
+	return ""
+}
+
+// ReplayTableSetTransition is a transition block's table-set change
+// (pkg/replay.ReplayTableSetTransition): adds sorted by table_id, retires
+// ascending and disjoint from adds, new_schema_root over the resulting set.
+type ReplayTableSetTransition struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Adds          []*ReplayTableSchema   `protobuf:"bytes,1,rep,name=adds,proto3" json:"adds,omitempty"`
+	Retires       []string               `protobuf:"bytes,2,rep,name=retires,proto3" json:"retires,omitempty"`
+	NewSchemaRoot string                 `protobuf:"bytes,3,opt,name=new_schema_root,json=newSchemaRoot,proto3" json:"new_schema_root,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReplayTableSetTransition) Reset() {
+	*x = ReplayTableSetTransition{}
+	mi := &file_replay_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReplayTableSetTransition) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReplayTableSetTransition) ProtoMessage() {}
+
+func (x *ReplayTableSetTransition) ProtoReflect() protoreflect.Message {
+	mi := &file_replay_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReplayTableSetTransition.ProtoReflect.Descriptor instead.
+func (*ReplayTableSetTransition) Descriptor() ([]byte, []int) {
+	return file_replay_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ReplayTableSetTransition) GetAdds() []*ReplayTableSchema {
+	if x != nil {
+		return x.Adds
+	}
+	return nil
+}
+
+func (x *ReplayTableSetTransition) GetRetires() []string {
+	if x != nil {
+		return x.Retires
+	}
+	return nil
+}
+
+func (x *ReplayTableSetTransition) GetNewSchemaRoot() string {
+	if x != nil {
+		return x.NewSchemaRoot
+	}
+	return ""
+}
+
 // PartitionCommitment is the post-replay commitment for one table partition
 // (pkg/replay.PartitionCommitment). root is "0x" + hex of the raw 2048-byte
 // LtHash accumulator so deltas stay additive.
@@ -295,7 +434,7 @@ type PartitionCommitment struct {
 
 func (x *PartitionCommitment) Reset() {
 	*x = PartitionCommitment{}
-	mi := &file_replay_proto_msgTypes[2]
+	mi := &file_replay_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -307,7 +446,7 @@ func (x *PartitionCommitment) String() string {
 func (*PartitionCommitment) ProtoMessage() {}
 
 func (x *PartitionCommitment) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[2]
+	mi := &file_replay_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -320,7 +459,7 @@ func (x *PartitionCommitment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PartitionCommitment.ProtoReflect.Descriptor instead.
 func (*PartitionCommitment) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{2}
+	return file_replay_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PartitionCommitment) GetTableId() string {
@@ -365,7 +504,7 @@ type PartManifestEntry struct {
 
 func (x *PartManifestEntry) Reset() {
 	*x = PartManifestEntry{}
-	mi := &file_replay_proto_msgTypes[3]
+	mi := &file_replay_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -377,7 +516,7 @@ func (x *PartManifestEntry) String() string {
 func (*PartManifestEntry) ProtoMessage() {}
 
 func (x *PartManifestEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[3]
+	mi := &file_replay_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -390,7 +529,7 @@ func (x *PartManifestEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PartManifestEntry.ProtoReflect.Descriptor instead.
 func (*PartManifestEntry) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{3}
+	return file_replay_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *PartManifestEntry) GetTableId() string {
@@ -477,7 +616,7 @@ type ExecutionReceipt struct {
 
 func (x *ExecutionReceipt) Reset() {
 	*x = ExecutionReceipt{}
-	mi := &file_replay_proto_msgTypes[4]
+	mi := &file_replay_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -489,7 +628,7 @@ func (x *ExecutionReceipt) String() string {
 func (*ExecutionReceipt) ProtoMessage() {}
 
 func (x *ExecutionReceipt) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[4]
+	mi := &file_replay_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -502,7 +641,7 @@ func (x *ExecutionReceipt) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecutionReceipt.ProtoReflect.Descriptor instead.
 func (*ExecutionReceipt) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{4}
+	return file_replay_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ExecutionReceipt) GetBlockSeq() uint64 {
@@ -616,7 +755,7 @@ type ReplayAttestation struct {
 
 func (x *ReplayAttestation) Reset() {
 	*x = ReplayAttestation{}
-	mi := &file_replay_proto_msgTypes[5]
+	mi := &file_replay_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -628,7 +767,7 @@ func (x *ReplayAttestation) String() string {
 func (*ReplayAttestation) ProtoMessage() {}
 
 func (x *ReplayAttestation) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[5]
+	mi := &file_replay_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -641,7 +780,7 @@ func (x *ReplayAttestation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReplayAttestation.ProtoReflect.Descriptor instead.
 func (*ReplayAttestation) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{5}
+	return file_replay_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ReplayAttestation) GetReplicaId() string {
@@ -693,7 +832,7 @@ type TableManifest struct {
 
 func (x *TableManifest) Reset() {
 	*x = TableManifest{}
-	mi := &file_replay_proto_msgTypes[6]
+	mi := &file_replay_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -705,7 +844,7 @@ func (x *TableManifest) String() string {
 func (*TableManifest) ProtoMessage() {}
 
 func (x *TableManifest) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[6]
+	mi := &file_replay_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -718,7 +857,7 @@ func (x *TableManifest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TableManifest.ProtoReflect.Descriptor instead.
 func (*TableManifest) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{6}
+	return file_replay_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *TableManifest) GetTableId() string {
@@ -773,7 +912,7 @@ type SafeSnapshotManifest struct {
 
 func (x *SafeSnapshotManifest) Reset() {
 	*x = SafeSnapshotManifest{}
-	mi := &file_replay_proto_msgTypes[7]
+	mi := &file_replay_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -785,7 +924,7 @@ func (x *SafeSnapshotManifest) String() string {
 func (*SafeSnapshotManifest) ProtoMessage() {}
 
 func (x *SafeSnapshotManifest) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[7]
+	mi := &file_replay_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -798,7 +937,7 @@ func (x *SafeSnapshotManifest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SafeSnapshotManifest.ProtoReflect.Descriptor instead.
 func (*SafeSnapshotManifest) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{7}
+	return file_replay_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *SafeSnapshotManifest) GetSnapshotId() string {
@@ -888,7 +1027,7 @@ type SnapshotPin struct {
 
 func (x *SnapshotPin) Reset() {
 	*x = SnapshotPin{}
-	mi := &file_replay_proto_msgTypes[8]
+	mi := &file_replay_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -900,7 +1039,7 @@ func (x *SnapshotPin) String() string {
 func (*SnapshotPin) ProtoMessage() {}
 
 func (x *SnapshotPin) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[8]
+	mi := &file_replay_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -913,7 +1052,7 @@ func (x *SnapshotPin) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotPin.ProtoReflect.Descriptor instead.
 func (*SnapshotPin) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{8}
+	return file_replay_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *SnapshotPin) GetNetworkId() string {
@@ -988,7 +1127,7 @@ type SnapshotReadPart struct {
 
 func (x *SnapshotReadPart) Reset() {
 	*x = SnapshotReadPart{}
-	mi := &file_replay_proto_msgTypes[9]
+	mi := &file_replay_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1000,7 +1139,7 @@ func (x *SnapshotReadPart) String() string {
 func (*SnapshotReadPart) ProtoMessage() {}
 
 func (x *SnapshotReadPart) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[9]
+	mi := &file_replay_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1013,7 +1152,7 @@ func (x *SnapshotReadPart) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotReadPart.ProtoReflect.Descriptor instead.
 func (*SnapshotReadPart) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{9}
+	return file_replay_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *SnapshotReadPart) GetTableId() string {
@@ -1080,7 +1219,7 @@ type SnapshotReadTable struct {
 
 func (x *SnapshotReadTable) Reset() {
 	*x = SnapshotReadTable{}
-	mi := &file_replay_proto_msgTypes[10]
+	mi := &file_replay_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1092,7 +1231,7 @@ func (x *SnapshotReadTable) String() string {
 func (*SnapshotReadTable) ProtoMessage() {}
 
 func (x *SnapshotReadTable) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[10]
+	mi := &file_replay_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1105,7 +1244,7 @@ func (x *SnapshotReadTable) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotReadTable.ProtoReflect.Descriptor instead.
 func (*SnapshotReadTable) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{10}
+	return file_replay_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *SnapshotReadTable) GetDatabase() string {
@@ -1161,7 +1300,7 @@ type SnapshotReadSet struct {
 
 func (x *SnapshotReadSet) Reset() {
 	*x = SnapshotReadSet{}
-	mi := &file_replay_proto_msgTypes[11]
+	mi := &file_replay_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1173,7 +1312,7 @@ func (x *SnapshotReadSet) String() string {
 func (*SnapshotReadSet) ProtoMessage() {}
 
 func (x *SnapshotReadSet) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[11]
+	mi := &file_replay_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1186,7 +1325,7 @@ func (x *SnapshotReadSet) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotReadSet.ProtoReflect.Descriptor instead.
 func (*SnapshotReadSet) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{11}
+	return file_replay_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *SnapshotReadSet) GetReadSnapshot() *SnapshotPin {
@@ -1234,7 +1373,7 @@ type SnapshotQueryBinding struct {
 
 func (x *SnapshotQueryBinding) Reset() {
 	*x = SnapshotQueryBinding{}
-	mi := &file_replay_proto_msgTypes[12]
+	mi := &file_replay_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1246,7 +1385,7 @@ func (x *SnapshotQueryBinding) String() string {
 func (*SnapshotQueryBinding) ProtoMessage() {}
 
 func (x *SnapshotQueryBinding) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[12]
+	mi := &file_replay_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1259,7 +1398,7 @@ func (x *SnapshotQueryBinding) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotQueryBinding.ProtoReflect.Descriptor instead.
 func (*SnapshotQueryBinding) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{12}
+	return file_replay_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *SnapshotQueryBinding) GetEnvelopeVersion() uint32 {
@@ -1428,7 +1567,7 @@ type SnapshotQueryInput struct {
 
 func (x *SnapshotQueryInput) Reset() {
 	*x = SnapshotQueryInput{}
-	mi := &file_replay_proto_msgTypes[13]
+	mi := &file_replay_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1440,7 +1579,7 @@ func (x *SnapshotQueryInput) String() string {
 func (*SnapshotQueryInput) ProtoMessage() {}
 
 func (x *SnapshotQueryInput) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[13]
+	mi := &file_replay_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1453,7 +1592,7 @@ func (x *SnapshotQueryInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotQueryInput.ProtoReflect.Descriptor instead.
 func (*SnapshotQueryInput) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{13}
+	return file_replay_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *SnapshotQueryInput) GetBinding() *SnapshotQueryBinding {
@@ -1489,7 +1628,7 @@ type SnapshotQueryEnvelope struct {
 
 func (x *SnapshotQueryEnvelope) Reset() {
 	*x = SnapshotQueryEnvelope{}
-	mi := &file_replay_proto_msgTypes[14]
+	mi := &file_replay_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1501,7 +1640,7 @@ func (x *SnapshotQueryEnvelope) String() string {
 func (*SnapshotQueryEnvelope) ProtoMessage() {}
 
 func (x *SnapshotQueryEnvelope) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[14]
+	mi := &file_replay_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1514,7 +1653,7 @@ func (x *SnapshotQueryEnvelope) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotQueryEnvelope.ProtoReflect.Descriptor instead.
 func (*SnapshotQueryEnvelope) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{14}
+	return file_replay_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *SnapshotQueryEnvelope) GetInput() *SnapshotQueryInput {
@@ -1555,7 +1694,7 @@ type SnapshotQueryReservation struct {
 
 func (x *SnapshotQueryReservation) Reset() {
 	*x = SnapshotQueryReservation{}
-	mi := &file_replay_proto_msgTypes[15]
+	mi := &file_replay_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1567,7 +1706,7 @@ func (x *SnapshotQueryReservation) String() string {
 func (*SnapshotQueryReservation) ProtoMessage() {}
 
 func (x *SnapshotQueryReservation) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[15]
+	mi := &file_replay_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1580,7 +1719,7 @@ func (x *SnapshotQueryReservation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotQueryReservation.ProtoReflect.Descriptor instead.
 func (*SnapshotQueryReservation) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{15}
+	return file_replay_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *SnapshotQueryReservation) GetReservationId() string {
@@ -1660,7 +1799,7 @@ type SnapshotQueryReservationStatus struct {
 
 func (x *SnapshotQueryReservationStatus) Reset() {
 	*x = SnapshotQueryReservationStatus{}
-	mi := &file_replay_proto_msgTypes[16]
+	mi := &file_replay_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1672,7 +1811,7 @@ func (x *SnapshotQueryReservationStatus) String() string {
 func (*SnapshotQueryReservationStatus) ProtoMessage() {}
 
 func (x *SnapshotQueryReservationStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[16]
+	mi := &file_replay_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1685,7 +1824,7 @@ func (x *SnapshotQueryReservationStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotQueryReservationStatus.ProtoReflect.Descriptor instead.
 func (*SnapshotQueryReservationStatus) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{16}
+	return file_replay_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *SnapshotQueryReservationStatus) GetVersion() uint32 {
@@ -1769,7 +1908,7 @@ type SnapshotQueryStatement struct {
 
 func (x *SnapshotQueryStatement) Reset() {
 	*x = SnapshotQueryStatement{}
-	mi := &file_replay_proto_msgTypes[17]
+	mi := &file_replay_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1781,7 +1920,7 @@ func (x *SnapshotQueryStatement) String() string {
 func (*SnapshotQueryStatement) ProtoMessage() {}
 
 func (x *SnapshotQueryStatement) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[17]
+	mi := &file_replay_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1794,7 +1933,7 @@ func (x *SnapshotQueryStatement) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotQueryStatement.ProtoReflect.Descriptor instead.
 func (*SnapshotQueryStatement) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{17}
+	return file_replay_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *SnapshotQueryStatement) GetStatementSeq() uint64 {
@@ -1831,7 +1970,7 @@ type SnapshotQueryJob struct {
 
 func (x *SnapshotQueryJob) Reset() {
 	*x = SnapshotQueryJob{}
-	mi := &file_replay_proto_msgTypes[18]
+	mi := &file_replay_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1843,7 +1982,7 @@ func (x *SnapshotQueryJob) String() string {
 func (*SnapshotQueryJob) ProtoMessage() {}
 
 func (x *SnapshotQueryJob) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[18]
+	mi := &file_replay_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1856,7 +1995,7 @@ func (x *SnapshotQueryJob) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotQueryJob.ProtoReflect.Descriptor instead.
 func (*SnapshotQueryJob) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{18}
+	return file_replay_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *SnapshotQueryJob) GetBlockSeq() uint64 {
@@ -1941,7 +2080,7 @@ type SnapshotQueryEvidence struct {
 
 func (x *SnapshotQueryEvidence) Reset() {
 	*x = SnapshotQueryEvidence{}
-	mi := &file_replay_proto_msgTypes[19]
+	mi := &file_replay_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1953,7 +2092,7 @@ func (x *SnapshotQueryEvidence) String() string {
 func (*SnapshotQueryEvidence) ProtoMessage() {}
 
 func (x *SnapshotQueryEvidence) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[19]
+	mi := &file_replay_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1966,7 +2105,7 @@ func (x *SnapshotQueryEvidence) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotQueryEvidence.ProtoReflect.Descriptor instead.
 func (*SnapshotQueryEvidence) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{19}
+	return file_replay_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *SnapshotQueryEvidence) GetExecutionOutcome() string {
@@ -2020,7 +2159,7 @@ type SnapshotQueryReceipt struct {
 
 func (x *SnapshotQueryReceipt) Reset() {
 	*x = SnapshotQueryReceipt{}
-	mi := &file_replay_proto_msgTypes[20]
+	mi := &file_replay_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2032,7 +2171,7 @@ func (x *SnapshotQueryReceipt) String() string {
 func (*SnapshotQueryReceipt) ProtoMessage() {}
 
 func (x *SnapshotQueryReceipt) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[20]
+	mi := &file_replay_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2045,7 +2184,7 @@ func (x *SnapshotQueryReceipt) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotQueryReceipt.ProtoReflect.Descriptor instead.
 func (*SnapshotQueryReceipt) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{20}
+	return file_replay_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *SnapshotQueryReceipt) GetBlockSeq() uint64 {
@@ -2201,7 +2340,7 @@ type SnapshotQueryAttestation struct {
 
 func (x *SnapshotQueryAttestation) Reset() {
 	*x = SnapshotQueryAttestation{}
-	mi := &file_replay_proto_msgTypes[21]
+	mi := &file_replay_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2213,7 +2352,7 @@ func (x *SnapshotQueryAttestation) String() string {
 func (*SnapshotQueryAttestation) ProtoMessage() {}
 
 func (x *SnapshotQueryAttestation) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[21]
+	mi := &file_replay_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2226,7 +2365,7 @@ func (x *SnapshotQueryAttestation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotQueryAttestation.ProtoReflect.Descriptor instead.
 func (*SnapshotQueryAttestation) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{21}
+	return file_replay_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *SnapshotQueryAttestation) GetReplicaId() string {
@@ -2273,7 +2412,7 @@ type SnapshotQuerySubmitResult struct {
 
 func (x *SnapshotQuerySubmitResult) Reset() {
 	*x = SnapshotQuerySubmitResult{}
-	mi := &file_replay_proto_msgTypes[22]
+	mi := &file_replay_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2285,7 +2424,7 @@ func (x *SnapshotQuerySubmitResult) String() string {
 func (*SnapshotQuerySubmitResult) ProtoMessage() {}
 
 func (x *SnapshotQuerySubmitResult) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[22]
+	mi := &file_replay_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2298,7 +2437,7 @@ func (x *SnapshotQuerySubmitResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotQuerySubmitResult.ProtoReflect.Descriptor instead.
 func (*SnapshotQuerySubmitResult) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{22}
+	return file_replay_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *SnapshotQuerySubmitResult) GetAdmissionCode() uint32 {
@@ -2366,7 +2505,7 @@ type SnapshotQueryStatus struct {
 
 func (x *SnapshotQueryStatus) Reset() {
 	*x = SnapshotQueryStatus{}
-	mi := &file_replay_proto_msgTypes[23]
+	mi := &file_replay_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2378,7 +2517,7 @@ func (x *SnapshotQueryStatus) String() string {
 func (*SnapshotQueryStatus) ProtoMessage() {}
 
 func (x *SnapshotQueryStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[23]
+	mi := &file_replay_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2391,7 +2530,7 @@ func (x *SnapshotQueryStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotQueryStatus.ProtoReflect.Descriptor instead.
 func (*SnapshotQueryStatus) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{23}
+	return file_replay_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *SnapshotQueryStatus) GetVersion() uint32 {
@@ -2452,7 +2591,7 @@ type ActiveQueryPolicy struct {
 
 func (x *ActiveQueryPolicy) Reset() {
 	*x = ActiveQueryPolicy{}
-	mi := &file_replay_proto_msgTypes[24]
+	mi := &file_replay_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2464,7 +2603,7 @@ func (x *ActiveQueryPolicy) String() string {
 func (*ActiveQueryPolicy) ProtoMessage() {}
 
 func (x *ActiveQueryPolicy) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[24]
+	mi := &file_replay_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2477,7 +2616,7 @@ func (x *ActiveQueryPolicy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActiveQueryPolicy.ProtoReflect.Descriptor instead.
 func (*ActiveQueryPolicy) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{24}
+	return file_replay_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ActiveQueryPolicy) GetActivationId() string {
@@ -2551,7 +2690,7 @@ type ExecutorProfileTransition struct {
 
 func (x *ExecutorProfileTransition) Reset() {
 	*x = ExecutorProfileTransition{}
-	mi := &file_replay_proto_msgTypes[25]
+	mi := &file_replay_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2563,7 +2702,7 @@ func (x *ExecutorProfileTransition) String() string {
 func (*ExecutorProfileTransition) ProtoMessage() {}
 
 func (x *ExecutorProfileTransition) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[25]
+	mi := &file_replay_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2576,7 +2715,7 @@ func (x *ExecutorProfileTransition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecutorProfileTransition.ProtoReflect.Descriptor instead.
 func (*ExecutorProfileTransition) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{25}
+	return file_replay_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ExecutorProfileTransition) GetNetworkId() string {
@@ -2682,7 +2821,7 @@ type ExecutorProfileTransitionReceipt struct {
 
 func (x *ExecutorProfileTransitionReceipt) Reset() {
 	*x = ExecutorProfileTransitionReceipt{}
-	mi := &file_replay_proto_msgTypes[26]
+	mi := &file_replay_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2694,7 +2833,7 @@ func (x *ExecutorProfileTransitionReceipt) String() string {
 func (*ExecutorProfileTransitionReceipt) ProtoMessage() {}
 
 func (x *ExecutorProfileTransitionReceipt) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[26]
+	mi := &file_replay_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2707,7 +2846,7 @@ func (x *ExecutorProfileTransitionReceipt) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecutorProfileTransitionReceipt.ProtoReflect.Descriptor instead.
 func (*ExecutorProfileTransitionReceipt) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{26}
+	return file_replay_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ExecutorProfileTransitionReceipt) GetTransitionRoot() string {
@@ -2746,7 +2885,7 @@ type SnapshotArtifactReady struct {
 
 func (x *SnapshotArtifactReady) Reset() {
 	*x = SnapshotArtifactReady{}
-	mi := &file_replay_proto_msgTypes[27]
+	mi := &file_replay_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2758,7 +2897,7 @@ func (x *SnapshotArtifactReady) String() string {
 func (*SnapshotArtifactReady) ProtoMessage() {}
 
 func (x *SnapshotArtifactReady) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[27]
+	mi := &file_replay_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2771,7 +2910,7 @@ func (x *SnapshotArtifactReady) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotArtifactReady.ProtoReflect.Descriptor instead.
 func (*SnapshotArtifactReady) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{27}
+	return file_replay_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *SnapshotArtifactReady) GetSnapshotId() string {
@@ -2834,7 +2973,7 @@ type SnapshotQueryAbortRecord struct {
 
 func (x *SnapshotQueryAbortRecord) Reset() {
 	*x = SnapshotQueryAbortRecord{}
-	mi := &file_replay_proto_msgTypes[28]
+	mi := &file_replay_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2846,7 +2985,7 @@ func (x *SnapshotQueryAbortRecord) String() string {
 func (*SnapshotQueryAbortRecord) ProtoMessage() {}
 
 func (x *SnapshotQueryAbortRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[28]
+	mi := &file_replay_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2859,7 +2998,7 @@ func (x *SnapshotQueryAbortRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotQueryAbortRecord.ProtoReflect.Descriptor instead.
 func (*SnapshotQueryAbortRecord) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{28}
+	return file_replay_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *SnapshotQueryAbortRecord) GetBlockSeq() uint64 {
@@ -2949,7 +3088,7 @@ type SnapshotQueryClaim struct {
 
 func (x *SnapshotQueryClaim) Reset() {
 	*x = SnapshotQueryClaim{}
-	mi := &file_replay_proto_msgTypes[29]
+	mi := &file_replay_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2961,7 +3100,7 @@ func (x *SnapshotQueryClaim) String() string {
 func (*SnapshotQueryClaim) ProtoMessage() {}
 
 func (x *SnapshotQueryClaim) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[29]
+	mi := &file_replay_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2974,7 +3113,7 @@ func (x *SnapshotQueryClaim) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotQueryClaim.ProtoReflect.Descriptor instead.
 func (*SnapshotQueryClaim) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{29}
+	return file_replay_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *SnapshotQueryClaim) GetSourceNode() string {
@@ -3086,7 +3225,7 @@ type ProfileSetting struct {
 
 func (x *ProfileSetting) Reset() {
 	*x = ProfileSetting{}
-	mi := &file_replay_proto_msgTypes[30]
+	mi := &file_replay_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3098,7 +3237,7 @@ func (x *ProfileSetting) String() string {
 func (*ProfileSetting) ProtoMessage() {}
 
 func (x *ProfileSetting) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[30]
+	mi := &file_replay_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3111,7 +3250,7 @@ func (x *ProfileSetting) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProfileSetting.ProtoReflect.Descriptor instead.
 func (*ProfileSetting) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{30}
+	return file_replay_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *ProfileSetting) GetName() string {
@@ -3145,7 +3284,7 @@ type QueryLimits struct {
 
 func (x *QueryLimits) Reset() {
 	*x = QueryLimits{}
-	mi := &file_replay_proto_msgTypes[31]
+	mi := &file_replay_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3157,7 +3296,7 @@ func (x *QueryLimits) String() string {
 func (*QueryLimits) ProtoMessage() {}
 
 func (x *QueryLimits) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[31]
+	mi := &file_replay_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3170,7 +3309,7 @@ func (x *QueryLimits) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryLimits.ProtoReflect.Descriptor instead.
 func (*QueryLimits) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{31}
+	return file_replay_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *QueryLimits) GetMaxSqlBytes() uint64 {
@@ -3250,7 +3389,7 @@ type QueryProfileRecord struct {
 
 func (x *QueryProfileRecord) Reset() {
 	*x = QueryProfileRecord{}
-	mi := &file_replay_proto_msgTypes[32]
+	mi := &file_replay_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3262,7 +3401,7 @@ func (x *QueryProfileRecord) String() string {
 func (*QueryProfileRecord) ProtoMessage() {}
 
 func (x *QueryProfileRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_replay_proto_msgTypes[32]
+	mi := &file_replay_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3275,7 +3414,7 @@ func (x *QueryProfileRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryProfileRecord.ProtoReflect.Descriptor instead.
 func (*QueryProfileRecord) Descriptor() ([]byte, []int) {
-	return file_replay_proto_rawDescGZIP(), []int{32}
+	return file_replay_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *QueryProfileRecord) GetVersion() uint32 {
@@ -3376,7 +3515,7 @@ const file_replay_proto_rawDesc = "" +
 	"\x0epayload_format\x18\v \x01(\tR\rpayloadFormat\x12'\n" +
 	"\x0fclient_revision\x18\f \x01(\rR\x0eclientRevision\x12\x1f\n" +
 	"\vschema_hash\x18\r \x01(\tR\n" +
-	"schemaHash\"\xc1\x02\n" +
+	"schemaHash\"\xd7\x03\n" +
 	"\tReplayJob\x12\x1b\n" +
 	"\tblock_seq\x18\x01 \x01(\x04R\bblockSeq\x121\n" +
 	"\x15prev_safe_snapshot_id\x18\x02 \x01(\tR\x12prevSafeSnapshotId\x12&\n" +
@@ -3386,7 +3525,17 @@ const file_replay_proto_rawDesc = "" +
 	"\x11source_claim_root\x18\x06 \x01(\tR\x0fsourceClaimRoot\x122\n" +
 	"\n" +
 	"statements\x18\a \x03(\v2\x12.arbiter.StatementR\n" +
-	"statements\"g\n" +
+	"statements\x12S\n" +
+	"\x14table_set_transition\x18\b \x01(\v2!.arbiter.ReplayTableSetTransitionR\x12tableSetTransition\x12?\n" +
+	"\rtable_schemas\x18\t \x03(\v2\x1a.arbiter.ReplayTableSchemaR\ftableSchemas\"O\n" +
+	"\x11ReplayTableSchema\x12\x19\n" +
+	"\btable_id\x18\x01 \x01(\tR\atableId\x12\x1f\n" +
+	"\vschema_json\x18\x02 \x01(\tR\n" +
+	"schemaJson\"\x8c\x01\n" +
+	"\x18ReplayTableSetTransition\x12.\n" +
+	"\x04adds\x18\x01 \x03(\v2\x1a.arbiter.ReplayTableSchemaR\x04adds\x12\x18\n" +
+	"\aretires\x18\x02 \x03(\tR\aretires\x12&\n" +
+	"\x0fnew_schema_root\x18\x03 \x01(\tR\rnewSchemaRoot\"g\n" +
 	"\x13PartitionCommitment\x12\x19\n" +
 	"\btable_id\x18\x01 \x01(\tR\atableId\x12!\n" +
 	"\fpartition_id\x18\x02 \x01(\tR\vpartitionId\x12\x12\n" +
@@ -3709,81 +3858,86 @@ func file_replay_proto_rawDescGZIP() []byte {
 	return file_replay_proto_rawDescData
 }
 
-var file_replay_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
+var file_replay_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
 var file_replay_proto_goTypes = []any{
 	(*Statement)(nil),                        // 0: arbiter.Statement
 	(*ReplayJob)(nil),                        // 1: arbiter.ReplayJob
-	(*PartitionCommitment)(nil),              // 2: arbiter.PartitionCommitment
-	(*PartManifestEntry)(nil),                // 3: arbiter.PartManifestEntry
-	(*ExecutionReceipt)(nil),                 // 4: arbiter.ExecutionReceipt
-	(*ReplayAttestation)(nil),                // 5: arbiter.ReplayAttestation
-	(*TableManifest)(nil),                    // 6: arbiter.TableManifest
-	(*SafeSnapshotManifest)(nil),             // 7: arbiter.SafeSnapshotManifest
-	(*SnapshotPin)(nil),                      // 8: arbiter.SnapshotPin
-	(*SnapshotReadPart)(nil),                 // 9: arbiter.SnapshotReadPart
-	(*SnapshotReadTable)(nil),                // 10: arbiter.SnapshotReadTable
-	(*SnapshotReadSet)(nil),                  // 11: arbiter.SnapshotReadSet
-	(*SnapshotQueryBinding)(nil),             // 12: arbiter.SnapshotQueryBinding
-	(*SnapshotQueryInput)(nil),               // 13: arbiter.SnapshotQueryInput
-	(*SnapshotQueryEnvelope)(nil),            // 14: arbiter.SnapshotQueryEnvelope
-	(*SnapshotQueryReservation)(nil),         // 15: arbiter.SnapshotQueryReservation
-	(*SnapshotQueryReservationStatus)(nil),   // 16: arbiter.SnapshotQueryReservationStatus
-	(*SnapshotQueryStatement)(nil),           // 17: arbiter.SnapshotQueryStatement
-	(*SnapshotQueryJob)(nil),                 // 18: arbiter.SnapshotQueryJob
-	(*SnapshotQueryEvidence)(nil),            // 19: arbiter.SnapshotQueryEvidence
-	(*SnapshotQueryReceipt)(nil),             // 20: arbiter.SnapshotQueryReceipt
-	(*SnapshotQueryAttestation)(nil),         // 21: arbiter.SnapshotQueryAttestation
-	(*SnapshotQuerySubmitResult)(nil),        // 22: arbiter.SnapshotQuerySubmitResult
-	(*SnapshotQueryStatus)(nil),              // 23: arbiter.SnapshotQueryStatus
-	(*ActiveQueryPolicy)(nil),                // 24: arbiter.ActiveQueryPolicy
-	(*ExecutorProfileTransition)(nil),        // 25: arbiter.ExecutorProfileTransition
-	(*ExecutorProfileTransitionReceipt)(nil), // 26: arbiter.ExecutorProfileTransitionReceipt
-	(*SnapshotArtifactReady)(nil),            // 27: arbiter.SnapshotArtifactReady
-	(*SnapshotQueryAbortRecord)(nil),         // 28: arbiter.SnapshotQueryAbortRecord
-	(*SnapshotQueryClaim)(nil),               // 29: arbiter.SnapshotQueryClaim
-	(*ProfileSetting)(nil),                   // 30: arbiter.ProfileSetting
-	(*QueryLimits)(nil),                      // 31: arbiter.QueryLimits
-	(*QueryProfileRecord)(nil),               // 32: arbiter.QueryProfileRecord
+	(*ReplayTableSchema)(nil),                // 2: arbiter.ReplayTableSchema
+	(*ReplayTableSetTransition)(nil),         // 3: arbiter.ReplayTableSetTransition
+	(*PartitionCommitment)(nil),              // 4: arbiter.PartitionCommitment
+	(*PartManifestEntry)(nil),                // 5: arbiter.PartManifestEntry
+	(*ExecutionReceipt)(nil),                 // 6: arbiter.ExecutionReceipt
+	(*ReplayAttestation)(nil),                // 7: arbiter.ReplayAttestation
+	(*TableManifest)(nil),                    // 8: arbiter.TableManifest
+	(*SafeSnapshotManifest)(nil),             // 9: arbiter.SafeSnapshotManifest
+	(*SnapshotPin)(nil),                      // 10: arbiter.SnapshotPin
+	(*SnapshotReadPart)(nil),                 // 11: arbiter.SnapshotReadPart
+	(*SnapshotReadTable)(nil),                // 12: arbiter.SnapshotReadTable
+	(*SnapshotReadSet)(nil),                  // 13: arbiter.SnapshotReadSet
+	(*SnapshotQueryBinding)(nil),             // 14: arbiter.SnapshotQueryBinding
+	(*SnapshotQueryInput)(nil),               // 15: arbiter.SnapshotQueryInput
+	(*SnapshotQueryEnvelope)(nil),            // 16: arbiter.SnapshotQueryEnvelope
+	(*SnapshotQueryReservation)(nil),         // 17: arbiter.SnapshotQueryReservation
+	(*SnapshotQueryReservationStatus)(nil),   // 18: arbiter.SnapshotQueryReservationStatus
+	(*SnapshotQueryStatement)(nil),           // 19: arbiter.SnapshotQueryStatement
+	(*SnapshotQueryJob)(nil),                 // 20: arbiter.SnapshotQueryJob
+	(*SnapshotQueryEvidence)(nil),            // 21: arbiter.SnapshotQueryEvidence
+	(*SnapshotQueryReceipt)(nil),             // 22: arbiter.SnapshotQueryReceipt
+	(*SnapshotQueryAttestation)(nil),         // 23: arbiter.SnapshotQueryAttestation
+	(*SnapshotQuerySubmitResult)(nil),        // 24: arbiter.SnapshotQuerySubmitResult
+	(*SnapshotQueryStatus)(nil),              // 25: arbiter.SnapshotQueryStatus
+	(*ActiveQueryPolicy)(nil),                // 26: arbiter.ActiveQueryPolicy
+	(*ExecutorProfileTransition)(nil),        // 27: arbiter.ExecutorProfileTransition
+	(*ExecutorProfileTransitionReceipt)(nil), // 28: arbiter.ExecutorProfileTransitionReceipt
+	(*SnapshotArtifactReady)(nil),            // 29: arbiter.SnapshotArtifactReady
+	(*SnapshotQueryAbortRecord)(nil),         // 30: arbiter.SnapshotQueryAbortRecord
+	(*SnapshotQueryClaim)(nil),               // 31: arbiter.SnapshotQueryClaim
+	(*ProfileSetting)(nil),                   // 32: arbiter.ProfileSetting
+	(*QueryLimits)(nil),                      // 33: arbiter.QueryLimits
+	(*QueryProfileRecord)(nil),               // 34: arbiter.QueryProfileRecord
 }
 var file_replay_proto_depIdxs = []int32{
 	0,  // 0: arbiter.ReplayJob.statements:type_name -> arbiter.Statement
-	2,  // 1: arbiter.ExecutionReceipt.partition_commitments_after:type_name -> arbiter.PartitionCommitment
-	3,  // 2: arbiter.ExecutionReceipt.affected_parts:type_name -> arbiter.PartManifestEntry
-	4,  // 3: arbiter.ReplayAttestation.receipt:type_name -> arbiter.ExecutionReceipt
-	2,  // 4: arbiter.TableManifest.partition_roots:type_name -> arbiter.PartitionCommitment
-	3,  // 5: arbiter.TableManifest.active_parts:type_name -> arbiter.PartManifestEntry
-	6,  // 6: arbiter.SafeSnapshotManifest.tables:type_name -> arbiter.TableManifest
-	2,  // 7: arbiter.SnapshotReadTable.partition_roots:type_name -> arbiter.PartitionCommitment
-	9,  // 8: arbiter.SnapshotReadTable.active_parts:type_name -> arbiter.SnapshotReadPart
-	8,  // 9: arbiter.SnapshotReadSet.read_snapshot:type_name -> arbiter.SnapshotPin
-	10, // 10: arbiter.SnapshotReadSet.tables:type_name -> arbiter.SnapshotReadTable
-	8,  // 11: arbiter.SnapshotQueryBinding.read_snapshot:type_name -> arbiter.SnapshotPin
-	12, // 12: arbiter.SnapshotQueryInput.binding:type_name -> arbiter.SnapshotQueryBinding
-	11, // 13: arbiter.SnapshotQueryInput.read_set:type_name -> arbiter.SnapshotReadSet
-	13, // 14: arbiter.SnapshotQueryEnvelope.input:type_name -> arbiter.SnapshotQueryInput
-	8,  // 15: arbiter.SnapshotQueryReservation.read_snapshot:type_name -> arbiter.SnapshotPin
-	15, // 16: arbiter.SnapshotQueryReservationStatus.reservation:type_name -> arbiter.SnapshotQueryReservation
-	14, // 17: arbiter.SnapshotQueryStatement.envelope:type_name -> arbiter.SnapshotQueryEnvelope
-	15, // 18: arbiter.SnapshotQueryJob.reservation:type_name -> arbiter.SnapshotQueryReservation
-	17, // 19: arbiter.SnapshotQueryJob.statement:type_name -> arbiter.SnapshotQueryStatement
-	29, // 20: arbiter.SnapshotQueryJob.source_claim:type_name -> arbiter.SnapshotQueryClaim
-	8,  // 21: arbiter.SnapshotQueryReceipt.read_snapshot:type_name -> arbiter.SnapshotPin
-	2,  // 22: arbiter.SnapshotQueryReceipt.partition_commitments_after:type_name -> arbiter.PartitionCommitment
-	3,  // 23: arbiter.SnapshotQueryReceipt.affected_parts:type_name -> arbiter.PartManifestEntry
-	20, // 24: arbiter.SnapshotQueryAttestation.receipt:type_name -> arbiter.SnapshotQueryReceipt
-	15, // 25: arbiter.SnapshotQuerySubmitResult.reservation:type_name -> arbiter.SnapshotQueryReservation
-	22, // 26: arbiter.SnapshotQueryStatus.accepted:type_name -> arbiter.SnapshotQuerySubmitResult
-	24, // 27: arbiter.ExecutorProfileTransition.activation:type_name -> arbiter.ActiveQueryPolicy
-	2,  // 28: arbiter.SnapshotQueryClaim.partition_deltas:type_name -> arbiter.PartitionCommitment
-	2,  // 29: arbiter.SnapshotQueryClaim.partition_commitments_after:type_name -> arbiter.PartitionCommitment
-	9,  // 30: arbiter.SnapshotQueryClaim.candidate_parts:type_name -> arbiter.SnapshotReadPart
-	30, // 31: arbiter.QueryProfileRecord.settings:type_name -> arbiter.ProfileSetting
-	31, // 32: arbiter.QueryProfileRecord.limits:type_name -> arbiter.QueryLimits
-	33, // [33:33] is the sub-list for method output_type
-	33, // [33:33] is the sub-list for method input_type
-	33, // [33:33] is the sub-list for extension type_name
-	33, // [33:33] is the sub-list for extension extendee
-	0,  // [0:33] is the sub-list for field type_name
+	3,  // 1: arbiter.ReplayJob.table_set_transition:type_name -> arbiter.ReplayTableSetTransition
+	2,  // 2: arbiter.ReplayJob.table_schemas:type_name -> arbiter.ReplayTableSchema
+	2,  // 3: arbiter.ReplayTableSetTransition.adds:type_name -> arbiter.ReplayTableSchema
+	4,  // 4: arbiter.ExecutionReceipt.partition_commitments_after:type_name -> arbiter.PartitionCommitment
+	5,  // 5: arbiter.ExecutionReceipt.affected_parts:type_name -> arbiter.PartManifestEntry
+	6,  // 6: arbiter.ReplayAttestation.receipt:type_name -> arbiter.ExecutionReceipt
+	4,  // 7: arbiter.TableManifest.partition_roots:type_name -> arbiter.PartitionCommitment
+	5,  // 8: arbiter.TableManifest.active_parts:type_name -> arbiter.PartManifestEntry
+	8,  // 9: arbiter.SafeSnapshotManifest.tables:type_name -> arbiter.TableManifest
+	4,  // 10: arbiter.SnapshotReadTable.partition_roots:type_name -> arbiter.PartitionCommitment
+	11, // 11: arbiter.SnapshotReadTable.active_parts:type_name -> arbiter.SnapshotReadPart
+	10, // 12: arbiter.SnapshotReadSet.read_snapshot:type_name -> arbiter.SnapshotPin
+	12, // 13: arbiter.SnapshotReadSet.tables:type_name -> arbiter.SnapshotReadTable
+	10, // 14: arbiter.SnapshotQueryBinding.read_snapshot:type_name -> arbiter.SnapshotPin
+	14, // 15: arbiter.SnapshotQueryInput.binding:type_name -> arbiter.SnapshotQueryBinding
+	13, // 16: arbiter.SnapshotQueryInput.read_set:type_name -> arbiter.SnapshotReadSet
+	15, // 17: arbiter.SnapshotQueryEnvelope.input:type_name -> arbiter.SnapshotQueryInput
+	10, // 18: arbiter.SnapshotQueryReservation.read_snapshot:type_name -> arbiter.SnapshotPin
+	17, // 19: arbiter.SnapshotQueryReservationStatus.reservation:type_name -> arbiter.SnapshotQueryReservation
+	16, // 20: arbiter.SnapshotQueryStatement.envelope:type_name -> arbiter.SnapshotQueryEnvelope
+	17, // 21: arbiter.SnapshotQueryJob.reservation:type_name -> arbiter.SnapshotQueryReservation
+	19, // 22: arbiter.SnapshotQueryJob.statement:type_name -> arbiter.SnapshotQueryStatement
+	31, // 23: arbiter.SnapshotQueryJob.source_claim:type_name -> arbiter.SnapshotQueryClaim
+	10, // 24: arbiter.SnapshotQueryReceipt.read_snapshot:type_name -> arbiter.SnapshotPin
+	4,  // 25: arbiter.SnapshotQueryReceipt.partition_commitments_after:type_name -> arbiter.PartitionCommitment
+	5,  // 26: arbiter.SnapshotQueryReceipt.affected_parts:type_name -> arbiter.PartManifestEntry
+	22, // 27: arbiter.SnapshotQueryAttestation.receipt:type_name -> arbiter.SnapshotQueryReceipt
+	17, // 28: arbiter.SnapshotQuerySubmitResult.reservation:type_name -> arbiter.SnapshotQueryReservation
+	24, // 29: arbiter.SnapshotQueryStatus.accepted:type_name -> arbiter.SnapshotQuerySubmitResult
+	26, // 30: arbiter.ExecutorProfileTransition.activation:type_name -> arbiter.ActiveQueryPolicy
+	4,  // 31: arbiter.SnapshotQueryClaim.partition_deltas:type_name -> arbiter.PartitionCommitment
+	4,  // 32: arbiter.SnapshotQueryClaim.partition_commitments_after:type_name -> arbiter.PartitionCommitment
+	11, // 33: arbiter.SnapshotQueryClaim.candidate_parts:type_name -> arbiter.SnapshotReadPart
+	32, // 34: arbiter.QueryProfileRecord.settings:type_name -> arbiter.ProfileSetting
+	33, // 35: arbiter.QueryProfileRecord.limits:type_name -> arbiter.QueryLimits
+	36, // [36:36] is the sub-list for method output_type
+	36, // [36:36] is the sub-list for method input_type
+	36, // [36:36] is the sub-list for extension type_name
+	36, // [36:36] is the sub-list for extension extendee
+	0,  // [0:36] is the sub-list for field type_name
 }
 
 func init() { file_replay_proto_init() }
@@ -3797,7 +3951,7 @@ func file_replay_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_replay_proto_rawDesc), len(file_replay_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   33,
+			NumMessages:   35,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

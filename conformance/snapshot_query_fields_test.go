@@ -50,4 +50,6 @@ var snapshotQueryFields = map[string]string{
 	"RecordSnapshotQueryAttestationCmd":   "attestation:SnapshotQueryAttestation",
 	"PublishExecutorProfileTransitionCmd": "transition:ExecutorProfileTransition manifest:SafeSnapshotManifest receipts:[]ExecutorProfileTransitionReceipt authority_jws:string",
 	"RecordSnapshotArtifactReadyCmd":      "submission:SnapshotArtifactReadySubmission",
+	"ReplayTableSchema":                   "table_id:string schema_json:string",
+	"ReplayTableSetTransition":            "adds:[]ReplayTableSchema retires:[]string new_schema_root:string",
 }
