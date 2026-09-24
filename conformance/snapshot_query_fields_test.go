@@ -52,4 +52,6 @@ var snapshotQueryFields = map[string]string{
 	"RecordSnapshotArtifactReadyCmd":      "submission:SnapshotArtifactReadySubmission",
 	"ReplayTableSchema":                   "table_id:string schema_json:string",
 	"ReplayTableSetTransition":            "adds:[]ReplayTableSchema retires:[]string new_schema_root:string",
+	"TableSetAdd":                         "table_id:string schema_hash:string",
+	"TableSetTransition":                  "adds:[]TableSetAdd retires:[]string new_schema_root:string",
 }

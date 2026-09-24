@@ -260,6 +260,22 @@ var replayJobTableSetFields = []*descriptorpb.FieldDescriptorProto{
 	},
 }
 
+// l3BlockHeaderWireFields pins the exact two fields sub-project 2c appended
+// to L3BlockHeader so auditors can recompute ChainHash for every block kind:
+// query_statement_root (string, 12) and table_set_transition (message
+// TableSetTransition, 13), in that order. Every existing baseline predates
+// them, so the exemption applies unconditionally.
+var l3BlockHeaderWireFields = []*descriptorpb.FieldDescriptorProto{
+	{
+		Name: proto.String("query_statement_root"), JsonName: proto.String("queryStatementRoot"), Number: proto.Int32(12),
+		Label: descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(), Type: descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
+	},
+	{
+		Name: proto.String("table_set_transition"), JsonName: proto.String("tableSetTransition"), Number: proto.Int32(13),
+		Label: descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(), Type: descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(), TypeName: proto.String(".arbiter.TableSetTransition"),
+	},
+}
+
 func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.FileDescriptorSet, allowPromotionInventory bool) {
 	t.Helper()
 	for _, old := range baseline.File {
@@ -301,6 +317,17 @@ func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.File
 				for i, want := range replayJobTableSetFields {
 					if !proto.Equal(got.Field[len(m.Field)+i], want) {
 						t.Fatalf("ReplayJob addition must be exactly table_set_transition = 8 and table_schemas = 9: %v", got)
+					}
+				}
+				got.Field = got.Field[:len(m.Field)]
+			}
+			if m.GetName() == "L3BlockHeader" {
+				if len(got.Field) != len(m.Field)+len(l3BlockHeaderWireFields) {
+					t.Fatalf("L3BlockHeader addition must be exactly query_statement_root = 12 and table_set_transition = 13: %v", got)
+				}
+				for i, want := range l3BlockHeaderWireFields {
+					if !proto.Equal(got.Field[len(m.Field)+i], want) {
+						t.Fatalf("L3BlockHeader addition must be exactly query_statement_root = 12 and table_set_transition = 13: %v", got)
 					}
 				}
 				got.Field = got.Field[:len(m.Field)]

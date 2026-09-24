@@ -7,6 +7,8 @@ syntax = "proto3";
 package arbiter;
 option go_package = "github.com/sentioxyz/arbiter-proto/gen/pb;pb";
 
+import "google/protobuf/empty.proto";
+
 // TableRegistryParams is set once through a signed consensus update and never
 // changed. confirmation is "finalized" or "safe".
 message TableRegistryParams {
@@ -77,4 +79,89 @@ message AdvanceL2CursorCmd {
 message RecordTablePurgedCmd {
   string node_id = 1;
   uint64 incarnation_seq = 2;
+}
+
+// ============================================================
+// TableRegistry read API (sub-project 2c). Leader-barriered like SafeState;
+// a follower answers FAILED_PRECONDITION with a NotLeader detail.
+// ============================================================
+
+enum TableIncarnationStatus {
+  TABLE_INCARNATION_STATUS_UNSPECIFIED = 0;
+  TABLE_INCARNATION_STATUS_LEGACY = 1;
+  TABLE_INCARNATION_STATUS_PENDING = 2;
+  TABLE_INCARNATION_STATUS_REFUSED = 3;
+  TABLE_INCARNATION_STATUS_ACTIVE = 4;
+  TABLE_INCARNATION_STATUS_RETIRING = 5;
+  TABLE_INCARNATION_STATUS_PURGING = 6;
+  TABLE_INCARNATION_STATUS_PURGED = 7;
+}
+
+enum TableIncarnationOrigin {
+  TABLE_INCARNATION_ORIGIN_UNSPECIFIED = 0;
+  TABLE_INCARNATION_ORIGIN_GENESIS = 1;
+  TABLE_INCARNATION_ORIGIN_LEGACY = 2;
+  TABLE_INCARNATION_ORIGIN_CHAIN = 3;
+}
+
+// TableRegistryCursor is the registry's L2 position: the last consumed log,
+// or the whole block when block_complete.
+message TableRegistryCursor {
+  uint64 block_number = 1;
+  string block_hash = 2;
+  uint64 log_index = 3;
+  bool block_complete = 4;
+}
+
+// TableIncarnation mirrors arbiter fsm.TableIncarnation (json tags == field
+// names). refused_code is one of the stable admission-rules-v1 codes
+// ("dotted_id", "previous_incarnation_not_purged", "schema_decode",
+// "table_id_mismatch", "no_columns", "column_name", "reserved_column",
+// "column_type", "non_canonical_type", "partition_freeze",
+// "schema_hash_mismatch", "physical_name_collision"); refused_reason is its
+// human-readable detail.
+message TableIncarnation {
+  uint64 seq = 1;
+  string database_id = 2;
+  string table_id = 3;
+  TableIncarnationOrigin origin = 4;
+  TableIncarnationStatus status = 5;
+  L2EventRef created = 6;
+  L2EventRef schema_ref = 7;
+  uint32 schema_version = 8;
+  string schema_hash = 9;
+  string schema_json = 10;
+  string refused_reason = 11;
+  string refused_code = 12;
+  L2EventRef deleted = 13;
+  TableRetireReason retire_reason = 14;
+  uint64 add_block_seq = 15;
+  uint64 retire_block_seq = 16;
+  repeated string purged_by = 17;
+}
+
+// TableRegistrySnapshot is the whole committed registry at one version.
+// incarnations are in seq order (seq = index + 1).
+message TableRegistrySnapshot {
+  TableRegistryParams params = 1;
+  uint64 version = 2;
+  bool seeded = 3;
+  TableRegistryCursor cursor = 4;
+  repeated TableIncarnation incarnations = 5;
+}
+
+message WatchTableRegistryRequest {
+  // The stream sends a snapshot whenever the registry version exceeds the
+  // last version sent, starting from since_version (0 = send the current one).
+  uint64 since_version = 1;
+}
+
+service TableRegistry {
+  // FAILED_PRECONDITION "table registry is disabled" until the governed
+  // parameter is committed.
+  rpc GetTableRegistry (google.protobuf.Empty) returns (TableRegistrySnapshot) {}
+  // Full snapshots, coalesced: intermediate versions may be skipped. Waits
+  // while the registry is disabled; ends with NotLeader when this node loses
+  // leadership.
+  rpc WatchTableRegistry (WatchTableRegistryRequest) returns (stream TableRegistrySnapshot) {}
 }
