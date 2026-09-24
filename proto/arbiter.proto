@@ -357,6 +357,29 @@ message L3BlockHeader {
   // sealed block's envelopes in statement_seq order.
   string statements_root = 10;
   AnchorRef l2_anchor_ref = 11;
+  // Set only on a singleton snapshot-query block: it repeats statements_root,
+  // which for that lane is housegate's SnapshotQueryStatementRoot.
+  string query_statement_root = 12;
+  // Set only on a zero-statement table-set transition block (dynamic SI
+  // table set, spec D7).
+  TableSetTransition table_set_transition = 13;
+}
+
+// TableSetAdd is one table a transition block brings into the SI state root,
+// empty, under the schema hash its registry incarnation committed.
+message TableSetAdd {
+  string table_id = 1;
+  string schema_hash = 2;
+}
+
+// TableSetTransition mirrors arbiter fsm.TableSetTransition (json tags ==
+// field names): adds sorted by table_id, retires ascending, new_schema_root
+// over the resulting table set. An empty list is absent from the ChainHash
+// preimage (omitempty).
+message TableSetTransition {
+  repeated TableSetAdd adds = 1;
+  repeated string retires = 2;
+  string new_schema_root = 3;
 }
 
 message L3BlockRef {

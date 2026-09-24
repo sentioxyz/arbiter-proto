@@ -14,6 +14,7 @@ package pb
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -73,6 +74,122 @@ func (x TableRetireReason) Number() protoreflect.EnumNumber {
 // Deprecated: Use TableRetireReason.Descriptor instead.
 func (TableRetireReason) EnumDescriptor() ([]byte, []int) {
 	return file_table_registry_proto_rawDescGZIP(), []int{0}
+}
+
+type TableIncarnationStatus int32
+
+const (
+	TableIncarnationStatus_TABLE_INCARNATION_STATUS_UNSPECIFIED TableIncarnationStatus = 0
+	TableIncarnationStatus_TABLE_INCARNATION_STATUS_LEGACY      TableIncarnationStatus = 1
+	TableIncarnationStatus_TABLE_INCARNATION_STATUS_PENDING     TableIncarnationStatus = 2
+	TableIncarnationStatus_TABLE_INCARNATION_STATUS_REFUSED     TableIncarnationStatus = 3
+	TableIncarnationStatus_TABLE_INCARNATION_STATUS_ACTIVE      TableIncarnationStatus = 4
+	TableIncarnationStatus_TABLE_INCARNATION_STATUS_RETIRING    TableIncarnationStatus = 5
+	TableIncarnationStatus_TABLE_INCARNATION_STATUS_PURGING     TableIncarnationStatus = 6
+	TableIncarnationStatus_TABLE_INCARNATION_STATUS_PURGED      TableIncarnationStatus = 7
+)
+
+// Enum value maps for TableIncarnationStatus.
+var (
+	TableIncarnationStatus_name = map[int32]string{
+		0: "TABLE_INCARNATION_STATUS_UNSPECIFIED",
+		1: "TABLE_INCARNATION_STATUS_LEGACY",
+		2: "TABLE_INCARNATION_STATUS_PENDING",
+		3: "TABLE_INCARNATION_STATUS_REFUSED",
+		4: "TABLE_INCARNATION_STATUS_ACTIVE",
+		5: "TABLE_INCARNATION_STATUS_RETIRING",
+		6: "TABLE_INCARNATION_STATUS_PURGING",
+		7: "TABLE_INCARNATION_STATUS_PURGED",
+	}
+	TableIncarnationStatus_value = map[string]int32{
+		"TABLE_INCARNATION_STATUS_UNSPECIFIED": 0,
+		"TABLE_INCARNATION_STATUS_LEGACY":      1,
+		"TABLE_INCARNATION_STATUS_PENDING":     2,
+		"TABLE_INCARNATION_STATUS_REFUSED":     3,
+		"TABLE_INCARNATION_STATUS_ACTIVE":      4,
+		"TABLE_INCARNATION_STATUS_RETIRING":    5,
+		"TABLE_INCARNATION_STATUS_PURGING":     6,
+		"TABLE_INCARNATION_STATUS_PURGED":      7,
+	}
+)
+
+func (x TableIncarnationStatus) Enum() *TableIncarnationStatus {
+	p := new(TableIncarnationStatus)
+	*p = x
+	return p
+}
+
+func (x TableIncarnationStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (TableIncarnationStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_table_registry_proto_enumTypes[1].Descriptor()
+}
+
+func (TableIncarnationStatus) Type() protoreflect.EnumType {
+	return &file_table_registry_proto_enumTypes[1]
+}
+
+func (x TableIncarnationStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use TableIncarnationStatus.Descriptor instead.
+func (TableIncarnationStatus) EnumDescriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{1}
+}
+
+type TableIncarnationOrigin int32
+
+const (
+	TableIncarnationOrigin_TABLE_INCARNATION_ORIGIN_UNSPECIFIED TableIncarnationOrigin = 0
+	TableIncarnationOrigin_TABLE_INCARNATION_ORIGIN_GENESIS     TableIncarnationOrigin = 1
+	TableIncarnationOrigin_TABLE_INCARNATION_ORIGIN_LEGACY      TableIncarnationOrigin = 2
+	TableIncarnationOrigin_TABLE_INCARNATION_ORIGIN_CHAIN       TableIncarnationOrigin = 3
+)
+
+// Enum value maps for TableIncarnationOrigin.
+var (
+	TableIncarnationOrigin_name = map[int32]string{
+		0: "TABLE_INCARNATION_ORIGIN_UNSPECIFIED",
+		1: "TABLE_INCARNATION_ORIGIN_GENESIS",
+		2: "TABLE_INCARNATION_ORIGIN_LEGACY",
+		3: "TABLE_INCARNATION_ORIGIN_CHAIN",
+	}
+	TableIncarnationOrigin_value = map[string]int32{
+		"TABLE_INCARNATION_ORIGIN_UNSPECIFIED": 0,
+		"TABLE_INCARNATION_ORIGIN_GENESIS":     1,
+		"TABLE_INCARNATION_ORIGIN_LEGACY":      2,
+		"TABLE_INCARNATION_ORIGIN_CHAIN":       3,
+	}
+)
+
+func (x TableIncarnationOrigin) Enum() *TableIncarnationOrigin {
+	p := new(TableIncarnationOrigin)
+	*p = x
+	return p
+}
+
+func (x TableIncarnationOrigin) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (TableIncarnationOrigin) Descriptor() protoreflect.EnumDescriptor {
+	return file_table_registry_proto_enumTypes[2].Descriptor()
+}
+
+func (TableIncarnationOrigin) Type() protoreflect.EnumType {
+	return &file_table_registry_proto_enumTypes[2]
+}
+
+func (x TableIncarnationOrigin) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use TableIncarnationOrigin.Descriptor instead.
+func (TableIncarnationOrigin) EnumDescriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{2}
 }
 
 // TableRegistryParams is set once through a signed consensus update and never
@@ -648,11 +765,384 @@ func (x *RecordTablePurgedCmd) GetIncarnationSeq() uint64 {
 	return 0
 }
 
+// TableRegistryCursor is the registry's L2 position: the last consumed log,
+// or the whole block when block_complete.
+type TableRegistryCursor struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BlockNumber   uint64                 `protobuf:"varint,1,opt,name=block_number,json=blockNumber,proto3" json:"block_number,omitempty"`
+	BlockHash     string                 `protobuf:"bytes,2,opt,name=block_hash,json=blockHash,proto3" json:"block_hash,omitempty"`
+	LogIndex      uint64                 `protobuf:"varint,3,opt,name=log_index,json=logIndex,proto3" json:"log_index,omitempty"`
+	BlockComplete bool                   `protobuf:"varint,4,opt,name=block_complete,json=blockComplete,proto3" json:"block_complete,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TableRegistryCursor) Reset() {
+	*x = TableRegistryCursor{}
+	mi := &file_table_registry_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TableRegistryCursor) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TableRegistryCursor) ProtoMessage() {}
+
+func (x *TableRegistryCursor) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TableRegistryCursor.ProtoReflect.Descriptor instead.
+func (*TableRegistryCursor) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *TableRegistryCursor) GetBlockNumber() uint64 {
+	if x != nil {
+		return x.BlockNumber
+	}
+	return 0
+}
+
+func (x *TableRegistryCursor) GetBlockHash() string {
+	if x != nil {
+		return x.BlockHash
+	}
+	return ""
+}
+
+func (x *TableRegistryCursor) GetLogIndex() uint64 {
+	if x != nil {
+		return x.LogIndex
+	}
+	return 0
+}
+
+func (x *TableRegistryCursor) GetBlockComplete() bool {
+	if x != nil {
+		return x.BlockComplete
+	}
+	return false
+}
+
+// TableIncarnation mirrors arbiter fsm.TableIncarnation (json tags == field
+// names). refused_code is one of the stable admission-rules-v1 codes
+// ("dotted_id", "previous_incarnation_not_purged", "schema_decode",
+// "table_id_mismatch", "no_columns", "column_name", "reserved_column",
+// "column_type", "non_canonical_type", "partition_freeze",
+// "schema_hash_mismatch", "physical_name_collision"); refused_reason is its
+// human-readable detail.
+type TableIncarnation struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Seq            uint64                 `protobuf:"varint,1,opt,name=seq,proto3" json:"seq,omitempty"`
+	DatabaseId     string                 `protobuf:"bytes,2,opt,name=database_id,json=databaseId,proto3" json:"database_id,omitempty"`
+	TableId        string                 `protobuf:"bytes,3,opt,name=table_id,json=tableId,proto3" json:"table_id,omitempty"`
+	Origin         TableIncarnationOrigin `protobuf:"varint,4,opt,name=origin,proto3,enum=arbiter.TableIncarnationOrigin" json:"origin,omitempty"`
+	Status         TableIncarnationStatus `protobuf:"varint,5,opt,name=status,proto3,enum=arbiter.TableIncarnationStatus" json:"status,omitempty"`
+	Created        *L2EventRef            `protobuf:"bytes,6,opt,name=created,proto3" json:"created,omitempty"`
+	SchemaRef      *L2EventRef            `protobuf:"bytes,7,opt,name=schema_ref,json=schemaRef,proto3" json:"schema_ref,omitempty"`
+	SchemaVersion  uint32                 `protobuf:"varint,8,opt,name=schema_version,json=schemaVersion,proto3" json:"schema_version,omitempty"`
+	SchemaHash     string                 `protobuf:"bytes,9,opt,name=schema_hash,json=schemaHash,proto3" json:"schema_hash,omitempty"`
+	SchemaJson     string                 `protobuf:"bytes,10,opt,name=schema_json,json=schemaJson,proto3" json:"schema_json,omitempty"`
+	RefusedReason  string                 `protobuf:"bytes,11,opt,name=refused_reason,json=refusedReason,proto3" json:"refused_reason,omitempty"`
+	RefusedCode    string                 `protobuf:"bytes,12,opt,name=refused_code,json=refusedCode,proto3" json:"refused_code,omitempty"`
+	Deleted        *L2EventRef            `protobuf:"bytes,13,opt,name=deleted,proto3" json:"deleted,omitempty"`
+	RetireReason   TableRetireReason      `protobuf:"varint,14,opt,name=retire_reason,json=retireReason,proto3,enum=arbiter.TableRetireReason" json:"retire_reason,omitempty"`
+	AddBlockSeq    uint64                 `protobuf:"varint,15,opt,name=add_block_seq,json=addBlockSeq,proto3" json:"add_block_seq,omitempty"`
+	RetireBlockSeq uint64                 `protobuf:"varint,16,opt,name=retire_block_seq,json=retireBlockSeq,proto3" json:"retire_block_seq,omitempty"`
+	PurgedBy       []string               `protobuf:"bytes,17,rep,name=purged_by,json=purgedBy,proto3" json:"purged_by,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *TableIncarnation) Reset() {
+	*x = TableIncarnation{}
+	mi := &file_table_registry_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TableIncarnation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TableIncarnation) ProtoMessage() {}
+
+func (x *TableIncarnation) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TableIncarnation.ProtoReflect.Descriptor instead.
+func (*TableIncarnation) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *TableIncarnation) GetSeq() uint64 {
+	if x != nil {
+		return x.Seq
+	}
+	return 0
+}
+
+func (x *TableIncarnation) GetDatabaseId() string {
+	if x != nil {
+		return x.DatabaseId
+	}
+	return ""
+}
+
+func (x *TableIncarnation) GetTableId() string {
+	if x != nil {
+		return x.TableId
+	}
+	return ""
+}
+
+func (x *TableIncarnation) GetOrigin() TableIncarnationOrigin {
+	if x != nil {
+		return x.Origin
+	}
+	return TableIncarnationOrigin_TABLE_INCARNATION_ORIGIN_UNSPECIFIED
+}
+
+func (x *TableIncarnation) GetStatus() TableIncarnationStatus {
+	if x != nil {
+		return x.Status
+	}
+	return TableIncarnationStatus_TABLE_INCARNATION_STATUS_UNSPECIFIED
+}
+
+func (x *TableIncarnation) GetCreated() *L2EventRef {
+	if x != nil {
+		return x.Created
+	}
+	return nil
+}
+
+func (x *TableIncarnation) GetSchemaRef() *L2EventRef {
+	if x != nil {
+		return x.SchemaRef
+	}
+	return nil
+}
+
+func (x *TableIncarnation) GetSchemaVersion() uint32 {
+	if x != nil {
+		return x.SchemaVersion
+	}
+	return 0
+}
+
+func (x *TableIncarnation) GetSchemaHash() string {
+	if x != nil {
+		return x.SchemaHash
+	}
+	return ""
+}
+
+func (x *TableIncarnation) GetSchemaJson() string {
+	if x != nil {
+		return x.SchemaJson
+	}
+	return ""
+}
+
+func (x *TableIncarnation) GetRefusedReason() string {
+	if x != nil {
+		return x.RefusedReason
+	}
+	return ""
+}
+
+func (x *TableIncarnation) GetRefusedCode() string {
+	if x != nil {
+		return x.RefusedCode
+	}
+	return ""
+}
+
+func (x *TableIncarnation) GetDeleted() *L2EventRef {
+	if x != nil {
+		return x.Deleted
+	}
+	return nil
+}
+
+func (x *TableIncarnation) GetRetireReason() TableRetireReason {
+	if x != nil {
+		return x.RetireReason
+	}
+	return TableRetireReason_TABLE_RETIRE_REASON_UNSPECIFIED
+}
+
+func (x *TableIncarnation) GetAddBlockSeq() uint64 {
+	if x != nil {
+		return x.AddBlockSeq
+	}
+	return 0
+}
+
+func (x *TableIncarnation) GetRetireBlockSeq() uint64 {
+	if x != nil {
+		return x.RetireBlockSeq
+	}
+	return 0
+}
+
+func (x *TableIncarnation) GetPurgedBy() []string {
+	if x != nil {
+		return x.PurgedBy
+	}
+	return nil
+}
+
+// TableRegistrySnapshot is the whole committed registry at one version.
+// incarnations are in seq order (seq = index + 1).
+type TableRegistrySnapshot struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Params        *TableRegistryParams   `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
+	Version       uint64                 `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
+	Seeded        bool                   `protobuf:"varint,3,opt,name=seeded,proto3" json:"seeded,omitempty"`
+	Cursor        *TableRegistryCursor   `protobuf:"bytes,4,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	Incarnations  []*TableIncarnation    `protobuf:"bytes,5,rep,name=incarnations,proto3" json:"incarnations,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TableRegistrySnapshot) Reset() {
+	*x = TableRegistrySnapshot{}
+	mi := &file_table_registry_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TableRegistrySnapshot) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TableRegistrySnapshot) ProtoMessage() {}
+
+func (x *TableRegistrySnapshot) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TableRegistrySnapshot.ProtoReflect.Descriptor instead.
+func (*TableRegistrySnapshot) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *TableRegistrySnapshot) GetParams() *TableRegistryParams {
+	if x != nil {
+		return x.Params
+	}
+	return nil
+}
+
+func (x *TableRegistrySnapshot) GetVersion() uint64 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *TableRegistrySnapshot) GetSeeded() bool {
+	if x != nil {
+		return x.Seeded
+	}
+	return false
+}
+
+func (x *TableRegistrySnapshot) GetCursor() *TableRegistryCursor {
+	if x != nil {
+		return x.Cursor
+	}
+	return nil
+}
+
+func (x *TableRegistrySnapshot) GetIncarnations() []*TableIncarnation {
+	if x != nil {
+		return x.Incarnations
+	}
+	return nil
+}
+
+type WatchTableRegistryRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The stream sends a snapshot whenever the registry version exceeds the
+	// last version sent, starting from since_version (0 = send the current one).
+	SinceVersion  uint64 `protobuf:"varint,1,opt,name=since_version,json=sinceVersion,proto3" json:"since_version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WatchTableRegistryRequest) Reset() {
+	*x = WatchTableRegistryRequest{}
+	mi := &file_table_registry_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WatchTableRegistryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatchTableRegistryRequest) ProtoMessage() {}
+
+func (x *WatchTableRegistryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatchTableRegistryRequest.ProtoReflect.Descriptor instead.
+func (*WatchTableRegistryRequest) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *WatchTableRegistryRequest) GetSinceVersion() uint64 {
+	if x != nil {
+		return x.SinceVersion
+	}
+	return 0
+}
+
 var File_table_registry_proto protoreflect.FileDescriptor
 
 const file_table_registry_proto_rawDesc = "" +
 	"\n" +
-	"\x14table_registry.proto\x12\aarbiter\"\xd2\x01\n" +
+	"\x14table_registry.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\"\xd2\x01\n" +
 	"\x13TableRegistryParams\x12\x19\n" +
 	"\bchain_id\x18\x01 \x01(\x04R\achainId\x12-\n" +
 	"\x12databases_contract\x18\x02 \x01(\tR\x11databasesContract\x12\"\n" +
@@ -699,11 +1189,65 @@ const file_table_registry_proto_rawDesc = "" +
 	"\x02to\x18\x01 \x01(\v2\x13.arbiter.L2BlockRefR\x02to\"X\n" +
 	"\x14RecordTablePurgedCmd\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12'\n" +
-	"\x0fincarnation_seq\x18\x02 \x01(\x04R\x0eincarnationSeq*\x89\x01\n" +
+	"\x0fincarnation_seq\x18\x02 \x01(\x04R\x0eincarnationSeq\"\x9b\x01\n" +
+	"\x13TableRegistryCursor\x12!\n" +
+	"\fblock_number\x18\x01 \x01(\x04R\vblockNumber\x12\x1d\n" +
+	"\n" +
+	"block_hash\x18\x02 \x01(\tR\tblockHash\x12\x1b\n" +
+	"\tlog_index\x18\x03 \x01(\x04R\blogIndex\x12%\n" +
+	"\x0eblock_complete\x18\x04 \x01(\bR\rblockComplete\"\xc3\x05\n" +
+	"\x10TableIncarnation\x12\x10\n" +
+	"\x03seq\x18\x01 \x01(\x04R\x03seq\x12\x1f\n" +
+	"\vdatabase_id\x18\x02 \x01(\tR\n" +
+	"databaseId\x12\x19\n" +
+	"\btable_id\x18\x03 \x01(\tR\atableId\x127\n" +
+	"\x06origin\x18\x04 \x01(\x0e2\x1f.arbiter.TableIncarnationOriginR\x06origin\x127\n" +
+	"\x06status\x18\x05 \x01(\x0e2\x1f.arbiter.TableIncarnationStatusR\x06status\x12-\n" +
+	"\acreated\x18\x06 \x01(\v2\x13.arbiter.L2EventRefR\acreated\x122\n" +
+	"\n" +
+	"schema_ref\x18\a \x01(\v2\x13.arbiter.L2EventRefR\tschemaRef\x12%\n" +
+	"\x0eschema_version\x18\b \x01(\rR\rschemaVersion\x12\x1f\n" +
+	"\vschema_hash\x18\t \x01(\tR\n" +
+	"schemaHash\x12\x1f\n" +
+	"\vschema_json\x18\n" +
+	" \x01(\tR\n" +
+	"schemaJson\x12%\n" +
+	"\x0erefused_reason\x18\v \x01(\tR\rrefusedReason\x12!\n" +
+	"\frefused_code\x18\f \x01(\tR\vrefusedCode\x12-\n" +
+	"\adeleted\x18\r \x01(\v2\x13.arbiter.L2EventRefR\adeleted\x12?\n" +
+	"\rretire_reason\x18\x0e \x01(\x0e2\x1a.arbiter.TableRetireReasonR\fretireReason\x12\"\n" +
+	"\radd_block_seq\x18\x0f \x01(\x04R\vaddBlockSeq\x12(\n" +
+	"\x10retire_block_seq\x18\x10 \x01(\x04R\x0eretireBlockSeq\x12\x1b\n" +
+	"\tpurged_by\x18\x11 \x03(\tR\bpurgedBy\"\xf4\x01\n" +
+	"\x15TableRegistrySnapshot\x124\n" +
+	"\x06params\x18\x01 \x01(\v2\x1c.arbiter.TableRegistryParamsR\x06params\x12\x18\n" +
+	"\aversion\x18\x02 \x01(\x04R\aversion\x12\x16\n" +
+	"\x06seeded\x18\x03 \x01(\bR\x06seeded\x124\n" +
+	"\x06cursor\x18\x04 \x01(\v2\x1c.arbiter.TableRegistryCursorR\x06cursor\x12=\n" +
+	"\fincarnations\x18\x05 \x03(\v2\x19.arbiter.TableIncarnationR\fincarnations\"@\n" +
+	"\x19WatchTableRegistryRequest\x12#\n" +
+	"\rsince_version\x18\x01 \x01(\x04R\fsinceVersion*\x89\x01\n" +
 	"\x11TableRetireReason\x12#\n" +
 	"\x1fTABLE_RETIRE_REASON_UNSPECIFIED\x10\x00\x12%\n" +
 	"!TABLE_RETIRE_REASON_TABLE_DELETED\x10\x01\x12(\n" +
-	"$TABLE_RETIRE_REASON_DATABASE_DELETED\x10\x02B.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
+	"$TABLE_RETIRE_REASON_DATABASE_DELETED\x10\x02*\xca\x02\n" +
+	"\x16TableIncarnationStatus\x12(\n" +
+	"$TABLE_INCARNATION_STATUS_UNSPECIFIED\x10\x00\x12#\n" +
+	"\x1fTABLE_INCARNATION_STATUS_LEGACY\x10\x01\x12$\n" +
+	" TABLE_INCARNATION_STATUS_PENDING\x10\x02\x12$\n" +
+	" TABLE_INCARNATION_STATUS_REFUSED\x10\x03\x12#\n" +
+	"\x1fTABLE_INCARNATION_STATUS_ACTIVE\x10\x04\x12%\n" +
+	"!TABLE_INCARNATION_STATUS_RETIRING\x10\x05\x12$\n" +
+	" TABLE_INCARNATION_STATUS_PURGING\x10\x06\x12#\n" +
+	"\x1fTABLE_INCARNATION_STATUS_PURGED\x10\a*\xb1\x01\n" +
+	"\x16TableIncarnationOrigin\x12(\n" +
+	"$TABLE_INCARNATION_ORIGIN_UNSPECIFIED\x10\x00\x12$\n" +
+	" TABLE_INCARNATION_ORIGIN_GENESIS\x10\x01\x12#\n" +
+	"\x1fTABLE_INCARNATION_ORIGIN_LEGACY\x10\x02\x12\"\n" +
+	"\x1eTABLE_INCARNATION_ORIGIN_CHAIN\x10\x032\xbb\x01\n" +
+	"\rTableRegistry\x12L\n" +
+	"\x10GetTableRegistry\x12\x16.google.protobuf.Empty\x1a\x1e.arbiter.TableRegistrySnapshot\"\x00\x12\\\n" +
+	"\x12WatchTableRegistry\x12\".arbiter.WatchTableRegistryRequest\x1a\x1e.arbiter.TableRegistrySnapshot\"\x000\x01B.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
 
 var (
 	file_table_registry_proto_rawDescOnce sync.Once
@@ -717,34 +1261,54 @@ func file_table_registry_proto_rawDescGZIP() []byte {
 	return file_table_registry_proto_rawDescData
 }
 
-var file_table_registry_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_table_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_table_registry_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_table_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_table_registry_proto_goTypes = []any{
-	(TableRetireReason)(0),       // 0: arbiter.TableRetireReason
-	(*TableRegistryParams)(nil),  // 1: arbiter.TableRegistryParams
-	(*L2BlockRef)(nil),           // 2: arbiter.L2BlockRef
-	(*L2EventRef)(nil),           // 3: arbiter.L2EventRef
-	(*LegacyTable)(nil),          // 4: arbiter.LegacyTable
-	(*SeedLegacyTablesCmd)(nil),  // 5: arbiter.SeedLegacyTablesCmd
-	(*AddTableCmd)(nil),          // 6: arbiter.AddTableCmd
-	(*RetireTablesCmd)(nil),      // 7: arbiter.RetireTablesCmd
-	(*AdvanceL2CursorCmd)(nil),   // 8: arbiter.AdvanceL2CursorCmd
-	(*RecordTablePurgedCmd)(nil), // 9: arbiter.RecordTablePurgedCmd
+	(TableRetireReason)(0),            // 0: arbiter.TableRetireReason
+	(TableIncarnationStatus)(0),       // 1: arbiter.TableIncarnationStatus
+	(TableIncarnationOrigin)(0),       // 2: arbiter.TableIncarnationOrigin
+	(*TableRegistryParams)(nil),       // 3: arbiter.TableRegistryParams
+	(*L2BlockRef)(nil),                // 4: arbiter.L2BlockRef
+	(*L2EventRef)(nil),                // 5: arbiter.L2EventRef
+	(*LegacyTable)(nil),               // 6: arbiter.LegacyTable
+	(*SeedLegacyTablesCmd)(nil),       // 7: arbiter.SeedLegacyTablesCmd
+	(*AddTableCmd)(nil),               // 8: arbiter.AddTableCmd
+	(*RetireTablesCmd)(nil),           // 9: arbiter.RetireTablesCmd
+	(*AdvanceL2CursorCmd)(nil),        // 10: arbiter.AdvanceL2CursorCmd
+	(*RecordTablePurgedCmd)(nil),      // 11: arbiter.RecordTablePurgedCmd
+	(*TableRegistryCursor)(nil),       // 12: arbiter.TableRegistryCursor
+	(*TableIncarnation)(nil),          // 13: arbiter.TableIncarnation
+	(*TableRegistrySnapshot)(nil),     // 14: arbiter.TableRegistrySnapshot
+	(*WatchTableRegistryRequest)(nil), // 15: arbiter.WatchTableRegistryRequest
+	(*emptypb.Empty)(nil),             // 16: google.protobuf.Empty
 }
 var file_table_registry_proto_depIdxs = []int32{
-	3, // 0: arbiter.LegacyTable.created:type_name -> arbiter.L2EventRef
-	2, // 1: arbiter.SeedLegacyTablesCmd.at_block:type_name -> arbiter.L2BlockRef
-	4, // 2: arbiter.SeedLegacyTablesCmd.tables:type_name -> arbiter.LegacyTable
-	3, // 3: arbiter.AddTableCmd.created:type_name -> arbiter.L2EventRef
-	3, // 4: arbiter.AddTableCmd.schema:type_name -> arbiter.L2EventRef
-	3, // 5: arbiter.RetireTablesCmd.deleted:type_name -> arbiter.L2EventRef
-	0, // 6: arbiter.RetireTablesCmd.reason:type_name -> arbiter.TableRetireReason
-	2, // 7: arbiter.AdvanceL2CursorCmd.to:type_name -> arbiter.L2BlockRef
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	5,  // 0: arbiter.LegacyTable.created:type_name -> arbiter.L2EventRef
+	4,  // 1: arbiter.SeedLegacyTablesCmd.at_block:type_name -> arbiter.L2BlockRef
+	6,  // 2: arbiter.SeedLegacyTablesCmd.tables:type_name -> arbiter.LegacyTable
+	5,  // 3: arbiter.AddTableCmd.created:type_name -> arbiter.L2EventRef
+	5,  // 4: arbiter.AddTableCmd.schema:type_name -> arbiter.L2EventRef
+	5,  // 5: arbiter.RetireTablesCmd.deleted:type_name -> arbiter.L2EventRef
+	0,  // 6: arbiter.RetireTablesCmd.reason:type_name -> arbiter.TableRetireReason
+	4,  // 7: arbiter.AdvanceL2CursorCmd.to:type_name -> arbiter.L2BlockRef
+	2,  // 8: arbiter.TableIncarnation.origin:type_name -> arbiter.TableIncarnationOrigin
+	1,  // 9: arbiter.TableIncarnation.status:type_name -> arbiter.TableIncarnationStatus
+	5,  // 10: arbiter.TableIncarnation.created:type_name -> arbiter.L2EventRef
+	5,  // 11: arbiter.TableIncarnation.schema_ref:type_name -> arbiter.L2EventRef
+	5,  // 12: arbiter.TableIncarnation.deleted:type_name -> arbiter.L2EventRef
+	0,  // 13: arbiter.TableIncarnation.retire_reason:type_name -> arbiter.TableRetireReason
+	3,  // 14: arbiter.TableRegistrySnapshot.params:type_name -> arbiter.TableRegistryParams
+	12, // 15: arbiter.TableRegistrySnapshot.cursor:type_name -> arbiter.TableRegistryCursor
+	13, // 16: arbiter.TableRegistrySnapshot.incarnations:type_name -> arbiter.TableIncarnation
+	16, // 17: arbiter.TableRegistry.GetTableRegistry:input_type -> google.protobuf.Empty
+	15, // 18: arbiter.TableRegistry.WatchTableRegistry:input_type -> arbiter.WatchTableRegistryRequest
+	14, // 19: arbiter.TableRegistry.GetTableRegistry:output_type -> arbiter.TableRegistrySnapshot
+	14, // 20: arbiter.TableRegistry.WatchTableRegistry:output_type -> arbiter.TableRegistrySnapshot
+	19, // [19:21] is the sub-list for method output_type
+	17, // [17:19] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_table_registry_proto_init() }
@@ -757,10 +1321,10 @@ func file_table_registry_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_table_registry_proto_rawDesc), len(file_table_registry_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   9,
+			NumEnums:      3,
+			NumMessages:   13,
 			NumExtensions: 0,
-			NumServices:   0,
+			NumServices:   1,
 		},
 		GoTypes:           file_table_registry_proto_goTypes,
 		DependencyIndexes: file_table_registry_proto_depIdxs,
