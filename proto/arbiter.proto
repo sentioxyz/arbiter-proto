@@ -19,6 +19,7 @@ package arbiter;
 option go_package = "github.com/sentioxyz/arbiter-proto/gen/pb;pb";
 
 import "replay.proto";
+import "table_registry.proto";
 
 // ============================================================
 // Ingress: HouseGate → Arbiter (§5.5 route A / optimistic-forward)
@@ -496,6 +497,15 @@ service PromotionGateway {
   // Idempotency key: promotion_seq (per table/partition, §10.3).
   rpc AckPromotion (PromotionAck) returns (Ack) {}
   rpc AckCleanup (CleanupAck) returns (Ack) {}
+  // A data-plane node (the source SNode or a verifier) reports that it dropped
+  // its hg_* tables and Keeper replica for one Purging incarnation of the
+  // dynamic SI table registry. Authenticated like AckCleanup: the node is named
+  // by node_id and the FSM accepts only a registered, non-evicted SNode or
+  // verifier. Idempotent: an already-recorded node, or an incarnation that is
+  // already Purged, returns Ack. FAILED_PRECONDITION without a NotLeader
+  // detail means the incarnation is not Purging yet; the caller retries and
+  // never reads it as success.
+  rpc SubmitTablePurged (RecordTablePurgedCmd) returns (Ack) {}
 }
 
 // SafeState serves read-only safe-state queries to HouseGate and clients.

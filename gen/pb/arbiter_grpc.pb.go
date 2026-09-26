@@ -802,6 +802,7 @@ const (
 	PromotionGateway_SubscribePromotions_FullMethodName = "/arbiter.PromotionGateway/SubscribePromotions"
 	PromotionGateway_AckPromotion_FullMethodName        = "/arbiter.PromotionGateway/AckPromotion"
 	PromotionGateway_AckCleanup_FullMethodName          = "/arbiter.PromotionGateway/AckCleanup"
+	PromotionGateway_SubmitTablePurged_FullMethodName   = "/arbiter.PromotionGateway/SubmitTablePurged"
 )
 
 // PromotionGatewayClient is the client API for PromotionGateway service.
@@ -814,6 +815,15 @@ type PromotionGatewayClient interface {
 	// Idempotency key: promotion_seq (per table/partition, §10.3).
 	AckPromotion(ctx context.Context, in *PromotionAck, opts ...grpc.CallOption) (*Ack, error)
 	AckCleanup(ctx context.Context, in *CleanupAck, opts ...grpc.CallOption) (*Ack, error)
+	// A data-plane node (the source SNode or a verifier) reports that it dropped
+	// its hg_* tables and Keeper replica for one Purging incarnation of the
+	// dynamic SI table registry. Authenticated like AckCleanup: the node is named
+	// by node_id and the FSM accepts only a registered, non-evicted SNode or
+	// verifier. Idempotent: an already-recorded node, or an incarnation that is
+	// already Purged, returns Ack. FAILED_PRECONDITION without a NotLeader
+	// detail means the incarnation is not Purging yet; the caller retries and
+	// never reads it as success.
+	SubmitTablePurged(ctx context.Context, in *RecordTablePurgedCmd, opts ...grpc.CallOption) (*Ack, error)
 }
 
 type promotionGatewayClient struct {
@@ -863,6 +873,16 @@ func (c *promotionGatewayClient) AckCleanup(ctx context.Context, in *CleanupAck,
 	return out, nil
 }
 
+func (c *promotionGatewayClient) SubmitTablePurged(ctx context.Context, in *RecordTablePurgedCmd, opts ...grpc.CallOption) (*Ack, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Ack)
+	err := c.cc.Invoke(ctx, PromotionGateway_SubmitTablePurged_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PromotionGatewayServer is the server API for PromotionGateway service.
 // All implementations must embed UnimplementedPromotionGatewayServer
 // for forward compatibility.
@@ -873,6 +893,15 @@ type PromotionGatewayServer interface {
 	// Idempotency key: promotion_seq (per table/partition, §10.3).
 	AckPromotion(context.Context, *PromotionAck) (*Ack, error)
 	AckCleanup(context.Context, *CleanupAck) (*Ack, error)
+	// A data-plane node (the source SNode or a verifier) reports that it dropped
+	// its hg_* tables and Keeper replica for one Purging incarnation of the
+	// dynamic SI table registry. Authenticated like AckCleanup: the node is named
+	// by node_id and the FSM accepts only a registered, non-evicted SNode or
+	// verifier. Idempotent: an already-recorded node, or an incarnation that is
+	// already Purged, returns Ack. FAILED_PRECONDITION without a NotLeader
+	// detail means the incarnation is not Purging yet; the caller retries and
+	// never reads it as success.
+	SubmitTablePurged(context.Context, *RecordTablePurgedCmd) (*Ack, error)
 	mustEmbedUnimplementedPromotionGatewayServer()
 }
 
@@ -891,6 +920,9 @@ func (UnimplementedPromotionGatewayServer) AckPromotion(context.Context, *Promot
 }
 func (UnimplementedPromotionGatewayServer) AckCleanup(context.Context, *CleanupAck) (*Ack, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AckCleanup not implemented")
+}
+func (UnimplementedPromotionGatewayServer) SubmitTablePurged(context.Context, *RecordTablePurgedCmd) (*Ack, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SubmitTablePurged not implemented")
 }
 func (UnimplementedPromotionGatewayServer) mustEmbedUnimplementedPromotionGatewayServer() {}
 func (UnimplementedPromotionGatewayServer) testEmbeddedByValue()                          {}
@@ -960,6 +992,24 @@ func _PromotionGateway_AckCleanup_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PromotionGateway_SubmitTablePurged_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RecordTablePurgedCmd)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PromotionGatewayServer).SubmitTablePurged(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PromotionGateway_SubmitTablePurged_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PromotionGatewayServer).SubmitTablePurged(ctx, req.(*RecordTablePurgedCmd))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PromotionGateway_ServiceDesc is the grpc.ServiceDesc for PromotionGateway service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -974,6 +1024,10 @@ var PromotionGateway_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AckCleanup",
 			Handler:    _PromotionGateway_AckCleanup_Handler,
+		},
+		{
+			MethodName: "SubmitTablePurged",
+			Handler:    _PromotionGateway_SubmitTablePurged_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

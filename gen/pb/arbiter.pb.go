@@ -3771,7 +3771,7 @@ var File_arbiter_proto protoreflect.FileDescriptor
 
 const file_arbiter_proto_rawDesc = "" +
 	"\n" +
-	"\rarbiter.proto\x12\aarbiter\x1a\freplay.proto\"v\n" +
+	"\rarbiter.proto\x12\aarbiter\x1a\freplay.proto\x1a\x14table_registry.proto\"v\n" +
 	"\vStatementID\x12%\n" +
 	"\x0eclient_account\x18\x01 \x01(\tR\rclientAccount\x12\x1d\n" +
 	"\n" +
@@ -4102,12 +4102,13 @@ const file_arbiter_proto_rawDesc = "" +
 	"\x19SubscribeVerifierDispatch\x12\x16.arbiter.VerifierHello\x1a\x19.arbiter.VerifierDispatch\"\x000\x01\x12?\n" +
 	"\x11SubmitAttestation\x12\x1a.arbiter.ReplayAttestation\x1a\f.arbiter.Ack\"\x00\x12S\n" +
 	"\x1eSubmitSnapshotQueryAttestation\x12!.arbiter.SnapshotQueryAttestation\x1a\f.arbiter.Ack\"\x00\x12>\n" +
-	"\x12SubmitByteSideScan\x12\x18.arbiter.ByteSideScanMsg\x1a\f.arbiter.Ack\"\x002\xc7\x01\n" +
+	"\x12SubmitByteSideScan\x12\x18.arbiter.ByteSideScanMsg\x1a\f.arbiter.Ack\"\x002\x8b\x02\n" +
 	"\x10PromotionGateway\x12I\n" +
 	"\x13SubscribePromotions\x12\x13.arbiter.SNodeHello\x1a\x19.arbiter.PromotionCommand\"\x000\x01\x125\n" +
 	"\fAckPromotion\x12\x15.arbiter.PromotionAck\x1a\f.arbiter.Ack\"\x00\x121\n" +
 	"\n" +
-	"AckCleanup\x12\x13.arbiter.CleanupAck\x1a\f.arbiter.Ack\"\x002\xce\x03\n" +
+	"AckCleanup\x12\x13.arbiter.CleanupAck\x1a\f.arbiter.Ack\"\x00\x12B\n" +
+	"\x11SubmitTablePurged\x12\x1d.arbiter.RecordTablePurgedCmd\x1a\f.arbiter.Ack\"\x002\xce\x03\n" +
 	"\tSafeState\x12N\n" +
 	"\x10GetSafeWatermark\x12 .arbiter.GetSafeWatermarkRequest\x1a\x16.arbiter.SafeWatermark\"\x00\x12D\n" +
 	"\vGetManifest\x12\x14.arbiter.SnapshotRef\x1a\x1d.arbiter.SafeSnapshotManifest\"\x00\x12H\n" +
@@ -4198,9 +4199,10 @@ var file_arbiter_proto_goTypes = []any{
 	(*SnapshotQueryClaim)(nil),                 // 58: arbiter.SnapshotQueryClaim
 	(*ReplayAttestation)(nil),                  // 59: arbiter.ReplayAttestation
 	(*SnapshotQueryAttestation)(nil),           // 60: arbiter.SnapshotQueryAttestation
-	(*SnapshotQueryReservationStatus)(nil),     // 61: arbiter.SnapshotQueryReservationStatus
-	(*SnapshotQuerySubmitResult)(nil),          // 62: arbiter.SnapshotQuerySubmitResult
-	(*SnapshotQueryStatus)(nil),                // 63: arbiter.SnapshotQueryStatus
+	(*RecordTablePurgedCmd)(nil),               // 61: arbiter.RecordTablePurgedCmd
+	(*SnapshotQueryReservationStatus)(nil),     // 62: arbiter.SnapshotQueryReservationStatus
+	(*SnapshotQuerySubmitResult)(nil),          // 63: arbiter.SnapshotQuerySubmitResult
+	(*SnapshotQueryStatus)(nil),                // 64: arbiter.SnapshotQueryStatus
 }
 var file_arbiter_proto_depIdxs = []int32{
 	3,  // 0: arbiter.StatementEnvelopeV2.statement_id:type_name -> arbiter.StatementID
@@ -4250,41 +4252,43 @@ var file_arbiter_proto_depIdxs = []int32{
 	18, // 44: arbiter.PromotionGateway.SubscribePromotions:input_type -> arbiter.SNodeHello
 	20, // 45: arbiter.PromotionGateway.AckPromotion:input_type -> arbiter.PromotionAck
 	21, // 46: arbiter.PromotionGateway.AckCleanup:input_type -> arbiter.CleanupAck
-	23, // 47: arbiter.SafeState.GetSafeWatermark:input_type -> arbiter.GetSafeWatermarkRequest
-	25, // 48: arbiter.SafeState.GetManifest:input_type -> arbiter.SnapshotRef
-	26, // 49: arbiter.SafeState.GetManifestByBlock:input_type -> arbiter.BlockRef
-	30, // 50: arbiter.SafeState.GetL3Block:input_type -> arbiter.L3BlockRef
-	45, // 51: arbiter.SafeState.GetPublishedSnapshot:input_type -> arbiter.GetPublishedSnapshotRequest
-	47, // 52: arbiter.SafeState.GetQueryPolicy:input_type -> arbiter.GetQueryPolicyRequest
-	32, // 53: arbiter.Membership.RegisterNode:input_type -> arbiter.NodeRegistration
-	33, // 54: arbiter.Membership.MarkActive:input_type -> arbiter.NodeRef
-	5,  // 55: arbiter.ArbiterIngress.SubmitStatement:output_type -> arbiter.SequencedAck
-	37, // 56: arbiter.ArbiterIngress.GetStatementStatus:output_type -> arbiter.StatementStatus
-	53, // 57: arbiter.ArbiterIngress.AcquireSnapshotQuery:output_type -> arbiter.SnapshotQueryReservation
-	61, // 58: arbiter.ArbiterIngress.GetSnapshotQueryReservation:output_type -> arbiter.SnapshotQueryReservationStatus
-	61, // 59: arbiter.ArbiterIngress.ReleaseSnapshotQuery:output_type -> arbiter.SnapshotQueryReservationStatus
-	62, // 60: arbiter.ArbiterIngress.SubmitSnapshotQuery:output_type -> arbiter.SnapshotQuerySubmitResult
-	63, // 61: arbiter.ArbiterIngress.GetSnapshotQueryStatus:output_type -> arbiter.SnapshotQueryStatus
-	34, // 62: arbiter.SourceClaims.RegisterResultClaim:output_type -> arbiter.Ack
-	34, // 63: arbiter.SourceClaims.RegisterSnapshotQueryClaim:output_type -> arbiter.Ack
-	34, // 64: arbiter.SourceClaims.RecordSnapshotArtifactReady:output_type -> arbiter.Ack
-	10, // 65: arbiter.VerifierGateway.SubscribeVerifierDispatch:output_type -> arbiter.VerifierDispatch
-	34, // 66: arbiter.VerifierGateway.SubmitAttestation:output_type -> arbiter.Ack
-	34, // 67: arbiter.VerifierGateway.SubmitSnapshotQueryAttestation:output_type -> arbiter.Ack
-	34, // 68: arbiter.VerifierGateway.SubmitByteSideScan:output_type -> arbiter.Ack
-	17, // 69: arbiter.PromotionGateway.SubscribePromotions:output_type -> arbiter.PromotionCommand
-	34, // 70: arbiter.PromotionGateway.AckPromotion:output_type -> arbiter.Ack
-	34, // 71: arbiter.PromotionGateway.AckCleanup:output_type -> arbiter.Ack
-	24, // 72: arbiter.SafeState.GetSafeWatermark:output_type -> arbiter.SafeWatermark
-	55, // 73: arbiter.SafeState.GetManifest:output_type -> arbiter.SafeSnapshotManifest
-	55, // 74: arbiter.SafeState.GetManifestByBlock:output_type -> arbiter.SafeSnapshotManifest
-	31, // 75: arbiter.SafeState.GetL3Block:output_type -> arbiter.L3Block
-	46, // 76: arbiter.SafeState.GetPublishedSnapshot:output_type -> arbiter.PublishedSnapshot
-	48, // 77: arbiter.SafeState.GetQueryPolicy:output_type -> arbiter.QueryPolicyStatus
-	34, // 78: arbiter.Membership.RegisterNode:output_type -> arbiter.Ack
-	34, // 79: arbiter.Membership.MarkActive:output_type -> arbiter.Ack
-	55, // [55:80] is the sub-list for method output_type
-	30, // [30:55] is the sub-list for method input_type
+	61, // 47: arbiter.PromotionGateway.SubmitTablePurged:input_type -> arbiter.RecordTablePurgedCmd
+	23, // 48: arbiter.SafeState.GetSafeWatermark:input_type -> arbiter.GetSafeWatermarkRequest
+	25, // 49: arbiter.SafeState.GetManifest:input_type -> arbiter.SnapshotRef
+	26, // 50: arbiter.SafeState.GetManifestByBlock:input_type -> arbiter.BlockRef
+	30, // 51: arbiter.SafeState.GetL3Block:input_type -> arbiter.L3BlockRef
+	45, // 52: arbiter.SafeState.GetPublishedSnapshot:input_type -> arbiter.GetPublishedSnapshotRequest
+	47, // 53: arbiter.SafeState.GetQueryPolicy:input_type -> arbiter.GetQueryPolicyRequest
+	32, // 54: arbiter.Membership.RegisterNode:input_type -> arbiter.NodeRegistration
+	33, // 55: arbiter.Membership.MarkActive:input_type -> arbiter.NodeRef
+	5,  // 56: arbiter.ArbiterIngress.SubmitStatement:output_type -> arbiter.SequencedAck
+	37, // 57: arbiter.ArbiterIngress.GetStatementStatus:output_type -> arbiter.StatementStatus
+	53, // 58: arbiter.ArbiterIngress.AcquireSnapshotQuery:output_type -> arbiter.SnapshotQueryReservation
+	62, // 59: arbiter.ArbiterIngress.GetSnapshotQueryReservation:output_type -> arbiter.SnapshotQueryReservationStatus
+	62, // 60: arbiter.ArbiterIngress.ReleaseSnapshotQuery:output_type -> arbiter.SnapshotQueryReservationStatus
+	63, // 61: arbiter.ArbiterIngress.SubmitSnapshotQuery:output_type -> arbiter.SnapshotQuerySubmitResult
+	64, // 62: arbiter.ArbiterIngress.GetSnapshotQueryStatus:output_type -> arbiter.SnapshotQueryStatus
+	34, // 63: arbiter.SourceClaims.RegisterResultClaim:output_type -> arbiter.Ack
+	34, // 64: arbiter.SourceClaims.RegisterSnapshotQueryClaim:output_type -> arbiter.Ack
+	34, // 65: arbiter.SourceClaims.RecordSnapshotArtifactReady:output_type -> arbiter.Ack
+	10, // 66: arbiter.VerifierGateway.SubscribeVerifierDispatch:output_type -> arbiter.VerifierDispatch
+	34, // 67: arbiter.VerifierGateway.SubmitAttestation:output_type -> arbiter.Ack
+	34, // 68: arbiter.VerifierGateway.SubmitSnapshotQueryAttestation:output_type -> arbiter.Ack
+	34, // 69: arbiter.VerifierGateway.SubmitByteSideScan:output_type -> arbiter.Ack
+	17, // 70: arbiter.PromotionGateway.SubscribePromotions:output_type -> arbiter.PromotionCommand
+	34, // 71: arbiter.PromotionGateway.AckPromotion:output_type -> arbiter.Ack
+	34, // 72: arbiter.PromotionGateway.AckCleanup:output_type -> arbiter.Ack
+	34, // 73: arbiter.PromotionGateway.SubmitTablePurged:output_type -> arbiter.Ack
+	24, // 74: arbiter.SafeState.GetSafeWatermark:output_type -> arbiter.SafeWatermark
+	55, // 75: arbiter.SafeState.GetManifest:output_type -> arbiter.SafeSnapshotManifest
+	55, // 76: arbiter.SafeState.GetManifestByBlock:output_type -> arbiter.SafeSnapshotManifest
+	31, // 77: arbiter.SafeState.GetL3Block:output_type -> arbiter.L3Block
+	46, // 78: arbiter.SafeState.GetPublishedSnapshot:output_type -> arbiter.PublishedSnapshot
+	48, // 79: arbiter.SafeState.GetQueryPolicy:output_type -> arbiter.QueryPolicyStatus
+	34, // 80: arbiter.Membership.RegisterNode:output_type -> arbiter.Ack
+	34, // 81: arbiter.Membership.MarkActive:output_type -> arbiter.Ack
+	56, // [56:82] is the sub-list for method output_type
+	30, // [30:56] is the sub-list for method input_type
 	30, // [30:30] is the sub-list for extension type_name
 	30, // [30:30] is the sub-list for extension extendee
 	0,  // [0:30] is the sub-list for field type_name
@@ -4296,6 +4300,7 @@ func file_arbiter_proto_init() {
 		return
 	}
 	file_replay_proto_init()
+	file_table_registry_proto_init()
 	file_arbiter_proto_msgTypes[7].OneofWrappers = []any{
 		(*VerifierDispatch_ReplayJob)(nil),
 		(*VerifierDispatch_ByteSideScan)(nil),

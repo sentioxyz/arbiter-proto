@@ -27,6 +27,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	TableRegistry_GetTableRegistry_FullMethodName   = "/arbiter.TableRegistry/GetTableRegistry"
 	TableRegistry_WatchTableRegistry_FullMethodName = "/arbiter.TableRegistry/WatchTableRegistry"
+	TableRegistry_GetPurgeNodeSet_FullMethodName    = "/arbiter.TableRegistry/GetPurgeNodeSet"
 )
 
 // TableRegistryClient is the client API for TableRegistry service.
@@ -40,6 +41,9 @@ type TableRegistryClient interface {
 	// while the registry is disabled; ends with NotLeader when this node loses
 	// leadership.
 	WatchTableRegistry(ctx context.Context, in *WatchTableRegistryRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TableRegistrySnapshot], error)
+	// The current purge node set. Leader-barriered like GetTableRegistry and
+	// answered whether or not the registry is enabled.
+	GetPurgeNodeSet(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*PurgeNodeSet, error)
 }
 
 type tableRegistryClient struct {
@@ -79,6 +83,16 @@ func (c *tableRegistryClient) WatchTableRegistry(ctx context.Context, in *WatchT
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type TableRegistry_WatchTableRegistryClient = grpc.ServerStreamingClient[TableRegistrySnapshot]
 
+func (c *tableRegistryClient) GetPurgeNodeSet(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*PurgeNodeSet, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PurgeNodeSet)
+	err := c.cc.Invoke(ctx, TableRegistry_GetPurgeNodeSet_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TableRegistryServer is the server API for TableRegistry service.
 // All implementations must embed UnimplementedTableRegistryServer
 // for forward compatibility.
@@ -90,6 +104,9 @@ type TableRegistryServer interface {
 	// while the registry is disabled; ends with NotLeader when this node loses
 	// leadership.
 	WatchTableRegistry(*WatchTableRegistryRequest, grpc.ServerStreamingServer[TableRegistrySnapshot]) error
+	// The current purge node set. Leader-barriered like GetTableRegistry and
+	// answered whether or not the registry is enabled.
+	GetPurgeNodeSet(context.Context, *emptypb.Empty) (*PurgeNodeSet, error)
 	mustEmbedUnimplementedTableRegistryServer()
 }
 
@@ -105,6 +122,9 @@ func (UnimplementedTableRegistryServer) GetTableRegistry(context.Context, *empty
 }
 func (UnimplementedTableRegistryServer) WatchTableRegistry(*WatchTableRegistryRequest, grpc.ServerStreamingServer[TableRegistrySnapshot]) error {
 	return status.Errorf(codes.Unimplemented, "method WatchTableRegistry not implemented")
+}
+func (UnimplementedTableRegistryServer) GetPurgeNodeSet(context.Context, *emptypb.Empty) (*PurgeNodeSet, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPurgeNodeSet not implemented")
 }
 func (UnimplementedTableRegistryServer) mustEmbedUnimplementedTableRegistryServer() {}
 func (UnimplementedTableRegistryServer) testEmbeddedByValue()                       {}
@@ -156,6 +176,24 @@ func _TableRegistry_WatchTableRegistry_Handler(srv interface{}, stream grpc.Serv
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type TableRegistry_WatchTableRegistryServer = grpc.ServerStreamingServer[TableRegistrySnapshot]
 
+func _TableRegistry_GetPurgeNodeSet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TableRegistryServer).GetPurgeNodeSet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TableRegistry_GetPurgeNodeSet_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TableRegistryServer).GetPurgeNodeSet(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TableRegistry_ServiceDesc is the grpc.ServiceDesc for TableRegistry service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -166,6 +204,10 @@ var TableRegistry_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetTableRegistry",
 			Handler:    _TableRegistry_GetTableRegistry_Handler,
+		},
+		{
+			MethodName: "GetPurgeNodeSet",
+			Handler:    _TableRegistry_GetPurgeNodeSet_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

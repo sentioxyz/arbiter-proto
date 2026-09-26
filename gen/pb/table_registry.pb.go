@@ -1092,6 +1092,54 @@ func (x *TableRegistrySnapshot) GetIncarnations() []*TableIncarnation {
 	return nil
 }
 
+// PurgeNodeSet is the committed set of data-plane nodes whose
+// SubmitTablePurged completes a purge: every registered, non-evicted SNode and
+// verifier, sorted ascending. A replica under a table's Keeper path whose name
+// is not in the set belongs to a decommissioned node.
+type PurgeNodeSet struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeIds       []string               `protobuf:"bytes,1,rep,name=node_ids,json=nodeIds,proto3" json:"node_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PurgeNodeSet) Reset() {
+	*x = PurgeNodeSet{}
+	mi := &file_table_registry_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PurgeNodeSet) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PurgeNodeSet) ProtoMessage() {}
+
+func (x *PurgeNodeSet) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PurgeNodeSet.ProtoReflect.Descriptor instead.
+func (*PurgeNodeSet) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *PurgeNodeSet) GetNodeIds() []string {
+	if x != nil {
+		return x.NodeIds
+	}
+	return nil
+}
+
 type WatchTableRegistryRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The stream sends a snapshot whenever the registry version exceeds the
@@ -1103,7 +1151,7 @@ type WatchTableRegistryRequest struct {
 
 func (x *WatchTableRegistryRequest) Reset() {
 	*x = WatchTableRegistryRequest{}
-	mi := &file_table_registry_proto_msgTypes[12]
+	mi := &file_table_registry_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1115,7 +1163,7 @@ func (x *WatchTableRegistryRequest) String() string {
 func (*WatchTableRegistryRequest) ProtoMessage() {}
 
 func (x *WatchTableRegistryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[12]
+	mi := &file_table_registry_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1128,7 +1176,7 @@ func (x *WatchTableRegistryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchTableRegistryRequest.ProtoReflect.Descriptor instead.
 func (*WatchTableRegistryRequest) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{12}
+	return file_table_registry_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *WatchTableRegistryRequest) GetSinceVersion() uint64 {
@@ -1224,7 +1272,9 @@ const file_table_registry_proto_rawDesc = "" +
 	"\aversion\x18\x02 \x01(\x04R\aversion\x12\x16\n" +
 	"\x06seeded\x18\x03 \x01(\bR\x06seeded\x124\n" +
 	"\x06cursor\x18\x04 \x01(\v2\x1c.arbiter.TableRegistryCursorR\x06cursor\x12=\n" +
-	"\fincarnations\x18\x05 \x03(\v2\x19.arbiter.TableIncarnationR\fincarnations\"@\n" +
+	"\fincarnations\x18\x05 \x03(\v2\x19.arbiter.TableIncarnationR\fincarnations\")\n" +
+	"\fPurgeNodeSet\x12\x19\n" +
+	"\bnode_ids\x18\x01 \x03(\tR\anodeIds\"@\n" +
 	"\x19WatchTableRegistryRequest\x12#\n" +
 	"\rsince_version\x18\x01 \x01(\x04R\fsinceVersion*\x89\x01\n" +
 	"\x11TableRetireReason\x12#\n" +
@@ -1244,10 +1294,11 @@ const file_table_registry_proto_rawDesc = "" +
 	"$TABLE_INCARNATION_ORIGIN_UNSPECIFIED\x10\x00\x12$\n" +
 	" TABLE_INCARNATION_ORIGIN_GENESIS\x10\x01\x12#\n" +
 	"\x1fTABLE_INCARNATION_ORIGIN_LEGACY\x10\x02\x12\"\n" +
-	"\x1eTABLE_INCARNATION_ORIGIN_CHAIN\x10\x032\xbb\x01\n" +
+	"\x1eTABLE_INCARNATION_ORIGIN_CHAIN\x10\x032\xff\x01\n" +
 	"\rTableRegistry\x12L\n" +
 	"\x10GetTableRegistry\x12\x16.google.protobuf.Empty\x1a\x1e.arbiter.TableRegistrySnapshot\"\x00\x12\\\n" +
-	"\x12WatchTableRegistry\x12\".arbiter.WatchTableRegistryRequest\x1a\x1e.arbiter.TableRegistrySnapshot\"\x000\x01B.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
+	"\x12WatchTableRegistry\x12\".arbiter.WatchTableRegistryRequest\x1a\x1e.arbiter.TableRegistrySnapshot\"\x000\x01\x12B\n" +
+	"\x0fGetPurgeNodeSet\x12\x16.google.protobuf.Empty\x1a\x15.arbiter.PurgeNodeSet\"\x00B.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
 
 var (
 	file_table_registry_proto_rawDescOnce sync.Once
@@ -1262,7 +1313,7 @@ func file_table_registry_proto_rawDescGZIP() []byte {
 }
 
 var file_table_registry_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_table_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_table_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_table_registry_proto_goTypes = []any{
 	(TableRetireReason)(0),            // 0: arbiter.TableRetireReason
 	(TableIncarnationStatus)(0),       // 1: arbiter.TableIncarnationStatus
@@ -1279,8 +1330,9 @@ var file_table_registry_proto_goTypes = []any{
 	(*TableRegistryCursor)(nil),       // 12: arbiter.TableRegistryCursor
 	(*TableIncarnation)(nil),          // 13: arbiter.TableIncarnation
 	(*TableRegistrySnapshot)(nil),     // 14: arbiter.TableRegistrySnapshot
-	(*WatchTableRegistryRequest)(nil), // 15: arbiter.WatchTableRegistryRequest
-	(*emptypb.Empty)(nil),             // 16: google.protobuf.Empty
+	(*PurgeNodeSet)(nil),              // 15: arbiter.PurgeNodeSet
+	(*WatchTableRegistryRequest)(nil), // 16: arbiter.WatchTableRegistryRequest
+	(*emptypb.Empty)(nil),             // 17: google.protobuf.Empty
 }
 var file_table_registry_proto_depIdxs = []int32{
 	5,  // 0: arbiter.LegacyTable.created:type_name -> arbiter.L2EventRef
@@ -1300,12 +1352,14 @@ var file_table_registry_proto_depIdxs = []int32{
 	3,  // 14: arbiter.TableRegistrySnapshot.params:type_name -> arbiter.TableRegistryParams
 	12, // 15: arbiter.TableRegistrySnapshot.cursor:type_name -> arbiter.TableRegistryCursor
 	13, // 16: arbiter.TableRegistrySnapshot.incarnations:type_name -> arbiter.TableIncarnation
-	16, // 17: arbiter.TableRegistry.GetTableRegistry:input_type -> google.protobuf.Empty
-	15, // 18: arbiter.TableRegistry.WatchTableRegistry:input_type -> arbiter.WatchTableRegistryRequest
-	14, // 19: arbiter.TableRegistry.GetTableRegistry:output_type -> arbiter.TableRegistrySnapshot
-	14, // 20: arbiter.TableRegistry.WatchTableRegistry:output_type -> arbiter.TableRegistrySnapshot
-	19, // [19:21] is the sub-list for method output_type
-	17, // [17:19] is the sub-list for method input_type
+	17, // 17: arbiter.TableRegistry.GetTableRegistry:input_type -> google.protobuf.Empty
+	16, // 18: arbiter.TableRegistry.WatchTableRegistry:input_type -> arbiter.WatchTableRegistryRequest
+	17, // 19: arbiter.TableRegistry.GetPurgeNodeSet:input_type -> google.protobuf.Empty
+	14, // 20: arbiter.TableRegistry.GetTableRegistry:output_type -> arbiter.TableRegistrySnapshot
+	14, // 21: arbiter.TableRegistry.WatchTableRegistry:output_type -> arbiter.TableRegistrySnapshot
+	15, // 22: arbiter.TableRegistry.GetPurgeNodeSet:output_type -> arbiter.PurgeNodeSet
+	20, // [20:23] is the sub-list for method output_type
+	17, // [17:20] is the sub-list for method input_type
 	17, // [17:17] is the sub-list for extension type_name
 	17, // [17:17] is the sub-list for extension extendee
 	0,  // [0:17] is the sub-list for field type_name
@@ -1322,7 +1376,7 @@ func file_table_registry_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_table_registry_proto_rawDesc), len(file_table_registry_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   13,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
