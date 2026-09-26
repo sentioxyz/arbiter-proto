@@ -150,6 +150,14 @@ message TableRegistrySnapshot {
   repeated TableIncarnation incarnations = 5;
 }
 
+// PurgeNodeSet is the committed set of data-plane nodes whose
+// SubmitTablePurged completes a purge: every registered, non-evicted SNode and
+// verifier, sorted ascending. A replica under a table's Keeper path whose name
+// is not in the set belongs to a decommissioned node.
+message PurgeNodeSet {
+  repeated string node_ids = 1;
+}
+
 message WatchTableRegistryRequest {
   // The stream sends a snapshot whenever the registry version exceeds the
   // last version sent, starting from since_version (0 = send the current one).
@@ -164,4 +172,7 @@ service TableRegistry {
   // while the registry is disabled; ends with NotLeader when this node loses
   // leadership.
   rpc WatchTableRegistry (WatchTableRegistryRequest) returns (stream TableRegistrySnapshot) {}
+  // The current purge node set. Leader-barriered like GetTableRegistry and
+  // answered whether or not the registry is enabled.
+  rpc GetPurgeNodeSet (google.protobuf.Empty) returns (PurgeNodeSet) {}
 }

@@ -80,7 +80,7 @@ func TestTableRegistryReadContract(t *testing.T) {
 		t.Fatalf("L3BlockHeader field 13 = %v", f)
 	}
 	svc := pb.File_table_registry_proto.Services().ByName("TableRegistry")
-	if svc == nil || svc.Methods().Len() != 2 {
+	if svc == nil || svc.Methods().Len() != 3 {
 		t.Fatalf("TableRegistry service = %v", svc)
 	}
 	for _, want := range []struct {
@@ -89,6 +89,7 @@ func TestTableRegistryReadContract(t *testing.T) {
 	}{
 		{"GetTableRegistry", "google.protobuf.Empty", "arbiter.TableRegistrySnapshot", false},
 		{"WatchTableRegistry", "arbiter.WatchTableRegistryRequest", "arbiter.TableRegistrySnapshot", true},
+		{"GetPurgeNodeSet", "google.protobuf.Empty", "arbiter.PurgeNodeSet", false},
 	} {
 		m := svc.Methods().ByName(protoreflect.Name(want.name))
 		if m == nil || m.Input().FullName() != want.input || m.Output().FullName() != want.output || m.IsStreamingServer() != want.stream || m.IsStreamingClient() {
