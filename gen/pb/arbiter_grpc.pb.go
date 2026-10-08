@@ -1053,6 +1053,8 @@ const (
 // SafeStateClient is the client API for SafeState service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// SafeState serves read-only safe-state queries to HouseGate and clients.
 type SafeStateClient interface {
 	GetSafeWatermark(ctx context.Context, in *GetSafeWatermarkRequest, opts ...grpc.CallOption) (*SafeWatermark, error)
 	GetManifest(ctx context.Context, in *SnapshotRef, opts ...grpc.CallOption) (*SafeSnapshotManifest, error)
@@ -1149,6 +1151,8 @@ func (c *safeStateClient) GetClientSeqState(ctx context.Context, in *GetClientSe
 // SafeStateServer is the server API for SafeState service.
 // All implementations must embed UnimplementedSafeStateServer
 // for forward compatibility.
+//
+// SafeState serves read-only safe-state queries to HouseGate and clients.
 type SafeStateServer interface {
 	GetSafeWatermark(context.Context, *GetSafeWatermarkRequest) (*SafeWatermark, error)
 	GetManifest(context.Context, *SnapshotRef) (*SafeSnapshotManifest, error)

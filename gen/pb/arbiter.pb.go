@@ -2761,7 +2761,6 @@ func (x *StatementStatus) GetBoundSource() string {
 	return ""
 }
 
-// SafeState serves read-only safe-state queries to HouseGate and clients.
 // GetClientSeqStateRequest names one accumulator subject: the account alone
 // for the legacy lane, account and lane for a client lane.
 type GetClientSeqStateRequest struct {
