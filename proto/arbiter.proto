@@ -26,15 +26,21 @@ import "table_registry.proto";
 // ============================================================
 
 // StatementID is the structured client-assigned statement identity.
-// Uniqueness key is (client_account, client_seq) — client_nonce contributes
-// entropy to _hg_row_id but is NOT part of the uniqueness key (§6.1).
+// Uniqueness key is (client_account, client_lane, client_seq) — client_nonce
+// contributes entropy to _hg_row_id but is NOT part of the uniqueness key.
 // Flat string form (replay projection, RCRecord linkage, row-id derivation):
-// "<lowercase client_account>:<decimal client_seq>:<client_nonce>".
+// "<lowercase client_account>:<decimal client_seq>:<client_nonce>" for the
+// legacy default lane, "<account>:<client_lane>:<seq>:<nonce>" for a lane.
 message StatementID {
   // Lowercase 0x-prefixed Ethereum address of the signing account.
   string client_account = 1;
   uint64 client_seq = 2;
   string client_nonce = 3;
+  // Client lane (housegate spec 2026-10-09 D9): exactly 16 lowercase hex
+  // characters, or empty for the legacy default lane. Admitted only once the
+  // consensus parameter client_lanes is set; before that a laned statement is
+  // ADMISSION_CODE_MALFORMED.
+  string client_lane = 4;
 }
 
 // StatementKind gates admission (§4.1 SubmitStatement). v1 admits INSERT
@@ -103,6 +109,10 @@ enum AdmissionCode {
   // high-water mark. Distinct from DUPLICATE_CLIENT_SEQ: the coordinate is
   // unspent, the account's gap state is what rejects it.
   ADMISSION_CODE_GAP_BUDGET_EXCEEDED = 8;
+  // A statement would open a new client lane for an account that already
+  // holds client_lanes.max_lanes_per_account lanes. The coordinate is unspent;
+  // the client continues on a lane it already holds or on the legacy lane.
+  ADMISSION_CODE_LANE_BUDGET_EXCEEDED = 9;
 }
 
 message SequencedAck {
@@ -411,6 +421,12 @@ message NodeRegistration {
   // Advisory dial address, observability only — dispatch always rides
   // node-initiated subscribe streams (§11.1).
   string dial_addr = 4;
+  // Capability strings of the registering binary ("client_lanes_v1").
+  // Request-only: the leader records them in a non-replicated feature book and
+  // never copies them into a RaftCommand or replicated state (housegate spec
+  // 2026-10-09 §5.6), because a voter that does not know this field refuses
+  // every command that carries it.
+  repeated string features = 5;
 }
 
 message NodeRef {
@@ -509,6 +525,28 @@ service PromotionGateway {
 }
 
 // SafeState serves read-only safe-state queries to HouseGate and clients.
+// GetClientSeqStateRequest names one accumulator subject: the account alone
+// for the legacy lane, account and lane for a client lane.
+message GetClientSeqStateRequest {
+  string client_account = 1;
+  string client_lane = 2;
+}
+
+// ClientSeqRange is a closed range [start, end] of unspent client_seq values.
+message ClientSeqRange {
+  uint64 start = 1;
+  uint64 end = 2;
+}
+
+// ClientSeqState is the serving voter's applied spent-id state of one subject:
+// spent = [1, hi] minus ranges. A local read, not a consensus read.
+message ClientSeqState {
+  bool found = 1;
+  string subject = 2;
+  uint64 hi = 3;
+  repeated ClientSeqRange ranges = 4;
+}
+
 service SafeState {
   rpc GetSafeWatermark (GetSafeWatermarkRequest) returns (SafeWatermark) {}
   rpc GetManifest (SnapshotRef) returns (SafeSnapshotManifest) {}
@@ -519,6 +557,9 @@ service SafeState {
   // Authenticated exact committed reads; missing records never imply publication.
   rpc GetPublishedSnapshot (GetPublishedSnapshotRequest) returns (PublishedSnapshot) {}
   rpc GetQueryPolicy (GetQueryPolicyRequest) returns (QueryPolicyStatus) {}
+  // Local read of the serving voter's applied accumulator state for one
+  // subject (operators and recovery tooling); no leader barrier.
+  rpc GetClientSeqState (GetClientSeqStateRequest) returns (ClientSeqState) {}
 }
 
 // Membership is called by SNodes / Verifiers.

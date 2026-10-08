@@ -270,6 +270,54 @@ func (x *TableRegistryParams) GetConfirmation() string {
 	return ""
 }
 
+// ClientLaneParams enables client_seq lanes (housegate spec 2026-10-09 D13).
+// Absent until an authority-signed consensus update sets it; afterwards every
+// update carries it, max_lanes_per_account only rises, and it is never removed.
+// Defined here because consensus.proto imports this file.
+type ClientLaneParams struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	MaxLanesPerAccount uint32                 `protobuf:"varint,1,opt,name=max_lanes_per_account,json=maxLanesPerAccount,proto3" json:"max_lanes_per_account,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *ClientLaneParams) Reset() {
+	*x = ClientLaneParams{}
+	mi := &file_table_registry_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClientLaneParams) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClientLaneParams) ProtoMessage() {}
+
+func (x *ClientLaneParams) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClientLaneParams.ProtoReflect.Descriptor instead.
+func (*ClientLaneParams) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ClientLaneParams) GetMaxLanesPerAccount() uint32 {
+	if x != nil {
+		return x.MaxLanesPerAccount
+	}
+	return 0
+}
+
 type L2BlockRef struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Number        uint64                 `protobuf:"varint,1,opt,name=number,proto3" json:"number,omitempty"`
@@ -280,7 +328,7 @@ type L2BlockRef struct {
 
 func (x *L2BlockRef) Reset() {
 	*x = L2BlockRef{}
-	mi := &file_table_registry_proto_msgTypes[1]
+	mi := &file_table_registry_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -292,7 +340,7 @@ func (x *L2BlockRef) String() string {
 func (*L2BlockRef) ProtoMessage() {}
 
 func (x *L2BlockRef) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[1]
+	mi := &file_table_registry_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -305,7 +353,7 @@ func (x *L2BlockRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use L2BlockRef.ProtoReflect.Descriptor instead.
 func (*L2BlockRef) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{1}
+	return file_table_registry_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *L2BlockRef) GetNumber() uint64 {
@@ -335,7 +383,7 @@ type L2EventRef struct {
 
 func (x *L2EventRef) Reset() {
 	*x = L2EventRef{}
-	mi := &file_table_registry_proto_msgTypes[2]
+	mi := &file_table_registry_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -347,7 +395,7 @@ func (x *L2EventRef) String() string {
 func (*L2EventRef) ProtoMessage() {}
 
 func (x *L2EventRef) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[2]
+	mi := &file_table_registry_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -360,7 +408,7 @@ func (x *L2EventRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use L2EventRef.ProtoReflect.Descriptor instead.
 func (*L2EventRef) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{2}
+	return file_table_registry_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *L2EventRef) GetBlockNumber() uint64 {
@@ -402,7 +450,7 @@ type LegacyTable struct {
 
 func (x *LegacyTable) Reset() {
 	*x = LegacyTable{}
-	mi := &file_table_registry_proto_msgTypes[3]
+	mi := &file_table_registry_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -414,7 +462,7 @@ func (x *LegacyTable) String() string {
 func (*LegacyTable) ProtoMessage() {}
 
 func (x *LegacyTable) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[3]
+	mi := &file_table_registry_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -427,7 +475,7 @@ func (x *LegacyTable) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LegacyTable.ProtoReflect.Descriptor instead.
 func (*LegacyTable) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{3}
+	return file_table_registry_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *LegacyTable) GetDatabaseId() string {
@@ -462,7 +510,7 @@ type SeedLegacyTablesCmd struct {
 
 func (x *SeedLegacyTablesCmd) Reset() {
 	*x = SeedLegacyTablesCmd{}
-	mi := &file_table_registry_proto_msgTypes[4]
+	mi := &file_table_registry_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -474,7 +522,7 @@ func (x *SeedLegacyTablesCmd) String() string {
 func (*SeedLegacyTablesCmd) ProtoMessage() {}
 
 func (x *SeedLegacyTablesCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[4]
+	mi := &file_table_registry_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -487,7 +535,7 @@ func (x *SeedLegacyTablesCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SeedLegacyTablesCmd.ProtoReflect.Descriptor instead.
 func (*SeedLegacyTablesCmd) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{4}
+	return file_table_registry_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SeedLegacyTablesCmd) GetAtBlock() *L2BlockRef {
@@ -520,7 +568,7 @@ type AddTableCmd struct {
 
 func (x *AddTableCmd) Reset() {
 	*x = AddTableCmd{}
-	mi := &file_table_registry_proto_msgTypes[5]
+	mi := &file_table_registry_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -532,7 +580,7 @@ func (x *AddTableCmd) String() string {
 func (*AddTableCmd) ProtoMessage() {}
 
 func (x *AddTableCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[5]
+	mi := &file_table_registry_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -545,7 +593,7 @@ func (x *AddTableCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddTableCmd.ProtoReflect.Descriptor instead.
 func (*AddTableCmd) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{5}
+	return file_table_registry_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *AddTableCmd) GetDatabaseId() string {
@@ -611,7 +659,7 @@ type RetireTablesCmd struct {
 
 func (x *RetireTablesCmd) Reset() {
 	*x = RetireTablesCmd{}
-	mi := &file_table_registry_proto_msgTypes[6]
+	mi := &file_table_registry_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -623,7 +671,7 @@ func (x *RetireTablesCmd) String() string {
 func (*RetireTablesCmd) ProtoMessage() {}
 
 func (x *RetireTablesCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[6]
+	mi := &file_table_registry_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -636,7 +684,7 @@ func (x *RetireTablesCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RetireTablesCmd.ProtoReflect.Descriptor instead.
 func (*RetireTablesCmd) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{6}
+	return file_table_registry_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *RetireTablesCmd) GetDatabaseId() string {
@@ -677,7 +725,7 @@ type AdvanceL2CursorCmd struct {
 
 func (x *AdvanceL2CursorCmd) Reset() {
 	*x = AdvanceL2CursorCmd{}
-	mi := &file_table_registry_proto_msgTypes[7]
+	mi := &file_table_registry_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -689,7 +737,7 @@ func (x *AdvanceL2CursorCmd) String() string {
 func (*AdvanceL2CursorCmd) ProtoMessage() {}
 
 func (x *AdvanceL2CursorCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[7]
+	mi := &file_table_registry_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -702,7 +750,7 @@ func (x *AdvanceL2CursorCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AdvanceL2CursorCmd.ProtoReflect.Descriptor instead.
 func (*AdvanceL2CursorCmd) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{7}
+	return file_table_registry_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *AdvanceL2CursorCmd) GetTo() *L2BlockRef {
@@ -723,7 +771,7 @@ type RecordTablePurgedCmd struct {
 
 func (x *RecordTablePurgedCmd) Reset() {
 	*x = RecordTablePurgedCmd{}
-	mi := &file_table_registry_proto_msgTypes[8]
+	mi := &file_table_registry_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -735,7 +783,7 @@ func (x *RecordTablePurgedCmd) String() string {
 func (*RecordTablePurgedCmd) ProtoMessage() {}
 
 func (x *RecordTablePurgedCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[8]
+	mi := &file_table_registry_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -748,7 +796,7 @@ func (x *RecordTablePurgedCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecordTablePurgedCmd.ProtoReflect.Descriptor instead.
 func (*RecordTablePurgedCmd) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{8}
+	return file_table_registry_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *RecordTablePurgedCmd) GetNodeId() string {
@@ -779,7 +827,7 @@ type TableRegistryCursor struct {
 
 func (x *TableRegistryCursor) Reset() {
 	*x = TableRegistryCursor{}
-	mi := &file_table_registry_proto_msgTypes[9]
+	mi := &file_table_registry_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -791,7 +839,7 @@ func (x *TableRegistryCursor) String() string {
 func (*TableRegistryCursor) ProtoMessage() {}
 
 func (x *TableRegistryCursor) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[9]
+	mi := &file_table_registry_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -804,7 +852,7 @@ func (x *TableRegistryCursor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TableRegistryCursor.ProtoReflect.Descriptor instead.
 func (*TableRegistryCursor) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{9}
+	return file_table_registry_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *TableRegistryCursor) GetBlockNumber() uint64 {
@@ -867,7 +915,7 @@ type TableIncarnation struct {
 
 func (x *TableIncarnation) Reset() {
 	*x = TableIncarnation{}
-	mi := &file_table_registry_proto_msgTypes[10]
+	mi := &file_table_registry_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -879,7 +927,7 @@ func (x *TableIncarnation) String() string {
 func (*TableIncarnation) ProtoMessage() {}
 
 func (x *TableIncarnation) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[10]
+	mi := &file_table_registry_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -892,7 +940,7 @@ func (x *TableIncarnation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TableIncarnation.ProtoReflect.Descriptor instead.
 func (*TableIncarnation) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{10}
+	return file_table_registry_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *TableIncarnation) GetSeq() uint64 {
@@ -1017,19 +1065,22 @@ func (x *TableIncarnation) GetPurgedBy() []string {
 // TableRegistrySnapshot is the whole committed registry at one version.
 // incarnations are in seq order (seq = index + 1).
 type TableRegistrySnapshot struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Params        *TableRegistryParams   `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
-	Version       uint64                 `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
-	Seeded        bool                   `protobuf:"varint,3,opt,name=seeded,proto3" json:"seeded,omitempty"`
-	Cursor        *TableRegistryCursor   `protobuf:"bytes,4,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	Incarnations  []*TableIncarnation    `protobuf:"bytes,5,rep,name=incarnations,proto3" json:"incarnations,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Params       *TableRegistryParams   `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
+	Version      uint64                 `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
+	Seeded       bool                   `protobuf:"varint,3,opt,name=seeded,proto3" json:"seeded,omitempty"`
+	Cursor       *TableRegistryCursor   `protobuf:"bytes,4,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	Incarnations []*TableIncarnation    `protobuf:"bytes,5,rep,name=incarnations,proto3" json:"incarnations,omitempty"`
+	// The committed client-lane parameter, so data-plane nodes learn activation
+	// through the registry follower. Setting or raising it bumps version.
+	ClientLanes   *ClientLaneParams `protobuf:"bytes,6,opt,name=client_lanes,json=clientLanes,proto3" json:"client_lanes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *TableRegistrySnapshot) Reset() {
 	*x = TableRegistrySnapshot{}
-	mi := &file_table_registry_proto_msgTypes[11]
+	mi := &file_table_registry_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1041,7 +1092,7 @@ func (x *TableRegistrySnapshot) String() string {
 func (*TableRegistrySnapshot) ProtoMessage() {}
 
 func (x *TableRegistrySnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[11]
+	mi := &file_table_registry_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1054,7 +1105,7 @@ func (x *TableRegistrySnapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TableRegistrySnapshot.ProtoReflect.Descriptor instead.
 func (*TableRegistrySnapshot) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{11}
+	return file_table_registry_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *TableRegistrySnapshot) GetParams() *TableRegistryParams {
@@ -1092,6 +1143,13 @@ func (x *TableRegistrySnapshot) GetIncarnations() []*TableIncarnation {
 	return nil
 }
 
+func (x *TableRegistrySnapshot) GetClientLanes() *ClientLaneParams {
+	if x != nil {
+		return x.ClientLanes
+	}
+	return nil
+}
+
 // PurgeNodeSet is the committed set of data-plane nodes whose
 // SubmitTablePurged completes a purge: every registered, non-evicted SNode and
 // verifier, sorted ascending. A replica under a table's Keeper path whose name
@@ -1105,7 +1163,7 @@ type PurgeNodeSet struct {
 
 func (x *PurgeNodeSet) Reset() {
 	*x = PurgeNodeSet{}
-	mi := &file_table_registry_proto_msgTypes[12]
+	mi := &file_table_registry_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1117,7 +1175,7 @@ func (x *PurgeNodeSet) String() string {
 func (*PurgeNodeSet) ProtoMessage() {}
 
 func (x *PurgeNodeSet) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[12]
+	mi := &file_table_registry_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1130,7 +1188,7 @@ func (x *PurgeNodeSet) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PurgeNodeSet.ProtoReflect.Descriptor instead.
 func (*PurgeNodeSet) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{12}
+	return file_table_registry_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *PurgeNodeSet) GetNodeIds() []string {
@@ -1151,7 +1209,7 @@ type WatchTableRegistryRequest struct {
 
 func (x *WatchTableRegistryRequest) Reset() {
 	*x = WatchTableRegistryRequest{}
-	mi := &file_table_registry_proto_msgTypes[13]
+	mi := &file_table_registry_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1163,7 +1221,7 @@ func (x *WatchTableRegistryRequest) String() string {
 func (*WatchTableRegistryRequest) ProtoMessage() {}
 
 func (x *WatchTableRegistryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[13]
+	mi := &file_table_registry_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1176,7 +1234,7 @@ func (x *WatchTableRegistryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchTableRegistryRequest.ProtoReflect.Descriptor instead.
 func (*WatchTableRegistryRequest) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{13}
+	return file_table_registry_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *WatchTableRegistryRequest) GetSinceVersion() uint64 {
@@ -1196,7 +1254,9 @@ const file_table_registry_proto_rawDesc = "" +
 	"\x12databases_contract\x18\x02 \x01(\tR\x11databasesContract\x12\"\n" +
 	"\rsi_indexer_id\x18\x03 \x01(\x04R\vsiIndexerId\x12)\n" +
 	"\x10activation_block\x18\x04 \x01(\x04R\x0factivationBlock\x12\"\n" +
-	"\fconfirmation\x18\x05 \x01(\tR\fconfirmation\"8\n" +
+	"\fconfirmation\x18\x05 \x01(\tR\fconfirmation\"E\n" +
+	"\x10ClientLaneParams\x121\n" +
+	"\x15max_lanes_per_account\x18\x01 \x01(\rR\x12maxLanesPerAccount\"8\n" +
 	"\n" +
 	"L2BlockRef\x12\x16\n" +
 	"\x06number\x18\x01 \x01(\x04R\x06number\x12\x12\n" +
@@ -1266,13 +1326,14 @@ const file_table_registry_proto_rawDesc = "" +
 	"\rretire_reason\x18\x0e \x01(\x0e2\x1a.arbiter.TableRetireReasonR\fretireReason\x12\"\n" +
 	"\radd_block_seq\x18\x0f \x01(\x04R\vaddBlockSeq\x12(\n" +
 	"\x10retire_block_seq\x18\x10 \x01(\x04R\x0eretireBlockSeq\x12\x1b\n" +
-	"\tpurged_by\x18\x11 \x03(\tR\bpurgedBy\"\xf4\x01\n" +
+	"\tpurged_by\x18\x11 \x03(\tR\bpurgedBy\"\xb2\x02\n" +
 	"\x15TableRegistrySnapshot\x124\n" +
 	"\x06params\x18\x01 \x01(\v2\x1c.arbiter.TableRegistryParamsR\x06params\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\x04R\aversion\x12\x16\n" +
 	"\x06seeded\x18\x03 \x01(\bR\x06seeded\x124\n" +
 	"\x06cursor\x18\x04 \x01(\v2\x1c.arbiter.TableRegistryCursorR\x06cursor\x12=\n" +
-	"\fincarnations\x18\x05 \x03(\v2\x19.arbiter.TableIncarnationR\fincarnations\")\n" +
+	"\fincarnations\x18\x05 \x03(\v2\x19.arbiter.TableIncarnationR\fincarnations\x12<\n" +
+	"\fclient_lanes\x18\x06 \x01(\v2\x19.arbiter.ClientLaneParamsR\vclientLanes\")\n" +
 	"\fPurgeNodeSet\x12\x19\n" +
 	"\bnode_ids\x18\x01 \x03(\tR\anodeIds\"@\n" +
 	"\x19WatchTableRegistryRequest\x12#\n" +
@@ -1313,56 +1374,58 @@ func file_table_registry_proto_rawDescGZIP() []byte {
 }
 
 var file_table_registry_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_table_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_table_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_table_registry_proto_goTypes = []any{
 	(TableRetireReason)(0),            // 0: arbiter.TableRetireReason
 	(TableIncarnationStatus)(0),       // 1: arbiter.TableIncarnationStatus
 	(TableIncarnationOrigin)(0),       // 2: arbiter.TableIncarnationOrigin
 	(*TableRegistryParams)(nil),       // 3: arbiter.TableRegistryParams
-	(*L2BlockRef)(nil),                // 4: arbiter.L2BlockRef
-	(*L2EventRef)(nil),                // 5: arbiter.L2EventRef
-	(*LegacyTable)(nil),               // 6: arbiter.LegacyTable
-	(*SeedLegacyTablesCmd)(nil),       // 7: arbiter.SeedLegacyTablesCmd
-	(*AddTableCmd)(nil),               // 8: arbiter.AddTableCmd
-	(*RetireTablesCmd)(nil),           // 9: arbiter.RetireTablesCmd
-	(*AdvanceL2CursorCmd)(nil),        // 10: arbiter.AdvanceL2CursorCmd
-	(*RecordTablePurgedCmd)(nil),      // 11: arbiter.RecordTablePurgedCmd
-	(*TableRegistryCursor)(nil),       // 12: arbiter.TableRegistryCursor
-	(*TableIncarnation)(nil),          // 13: arbiter.TableIncarnation
-	(*TableRegistrySnapshot)(nil),     // 14: arbiter.TableRegistrySnapshot
-	(*PurgeNodeSet)(nil),              // 15: arbiter.PurgeNodeSet
-	(*WatchTableRegistryRequest)(nil), // 16: arbiter.WatchTableRegistryRequest
-	(*emptypb.Empty)(nil),             // 17: google.protobuf.Empty
+	(*ClientLaneParams)(nil),          // 4: arbiter.ClientLaneParams
+	(*L2BlockRef)(nil),                // 5: arbiter.L2BlockRef
+	(*L2EventRef)(nil),                // 6: arbiter.L2EventRef
+	(*LegacyTable)(nil),               // 7: arbiter.LegacyTable
+	(*SeedLegacyTablesCmd)(nil),       // 8: arbiter.SeedLegacyTablesCmd
+	(*AddTableCmd)(nil),               // 9: arbiter.AddTableCmd
+	(*RetireTablesCmd)(nil),           // 10: arbiter.RetireTablesCmd
+	(*AdvanceL2CursorCmd)(nil),        // 11: arbiter.AdvanceL2CursorCmd
+	(*RecordTablePurgedCmd)(nil),      // 12: arbiter.RecordTablePurgedCmd
+	(*TableRegistryCursor)(nil),       // 13: arbiter.TableRegistryCursor
+	(*TableIncarnation)(nil),          // 14: arbiter.TableIncarnation
+	(*TableRegistrySnapshot)(nil),     // 15: arbiter.TableRegistrySnapshot
+	(*PurgeNodeSet)(nil),              // 16: arbiter.PurgeNodeSet
+	(*WatchTableRegistryRequest)(nil), // 17: arbiter.WatchTableRegistryRequest
+	(*emptypb.Empty)(nil),             // 18: google.protobuf.Empty
 }
 var file_table_registry_proto_depIdxs = []int32{
-	5,  // 0: arbiter.LegacyTable.created:type_name -> arbiter.L2EventRef
-	4,  // 1: arbiter.SeedLegacyTablesCmd.at_block:type_name -> arbiter.L2BlockRef
-	6,  // 2: arbiter.SeedLegacyTablesCmd.tables:type_name -> arbiter.LegacyTable
-	5,  // 3: arbiter.AddTableCmd.created:type_name -> arbiter.L2EventRef
-	5,  // 4: arbiter.AddTableCmd.schema:type_name -> arbiter.L2EventRef
-	5,  // 5: arbiter.RetireTablesCmd.deleted:type_name -> arbiter.L2EventRef
+	6,  // 0: arbiter.LegacyTable.created:type_name -> arbiter.L2EventRef
+	5,  // 1: arbiter.SeedLegacyTablesCmd.at_block:type_name -> arbiter.L2BlockRef
+	7,  // 2: arbiter.SeedLegacyTablesCmd.tables:type_name -> arbiter.LegacyTable
+	6,  // 3: arbiter.AddTableCmd.created:type_name -> arbiter.L2EventRef
+	6,  // 4: arbiter.AddTableCmd.schema:type_name -> arbiter.L2EventRef
+	6,  // 5: arbiter.RetireTablesCmd.deleted:type_name -> arbiter.L2EventRef
 	0,  // 6: arbiter.RetireTablesCmd.reason:type_name -> arbiter.TableRetireReason
-	4,  // 7: arbiter.AdvanceL2CursorCmd.to:type_name -> arbiter.L2BlockRef
+	5,  // 7: arbiter.AdvanceL2CursorCmd.to:type_name -> arbiter.L2BlockRef
 	2,  // 8: arbiter.TableIncarnation.origin:type_name -> arbiter.TableIncarnationOrigin
 	1,  // 9: arbiter.TableIncarnation.status:type_name -> arbiter.TableIncarnationStatus
-	5,  // 10: arbiter.TableIncarnation.created:type_name -> arbiter.L2EventRef
-	5,  // 11: arbiter.TableIncarnation.schema_ref:type_name -> arbiter.L2EventRef
-	5,  // 12: arbiter.TableIncarnation.deleted:type_name -> arbiter.L2EventRef
+	6,  // 10: arbiter.TableIncarnation.created:type_name -> arbiter.L2EventRef
+	6,  // 11: arbiter.TableIncarnation.schema_ref:type_name -> arbiter.L2EventRef
+	6,  // 12: arbiter.TableIncarnation.deleted:type_name -> arbiter.L2EventRef
 	0,  // 13: arbiter.TableIncarnation.retire_reason:type_name -> arbiter.TableRetireReason
 	3,  // 14: arbiter.TableRegistrySnapshot.params:type_name -> arbiter.TableRegistryParams
-	12, // 15: arbiter.TableRegistrySnapshot.cursor:type_name -> arbiter.TableRegistryCursor
-	13, // 16: arbiter.TableRegistrySnapshot.incarnations:type_name -> arbiter.TableIncarnation
-	17, // 17: arbiter.TableRegistry.GetTableRegistry:input_type -> google.protobuf.Empty
-	16, // 18: arbiter.TableRegistry.WatchTableRegistry:input_type -> arbiter.WatchTableRegistryRequest
-	17, // 19: arbiter.TableRegistry.GetPurgeNodeSet:input_type -> google.protobuf.Empty
-	14, // 20: arbiter.TableRegistry.GetTableRegistry:output_type -> arbiter.TableRegistrySnapshot
-	14, // 21: arbiter.TableRegistry.WatchTableRegistry:output_type -> arbiter.TableRegistrySnapshot
-	15, // 22: arbiter.TableRegistry.GetPurgeNodeSet:output_type -> arbiter.PurgeNodeSet
-	20, // [20:23] is the sub-list for method output_type
-	17, // [17:20] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	13, // 15: arbiter.TableRegistrySnapshot.cursor:type_name -> arbiter.TableRegistryCursor
+	14, // 16: arbiter.TableRegistrySnapshot.incarnations:type_name -> arbiter.TableIncarnation
+	4,  // 17: arbiter.TableRegistrySnapshot.client_lanes:type_name -> arbiter.ClientLaneParams
+	18, // 18: arbiter.TableRegistry.GetTableRegistry:input_type -> google.protobuf.Empty
+	17, // 19: arbiter.TableRegistry.WatchTableRegistry:input_type -> arbiter.WatchTableRegistryRequest
+	18, // 20: arbiter.TableRegistry.GetPurgeNodeSet:input_type -> google.protobuf.Empty
+	15, // 21: arbiter.TableRegistry.GetTableRegistry:output_type -> arbiter.TableRegistrySnapshot
+	15, // 22: arbiter.TableRegistry.WatchTableRegistry:output_type -> arbiter.TableRegistrySnapshot
+	16, // 23: arbiter.TableRegistry.GetPurgeNodeSet:output_type -> arbiter.PurgeNodeSet
+	21, // [21:24] is the sub-list for method output_type
+	18, // [18:21] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_table_registry_proto_init() }
@@ -1376,7 +1439,7 @@ func file_table_registry_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_table_registry_proto_rawDesc), len(file_table_registry_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   14,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

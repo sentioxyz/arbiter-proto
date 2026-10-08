@@ -38,6 +38,8 @@ type ConsensusMutableParams struct {
 	// Set once by a signed update and then carried unchanged by every later
 	// update; absent means the dynamic table registry is disabled.
 	TableRegistry *TableRegistryParams `protobuf:"bytes,4,opt,name=table_registry,json=tableRegistry,proto3" json:"table_registry,omitempty"`
+	// Set once by a signed update, then carried by every update; raise-only.
+	ClientLanes   *ClientLaneParams `protobuf:"bytes,5,opt,name=client_lanes,json=clientLanes,proto3" json:"client_lanes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -100,6 +102,13 @@ func (x *ConsensusMutableParams) GetTableRegistry() *TableRegistryParams {
 	return nil
 }
 
+func (x *ConsensusMutableParams) GetClientLanes() *ClientLaneParams {
+	if x != nil {
+		return x.ClientLanes
+	}
+	return nil
+}
+
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
 // Authority addresses are lowercase, sorted and deduplicated before hashing.
 // authority_jws covers every field; it uses a dedicated versioned purpose
@@ -119,6 +128,8 @@ type ConsensusParamsUpdate struct {
 	ArtifactDispositionCapability uint32 `protobuf:"varint,8,opt,name=artifact_disposition_capability,json=artifactDispositionCapability,proto3" json:"artifact_disposition_capability,omitempty"`
 	// Absent keeps the registry disabled. Once set it must be resent unchanged.
 	TableRegistry *TableRegistryParams `protobuf:"bytes,9,opt,name=table_registry,json=tableRegistry,proto3" json:"table_registry,omitempty"`
+	// Absent keeps client lanes disabled. Once set it must be resent; lowering or removal is refused.
+	ClientLanes   *ClientLaneParams `protobuf:"bytes,10,opt,name=client_lanes,json=clientLanes,proto3" json:"client_lanes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -212,6 +223,13 @@ func (x *ConsensusParamsUpdate) GetArtifactDispositionCapability() uint32 {
 func (x *ConsensusParamsUpdate) GetTableRegistry() *TableRegistryParams {
 	if x != nil {
 		return x.TableRegistry
+	}
+	return nil
+}
+
+func (x *ConsensusParamsUpdate) GetClientLanes() *ClientLaneParams {
+	if x != nil {
+		return x.ClientLanes
 	}
 	return nil
 }
@@ -459,8 +477,11 @@ type ProtocolInfo struct {
 	NodeId          string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
 	ProtocolVersion uint32                 `protobuf:"varint,2,opt,name=protocol_version,json=protocolVersion,proto3" json:"protocol_version,omitempty"`
 	UpdatesEnabled  bool                   `protobuf:"varint,3,opt,name=updates_enabled,json=updatesEnabled,proto3" json:"updates_enabled,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Capability strings of this binary ("client_lanes_v1"); a static local
+	// property, read by arbiter-admin's activation gate on every voter.
+	Features      []string `protobuf:"bytes,4,rep,name=features,proto3" json:"features,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ProtocolInfo) Reset() {
@@ -512,6 +533,13 @@ func (x *ProtocolInfo) GetUpdatesEnabled() bool {
 		return x.UpdatesEnabled
 	}
 	return false
+}
+
+func (x *ProtocolInfo) GetFeatures() []string {
+	if x != nil {
+		return x.Features
+	}
+	return nil
 }
 
 // ConsensusParamsState is a leader-barrier view used to prepare the next
@@ -618,17 +646,136 @@ func (x *ConsensusParamsState) GetPromotionSeq() uint64 {
 	return 0
 }
 
+// NodeFeatureEntry joins one non-evicted verifier or SNode registration with
+// the features its latest RegisterNode on the current leader advertised.
+// features is empty when this leader has not seen it register.
+type NodeFeatureEntry struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	NodeId         string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	Features       []string               `protobuf:"bytes,2,rep,name=features,proto3" json:"features,omitempty"`
+	RegisteredUnix int64                  `protobuf:"varint,3,opt,name=registered_unix,json=registeredUnix,proto3" json:"registered_unix,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *NodeFeatureEntry) Reset() {
+	*x = NodeFeatureEntry{}
+	mi := &file_consensus_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NodeFeatureEntry) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeFeatureEntry) ProtoMessage() {}
+
+func (x *NodeFeatureEntry) ProtoReflect() protoreflect.Message {
+	mi := &file_consensus_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeFeatureEntry.ProtoReflect.Descriptor instead.
+func (*NodeFeatureEntry) Descriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *NodeFeatureEntry) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *NodeFeatureEntry) GetFeatures() []string {
+	if x != nil {
+		return x.Features
+	}
+	return nil
+}
+
+func (x *NodeFeatureEntry) GetRegisteredUnix() int64 {
+	if x != nil {
+		return x.RegisteredUnix
+	}
+	return 0
+}
+
+// NodeFeatures is the leader's non-replicated feature book. raft_voter_ids is
+// the current Raft configuration's voter ids, so the activation gate can prove
+// it probed every voter.
+type NodeFeatures struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Entries       []*NodeFeatureEntry    `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
+	RaftVoterIds  []string               `protobuf:"bytes,2,rep,name=raft_voter_ids,json=raftVoterIds,proto3" json:"raft_voter_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NodeFeatures) Reset() {
+	*x = NodeFeatures{}
+	mi := &file_consensus_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NodeFeatures) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeFeatures) ProtoMessage() {}
+
+func (x *NodeFeatures) ProtoReflect() protoreflect.Message {
+	mi := &file_consensus_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeFeatures.ProtoReflect.Descriptor instead.
+func (*NodeFeatures) Descriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *NodeFeatures) GetEntries() []*NodeFeatureEntry {
+	if x != nil {
+		return x.Entries
+	}
+	return nil
+}
+
+func (x *NodeFeatures) GetRaftVoterIds() []string {
+	if x != nil {
+		return x.RaftVoterIds
+	}
+	return nil
+}
+
 var File_consensus_proto protoreflect.FileDescriptor
 
 const file_consensus_proto_rawDesc = "" +
 	"\n" +
-	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xf7\x01\n" +
+	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xb5\x02\n" +
 	"\x16ConsensusMutableParams\x12/\n" +
 	"\x13authority_addresses\x18\x01 \x03(\tR\x12authorityAddresses\x12\x1f\n" +
 	"\vmax_writers\x18\x02 \x01(\x04R\n" +
 	"maxWriters\x12F\n" +
 	"\x1fartifact_disposition_capability\x18\x03 \x01(\rR\x1dartifactDispositionCapability\x12C\n" +
-	"\x0etable_registry\x18\x04 \x01(\v2\x1c.arbiter.TableRegistryParamsR\rtableRegistry\"\xd8\x03\n" +
+	"\x0etable_registry\x18\x04 \x01(\v2\x1c.arbiter.TableRegistryParamsR\rtableRegistry\x12<\n" +
+	"\fclient_lanes\x18\x05 \x01(\v2\x19.arbiter.ClientLaneParamsR\vclientLanes\"\x96\x04\n" +
 	"\x15ConsensusParamsUpdate\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12.\n" +
@@ -640,7 +787,9 @@ const file_consensus_proto_rawDesc = "" +
 	"maxWriters\x124\n" +
 	"\x16expected_promotion_seq\x18\a \x01(\x04R\x14expectedPromotionSeq\x12F\n" +
 	"\x1fartifact_disposition_capability\x18\b \x01(\rR\x1dartifactDispositionCapability\x12C\n" +
-	"\x0etable_registry\x18\t \x01(\v2\x1c.arbiter.TableRegistryParamsR\rtableRegistry\"w\n" +
+	"\x0etable_registry\x18\t \x01(\v2\x1c.arbiter.TableRegistryParamsR\rtableRegistry\x12<\n" +
+	"\fclient_lanes\x18\n" +
+	" \x01(\v2\x19.arbiter.ClientLaneParamsR\vclientLanes\"w\n" +
 	"\x18UpdateConsensusParamsCmd\x126\n" +
 	"\x06update\x18\x01 \x01(\v2\x1e.arbiter.ConsensusParamsUpdateR\x06update\x12#\n" +
 	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"\xb8\x01\n" +
@@ -657,11 +806,12 @@ const file_consensus_proto_rawDesc = "" +
 	"\n" +
 	"activation\x18\x01 \x01(\v2\x1a.arbiter.ActiveQueryPolicyR\n" +
 	"activation\x12#\n" +
-	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"{\n" +
+	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"\x97\x01\n" +
 	"\fProtocolInfo\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12)\n" +
 	"\x10protocol_version\x18\x02 \x01(\rR\x0fprotocolVersion\x12'\n" +
-	"\x0fupdates_enabled\x18\x03 \x01(\bR\x0eupdatesEnabled\"\xea\x02\n" +
+	"\x0fupdates_enabled\x18\x03 \x01(\bR\x0eupdatesEnabled\x12\x1a\n" +
+	"\bfeatures\x18\x04 \x03(\tR\bfeatures\"\xea\x02\n" +
 	"\x14ConsensusParamsState\x12)\n" +
 	"\x10protocol_version\x18\x01 \x01(\rR\x0fprotocolVersion\x12\x1d\n" +
 	"\n" +
@@ -671,14 +821,22 @@ const file_consensus_proto_rawDesc = "" +
 	"\acurrent\x18\x05 \x01(\v2\x1f.arbiter.ConsensusMutableParamsR\acurrent\x12\x14\n" +
 	"\x05epoch\x18\x06 \x01(\x04R\x05epoch\x12#\n" +
 	"\rparams_digest\x18\a \x01(\tR\fparamsDigest\x12#\n" +
-	"\rpromotion_seq\x18\b \x01(\x04R\fpromotionSeq2\x8e\x04\n" +
+	"\rpromotion_seq\x18\b \x01(\x04R\fpromotionSeq\"p\n" +
+	"\x10NodeFeatureEntry\x12\x17\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x1a\n" +
+	"\bfeatures\x18\x02 \x03(\tR\bfeatures\x12'\n" +
+	"\x0fregistered_unix\x18\x03 \x01(\x03R\x0eregisteredUnix\"i\n" +
+	"\fNodeFeatures\x123\n" +
+	"\aentries\x18\x01 \x03(\v2\x19.arbiter.NodeFeatureEntryR\aentries\x12$\n" +
+	"\x0eraft_voter_ids\x18\x02 \x03(\tR\fraftVoterIds2\xd2\x04\n" +
 	"\x0eConsensusAdmin\x12B\n" +
 	"\x0fGetProtocolInfo\x12\x16.google.protobuf.Empty\x1a\x15.arbiter.ProtocolInfo\"\x00\x12M\n" +
 	"\x12GetConsensusParams\x12\x16.google.protobuf.Empty\x1a\x1d.arbiter.ConsensusParamsState\"\x00\x12J\n" +
 	"\x15UpdateConsensusParams\x12!.arbiter.UpdateConsensusParamsCmd\x1a\f.arbiter.Ack\"\x00\x12u\n" +
 	"\x1eGetSnapshotQueryAbortCandidate\x12..arbiter.GetSnapshotQueryAbortCandidateRequest\x1a!.arbiter.SnapshotQueryAbortRecord\"\x00\x12X\n" +
 	"\x12AbortSnapshotQuery\x12\".arbiter.AbortSnapshotQueryRequest\x1a\x1c.arbiter.SnapshotQueryStatus\"\x00\x12L\n" +
-	"\x14ActivateQueryProfile\x12$.arbiter.ActivateQueryProfileRequest\x1a\f.arbiter.Ack\"\x00B.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
+	"\x14ActivateQueryProfile\x12$.arbiter.ActivateQueryProfileRequest\x1a\f.arbiter.Ack\"\x00\x12B\n" +
+	"\x0fGetNodeFeatures\x12\x16.google.protobuf.Empty\x1a\x15.arbiter.NodeFeatures\"\x00B.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
 
 var (
 	file_consensus_proto_rawDescOnce sync.Once
@@ -692,7 +850,7 @@ func file_consensus_proto_rawDescGZIP() []byte {
 	return file_consensus_proto_rawDescData
 }
 
-var file_consensus_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_consensus_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_consensus_proto_goTypes = []any{
 	(*ConsensusMutableParams)(nil),                // 0: arbiter.ConsensusMutableParams
 	(*ConsensusParamsUpdate)(nil),                 // 1: arbiter.ConsensusParamsUpdate
@@ -702,38 +860,46 @@ var file_consensus_proto_goTypes = []any{
 	(*ActivateQueryProfileRequest)(nil),           // 5: arbiter.ActivateQueryProfileRequest
 	(*ProtocolInfo)(nil),                          // 6: arbiter.ProtocolInfo
 	(*ConsensusParamsState)(nil),                  // 7: arbiter.ConsensusParamsState
-	(*TableRegistryParams)(nil),                   // 8: arbiter.TableRegistryParams
-	(*SnapshotQueryAbortRecord)(nil),              // 9: arbiter.SnapshotQueryAbortRecord
-	(*ActiveQueryPolicy)(nil),                     // 10: arbiter.ActiveQueryPolicy
-	(*emptypb.Empty)(nil),                         // 11: google.protobuf.Empty
-	(*Ack)(nil),                                   // 12: arbiter.Ack
-	(*SnapshotQueryStatus)(nil),                   // 13: arbiter.SnapshotQueryStatus
+	(*NodeFeatureEntry)(nil),                      // 8: arbiter.NodeFeatureEntry
+	(*NodeFeatures)(nil),                          // 9: arbiter.NodeFeatures
+	(*TableRegistryParams)(nil),                   // 10: arbiter.TableRegistryParams
+	(*ClientLaneParams)(nil),                      // 11: arbiter.ClientLaneParams
+	(*SnapshotQueryAbortRecord)(nil),              // 12: arbiter.SnapshotQueryAbortRecord
+	(*ActiveQueryPolicy)(nil),                     // 13: arbiter.ActiveQueryPolicy
+	(*emptypb.Empty)(nil),                         // 14: google.protobuf.Empty
+	(*Ack)(nil),                                   // 15: arbiter.Ack
+	(*SnapshotQueryStatus)(nil),                   // 16: arbiter.SnapshotQueryStatus
 }
 var file_consensus_proto_depIdxs = []int32{
-	8,  // 0: arbiter.ConsensusMutableParams.table_registry:type_name -> arbiter.TableRegistryParams
-	8,  // 1: arbiter.ConsensusParamsUpdate.table_registry:type_name -> arbiter.TableRegistryParams
-	1,  // 2: arbiter.UpdateConsensusParamsCmd.update:type_name -> arbiter.ConsensusParamsUpdate
-	9,  // 3: arbiter.AbortSnapshotQueryRequest.record:type_name -> arbiter.SnapshotQueryAbortRecord
-	10, // 4: arbiter.ActivateQueryProfileRequest.activation:type_name -> arbiter.ActiveQueryPolicy
-	0,  // 5: arbiter.ConsensusParamsState.bootstrap:type_name -> arbiter.ConsensusMutableParams
-	0,  // 6: arbiter.ConsensusParamsState.current:type_name -> arbiter.ConsensusMutableParams
-	11, // 7: arbiter.ConsensusAdmin.GetProtocolInfo:input_type -> google.protobuf.Empty
-	11, // 8: arbiter.ConsensusAdmin.GetConsensusParams:input_type -> google.protobuf.Empty
-	2,  // 9: arbiter.ConsensusAdmin.UpdateConsensusParams:input_type -> arbiter.UpdateConsensusParamsCmd
-	3,  // 10: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:input_type -> arbiter.GetSnapshotQueryAbortCandidateRequest
-	4,  // 11: arbiter.ConsensusAdmin.AbortSnapshotQuery:input_type -> arbiter.AbortSnapshotQueryRequest
-	5,  // 12: arbiter.ConsensusAdmin.ActivateQueryProfile:input_type -> arbiter.ActivateQueryProfileRequest
-	6,  // 13: arbiter.ConsensusAdmin.GetProtocolInfo:output_type -> arbiter.ProtocolInfo
-	7,  // 14: arbiter.ConsensusAdmin.GetConsensusParams:output_type -> arbiter.ConsensusParamsState
-	12, // 15: arbiter.ConsensusAdmin.UpdateConsensusParams:output_type -> arbiter.Ack
-	9,  // 16: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:output_type -> arbiter.SnapshotQueryAbortRecord
-	13, // 17: arbiter.ConsensusAdmin.AbortSnapshotQuery:output_type -> arbiter.SnapshotQueryStatus
-	12, // 18: arbiter.ConsensusAdmin.ActivateQueryProfile:output_type -> arbiter.Ack
-	13, // [13:19] is the sub-list for method output_type
-	7,  // [7:13] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	10, // 0: arbiter.ConsensusMutableParams.table_registry:type_name -> arbiter.TableRegistryParams
+	11, // 1: arbiter.ConsensusMutableParams.client_lanes:type_name -> arbiter.ClientLaneParams
+	10, // 2: arbiter.ConsensusParamsUpdate.table_registry:type_name -> arbiter.TableRegistryParams
+	11, // 3: arbiter.ConsensusParamsUpdate.client_lanes:type_name -> arbiter.ClientLaneParams
+	1,  // 4: arbiter.UpdateConsensusParamsCmd.update:type_name -> arbiter.ConsensusParamsUpdate
+	12, // 5: arbiter.AbortSnapshotQueryRequest.record:type_name -> arbiter.SnapshotQueryAbortRecord
+	13, // 6: arbiter.ActivateQueryProfileRequest.activation:type_name -> arbiter.ActiveQueryPolicy
+	0,  // 7: arbiter.ConsensusParamsState.bootstrap:type_name -> arbiter.ConsensusMutableParams
+	0,  // 8: arbiter.ConsensusParamsState.current:type_name -> arbiter.ConsensusMutableParams
+	8,  // 9: arbiter.NodeFeatures.entries:type_name -> arbiter.NodeFeatureEntry
+	14, // 10: arbiter.ConsensusAdmin.GetProtocolInfo:input_type -> google.protobuf.Empty
+	14, // 11: arbiter.ConsensusAdmin.GetConsensusParams:input_type -> google.protobuf.Empty
+	2,  // 12: arbiter.ConsensusAdmin.UpdateConsensusParams:input_type -> arbiter.UpdateConsensusParamsCmd
+	3,  // 13: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:input_type -> arbiter.GetSnapshotQueryAbortCandidateRequest
+	4,  // 14: arbiter.ConsensusAdmin.AbortSnapshotQuery:input_type -> arbiter.AbortSnapshotQueryRequest
+	5,  // 15: arbiter.ConsensusAdmin.ActivateQueryProfile:input_type -> arbiter.ActivateQueryProfileRequest
+	14, // 16: arbiter.ConsensusAdmin.GetNodeFeatures:input_type -> google.protobuf.Empty
+	6,  // 17: arbiter.ConsensusAdmin.GetProtocolInfo:output_type -> arbiter.ProtocolInfo
+	7,  // 18: arbiter.ConsensusAdmin.GetConsensusParams:output_type -> arbiter.ConsensusParamsState
+	15, // 19: arbiter.ConsensusAdmin.UpdateConsensusParams:output_type -> arbiter.Ack
+	12, // 20: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:output_type -> arbiter.SnapshotQueryAbortRecord
+	16, // 21: arbiter.ConsensusAdmin.AbortSnapshotQuery:output_type -> arbiter.SnapshotQueryStatus
+	15, // 22: arbiter.ConsensusAdmin.ActivateQueryProfile:output_type -> arbiter.Ack
+	9,  // 23: arbiter.ConsensusAdmin.GetNodeFeatures:output_type -> arbiter.NodeFeatures
+	17, // [17:24] is the sub-list for method output_type
+	10, // [10:17] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_consensus_proto_init() }
@@ -750,7 +916,7 @@ func file_consensus_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_consensus_proto_rawDesc), len(file_consensus_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

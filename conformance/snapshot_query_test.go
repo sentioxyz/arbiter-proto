@@ -243,6 +243,37 @@ var tableRegistryFieldNumbers = map[string]int32{
 	"ConsensusParamsUpdate":  9,
 }
 
+// clientLaneFields pins the exact trailing field the client_seq lane work
+// (housegate spec 2026-10-09 §5.2) appended to each message that existed in
+// every baseline that carries them: StatementID.client_lane = 4,
+// NodeRegistration.features = 5 (repeated string, request-only),
+// ProtocolInfo.features = 4 (repeated string) and ConsensusMutableParams.client_lanes = 5 /
+// ConsensusParamsUpdate.client_lanes = 10, which follow table_registry and are
+// therefore stripped before that exemption runs. Every existing baseline
+// predates the addition, so the exemption applies unconditionally.
+var clientLaneFields = map[string]*descriptorpb.FieldDescriptorProto{
+	"StatementID": {
+		Name: proto.String("client_lane"), JsonName: proto.String("clientLane"), Number: proto.Int32(4),
+		Label: descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(), Type: descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
+	},
+	"NodeRegistration": {
+		Name: proto.String("features"), JsonName: proto.String("features"), Number: proto.Int32(5),
+		Label: descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum(), Type: descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
+	},
+	"ProtocolInfo": {
+		Name: proto.String("features"), JsonName: proto.String("features"), Number: proto.Int32(4),
+		Label: descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum(), Type: descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
+	},
+	"ConsensusMutableParams": {
+		Name: proto.String("client_lanes"), JsonName: proto.String("clientLanes"), Number: proto.Int32(5),
+		Label: descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(), Type: descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(), TypeName: proto.String(".arbiter.ClientLaneParams"),
+	},
+	"ConsensusParamsUpdate": {
+		Name: proto.String("client_lanes"), JsonName: proto.String("clientLanes"), Number: proto.Int32(10),
+		Label: descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(), Type: descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(), TypeName: proto.String(".arbiter.ClientLaneParams"),
+	},
+}
+
 // replayJobTableSetFields pins the exact two fields sub-project 2b appended
 // to ReplayJob (task 3 of the dynamic SI table set): table_set_transition
 // (message ReplayTableSetTransition) and table_schemas (repeated message
@@ -331,6 +362,16 @@ func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.File
 					}
 				}
 				got.Field = got.Field[:len(m.Field)]
+			}
+			if want, ok := clientLaneFields[m.GetName()]; ok {
+				if len(got.Field) == 0 {
+					t.Fatalf("%s missing fields entirely", m.GetName())
+				}
+				last := got.Field[len(got.Field)-1]
+				if last.GetNumber() != want.GetNumber() || !proto.Equal(last, want) {
+					t.Fatalf("%s addition must be exactly %s = %d: %v", m.GetName(), want.GetName(), want.GetNumber(), got)
+				}
+				got.Field = got.Field[:len(got.Field)-1]
 			}
 			if num, ok := tableRegistryFieldNumbers[m.GetName()]; ok {
 				if len(got.Field) == 0 {

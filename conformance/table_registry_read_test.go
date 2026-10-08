@@ -32,7 +32,7 @@ func TestTableRegistryReadContract(t *testing.T) {
 			{"deleted", 13, protoreflect.MessageKind, false}, {"retire_reason", 14, protoreflect.EnumKind, false}, {"add_block_seq", 15, protoreflect.Uint64Kind, false},
 			{"retire_block_seq", 16, protoreflect.Uint64Kind, false}, {"purged_by", 17, protoreflect.StringKind, true},
 		}},
-		{&pb.TableRegistrySnapshot{}, []field{{"params", 1, protoreflect.MessageKind, false}, {"version", 2, protoreflect.Uint64Kind, false}, {"seeded", 3, protoreflect.BoolKind, false}, {"cursor", 4, protoreflect.MessageKind, false}, {"incarnations", 5, protoreflect.MessageKind, true}}},
+		{&pb.TableRegistrySnapshot{}, []field{{"params", 1, protoreflect.MessageKind, false}, {"version", 2, protoreflect.Uint64Kind, false}, {"seeded", 3, protoreflect.BoolKind, false}, {"cursor", 4, protoreflect.MessageKind, false}, {"incarnations", 5, protoreflect.MessageKind, true}, {"client_lanes", 6, protoreflect.MessageKind, false}}},
 		{&pb.WatchTableRegistryRequest{}, []field{{"since_version", 1, protoreflect.Uint64Kind, false}}},
 		{&pb.TableSetAdd{}, []field{{"table_id", 1, protoreflect.StringKind, false}, {"schema_hash", 2, protoreflect.StringKind, false}}},
 		{&pb.TableSetTransition{}, []field{{"adds", 1, protoreflect.MessageKind, true}, {"retires", 2, protoreflect.StringKind, true}, {"new_schema_root", 3, protoreflect.StringKind, false}}},

@@ -19,6 +19,14 @@ message TableRegistryParams {
   string confirmation = 5;
 }
 
+// ClientLaneParams enables client_seq lanes (housegate spec 2026-10-09 D13).
+// Absent until an authority-signed consensus update sets it; afterwards every
+// update carries it, max_lanes_per_account only rises, and it is never removed.
+// Defined here because consensus.proto imports this file.
+message ClientLaneParams {
+  uint32 max_lanes_per_account = 1;
+}
+
 message L2BlockRef {
   uint64 number = 1;
   string hash = 2;
@@ -148,6 +156,9 @@ message TableRegistrySnapshot {
   bool seeded = 3;
   TableRegistryCursor cursor = 4;
   repeated TableIncarnation incarnations = 5;
+  // The committed client-lane parameter, so data-plane nodes learn activation
+  // through the registry follower. Setting or raising it bumps version.
+  ClientLaneParams client_lanes = 6;
 }
 
 // PurgeNodeSet is the committed set of data-plane nodes whose

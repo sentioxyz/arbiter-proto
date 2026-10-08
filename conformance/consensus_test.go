@@ -15,17 +15,17 @@ func TestConsensusUpdateContract(t *testing.T) {
 		kinds   []protoreflect.Kind
 	}{
 		{&pb.ConsensusParamsUpdate{},
-			[]protoreflect.Name{"network_id", "genesis_snapshot_id", "expected_epoch", "previous_params_digest", "authority_addresses", "max_writers", "expected_promotion_seq", "artifact_disposition_capability", "table_registry"},
-			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.StringKind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.Uint64Kind, protoreflect.Uint32Kind, protoreflect.MessageKind}},
+			[]protoreflect.Name{"network_id", "genesis_snapshot_id", "expected_epoch", "previous_params_digest", "authority_addresses", "max_writers", "expected_promotion_seq", "artifact_disposition_capability", "table_registry", "client_lanes"},
+			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.StringKind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.Uint64Kind, protoreflect.Uint32Kind, protoreflect.MessageKind, protoreflect.MessageKind}},
 		{&pb.UpdateConsensusParamsCmd{},
 			[]protoreflect.Name{"update", "authority_jws"},
 			[]protoreflect.Kind{protoreflect.MessageKind, protoreflect.StringKind}},
 		{&pb.ConsensusMutableParams{},
-			[]protoreflect.Name{"authority_addresses", "max_writers", "artifact_disposition_capability", "table_registry"},
-			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.Uint32Kind, protoreflect.MessageKind}},
+			[]protoreflect.Name{"authority_addresses", "max_writers", "artifact_disposition_capability", "table_registry", "client_lanes"},
+			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.Uint32Kind, protoreflect.MessageKind, protoreflect.MessageKind}},
 		{&pb.ProtocolInfo{},
-			[]protoreflect.Name{"node_id", "protocol_version", "updates_enabled"},
-			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.Uint32Kind, protoreflect.BoolKind}},
+			[]protoreflect.Name{"node_id", "protocol_version", "updates_enabled", "features"},
+			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.Uint32Kind, protoreflect.BoolKind, protoreflect.StringKind}},
 		{&pb.ConsensusParamsState{},
 			[]protoreflect.Name{"protocol_version", "network_id", "genesis_snapshot_id", "bootstrap", "current", "epoch", "params_digest", "promotion_seq"},
 			[]protoreflect.Kind{protoreflect.Uint32Kind, protoreflect.StringKind, protoreflect.StringKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.Uint64Kind, protoreflect.StringKind, protoreflect.Uint64Kind}},
@@ -41,7 +41,7 @@ func TestConsensusUpdateContract(t *testing.T) {
 				if f == nil || f.Number() != protoreflect.FieldNumber(i+1) || f.Kind() != tt.kinds[i] {
 					t.Fatalf("field %s = %v, want number %d kind %s", name, f, i+1, tt.kinds[i])
 				}
-				if f.IsList() != (name == "authority_addresses") {
+				if f.IsList() != (name == "authority_addresses" || name == "features") {
 					t.Fatalf("field %s repeated = %v", name, f.IsList())
 				}
 			}
@@ -63,6 +63,10 @@ func TestConsensusUpdateContract(t *testing.T) {
 		if got := f.Message().FullName(); got != "arbiter.TableRegistryParams" {
 			t.Fatalf("%s.table_registry type = %s", m.ProtoReflect().Descriptor().Name(), got)
 		}
+		f = m.ProtoReflect().Descriptor().Fields().ByName("client_lanes")
+		if got := f.Message().FullName(); got != "arbiter.ClientLaneParams" {
+			t.Fatalf("%s.client_lanes type = %s", m.ProtoReflect().Descriptor().Name(), got)
+		}
 	}
 }
 
@@ -79,7 +83,7 @@ func TestConsensusUpdateAppendsRaftSlot18(t *testing.T) {
 
 func TestConsensusAdminRPCSignatures(t *testing.T) {
 	service := pb.File_consensus_proto.Services().ByName("ConsensusAdmin")
-	if service == nil || service.Methods().Len() != 6 {
+	if service == nil || service.Methods().Len() != 7 {
 		t.Fatalf("ConsensusAdmin service = %v", service)
 	}
 	for _, tt := range []struct {
@@ -92,6 +96,7 @@ func TestConsensusAdminRPCSignatures(t *testing.T) {
 		{"GetSnapshotQueryAbortCandidate", "arbiter.GetSnapshotQueryAbortCandidateRequest", "arbiter.SnapshotQueryAbortRecord"},
 		{"AbortSnapshotQuery", "arbiter.AbortSnapshotQueryRequest", "arbiter.SnapshotQueryStatus"},
 		{"ActivateQueryProfile", "arbiter.ActivateQueryProfileRequest", "arbiter.Ack"},
+		{"GetNodeFeatures", "google.protobuf.Empty", "arbiter.NodeFeatures"},
 	} {
 		method := service.Methods().ByName(tt.name)
 		if method == nil || method.Input().FullName() != tt.input || method.Output().FullName() != tt.output || method.IsStreamingClient() || method.IsStreamingServer() {

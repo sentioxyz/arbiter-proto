@@ -22,6 +22,8 @@ message ConsensusMutableParams {
   // Set once by a signed update and then carried unchanged by every later
   // update; absent means the dynamic table registry is disabled.
   TableRegistryParams table_registry = 4;
+  // Set once by a signed update, then carried by every update; raise-only.
+  ClientLaneParams client_lanes = 5;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -42,6 +44,8 @@ message ConsensusParamsUpdate {
   uint32 artifact_disposition_capability = 8;
   // Absent keeps the registry disabled. Once set it must be resent unchanged.
   TableRegistryParams table_registry = 9;
+  // Absent keeps client lanes disabled. Once set it must be resent; lowering or removal is refused.
+  ClientLaneParams client_lanes = 10;
 }
 
 // UpdateConsensusParamsCmd is both the administration request and the
@@ -84,6 +88,9 @@ message ProtocolInfo {
   string node_id = 1;
   uint32 protocol_version = 2;
   bool updates_enabled = 3;
+  // Capability strings of this binary ("client_lanes_v1"); a static local
+  // property, read by arbiter-admin's activation gate on every voter.
+  repeated string features = 4;
 }
 
 // ConsensusParamsState is a leader-barrier view used to prepare the next
@@ -99,6 +106,23 @@ message ConsensusParamsState {
   // fields; this is not only a digest of ConsensusMutableParams.
   string params_digest = 7;
   uint64 promotion_seq = 8;
+}
+
+// NodeFeatureEntry joins one non-evicted verifier or SNode registration with
+// the features its latest RegisterNode on the current leader advertised.
+// features is empty when this leader has not seen it register.
+message NodeFeatureEntry {
+  string node_id = 1;
+  repeated string features = 2;
+  int64 registered_unix = 3;
+}
+
+// NodeFeatures is the leader's non-replicated feature book. raft_voter_ids is
+// the current Raft configuration's voter ids, so the activation gate can prove
+// it probed every voter.
+message NodeFeatures {
+  repeated NodeFeatureEntry entries = 1;
+  repeated string raft_voter_ids = 2;
 }
 
 service ConsensusAdmin {
@@ -119,4 +143,7 @@ service ConsensusAdmin {
   rpc AbortSnapshotQuery (AbortSnapshotQueryRequest) returns (SnapshotQueryStatus) {}
   // Leader-only, explicitly enabled mutation: proposes Raft tag 23.
   rpc ActivateQueryProfile (ActivateQueryProfileRequest) returns (Ack) {}
+  // Leader-only read with a barrier: one entry per non-evicted verifier and
+  // SNode registration joined with the leader's non-replicated feature book.
+  rpc GetNodeFeatures (google.protobuf.Empty) returns (NodeFeatures) {}
 }
