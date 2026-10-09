@@ -1047,6 +1047,7 @@ const (
 	SafeState_GetL3Block_FullMethodName           = "/arbiter.SafeState/GetL3Block"
 	SafeState_GetPublishedSnapshot_FullMethodName = "/arbiter.SafeState/GetPublishedSnapshot"
 	SafeState_GetQueryPolicy_FullMethodName       = "/arbiter.SafeState/GetQueryPolicy"
+	SafeState_GetClientSeqState_FullMethodName    = "/arbiter.SafeState/GetClientSeqState"
 )
 
 // SafeStateClient is the client API for SafeState service.
@@ -1064,6 +1065,9 @@ type SafeStateClient interface {
 	// Authenticated exact committed reads; missing records never imply publication.
 	GetPublishedSnapshot(ctx context.Context, in *GetPublishedSnapshotRequest, opts ...grpc.CallOption) (*PublishedSnapshot, error)
 	GetQueryPolicy(ctx context.Context, in *GetQueryPolicyRequest, opts ...grpc.CallOption) (*QueryPolicyStatus, error)
+	// Local read of the serving voter's applied accumulator state for one
+	// subject (operators and recovery tooling); no leader barrier.
+	GetClientSeqState(ctx context.Context, in *GetClientSeqStateRequest, opts ...grpc.CallOption) (*ClientSeqState, error)
 }
 
 type safeStateClient struct {
@@ -1134,6 +1138,16 @@ func (c *safeStateClient) GetQueryPolicy(ctx context.Context, in *GetQueryPolicy
 	return out, nil
 }
 
+func (c *safeStateClient) GetClientSeqState(ctx context.Context, in *GetClientSeqStateRequest, opts ...grpc.CallOption) (*ClientSeqState, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ClientSeqState)
+	err := c.cc.Invoke(ctx, SafeState_GetClientSeqState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SafeStateServer is the server API for SafeState service.
 // All implementations must embed UnimplementedSafeStateServer
 // for forward compatibility.
@@ -1149,6 +1163,9 @@ type SafeStateServer interface {
 	// Authenticated exact committed reads; missing records never imply publication.
 	GetPublishedSnapshot(context.Context, *GetPublishedSnapshotRequest) (*PublishedSnapshot, error)
 	GetQueryPolicy(context.Context, *GetQueryPolicyRequest) (*QueryPolicyStatus, error)
+	// Local read of the serving voter's applied accumulator state for one
+	// subject (operators and recovery tooling); no leader barrier.
+	GetClientSeqState(context.Context, *GetClientSeqStateRequest) (*ClientSeqState, error)
 	mustEmbedUnimplementedSafeStateServer()
 }
 
@@ -1176,6 +1193,9 @@ func (UnimplementedSafeStateServer) GetPublishedSnapshot(context.Context, *GetPu
 }
 func (UnimplementedSafeStateServer) GetQueryPolicy(context.Context, *GetQueryPolicyRequest) (*QueryPolicyStatus, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetQueryPolicy not implemented")
+}
+func (UnimplementedSafeStateServer) GetClientSeqState(context.Context, *GetClientSeqStateRequest) (*ClientSeqState, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetClientSeqState not implemented")
 }
 func (UnimplementedSafeStateServer) mustEmbedUnimplementedSafeStateServer() {}
 func (UnimplementedSafeStateServer) testEmbeddedByValue()                   {}
@@ -1306,6 +1326,24 @@ func _SafeState_GetQueryPolicy_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SafeState_GetClientSeqState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetClientSeqStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SafeStateServer).GetClientSeqState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SafeState_GetClientSeqState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SafeStateServer).GetClientSeqState(ctx, req.(*GetClientSeqStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SafeState_ServiceDesc is the grpc.ServiceDesc for SafeState service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1336,6 +1374,10 @@ var SafeState_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetQueryPolicy",
 			Handler:    _SafeState_GetQueryPolicy_Handler,
+		},
+		{
+			MethodName: "GetClientSeqState",
+			Handler:    _SafeState_GetClientSeqState_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -54,4 +54,7 @@ var snapshotQueryFields = map[string]string{
 	"ReplayTableSetTransition":            "adds:[]ReplayTableSchema retires:[]string new_schema_root:string",
 	"TableSetAdd":                         "table_id:string schema_hash:string",
 	"TableSetTransition":                  "adds:[]TableSetAdd retires:[]string new_schema_root:string",
+	"GetClientSeqStateRequest":            "client_account:string client_lane:string",
+	"ClientSeqRange":                      "start:uint64 end:uint64",
+	"ClientSeqState":                      "found:bool subject:string hi:uint64 ranges:[]ClientSeqRange",
 }

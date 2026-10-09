@@ -30,6 +30,7 @@ const (
 	ConsensusAdmin_GetSnapshotQueryAbortCandidate_FullMethodName = "/arbiter.ConsensusAdmin/GetSnapshotQueryAbortCandidate"
 	ConsensusAdmin_AbortSnapshotQuery_FullMethodName             = "/arbiter.ConsensusAdmin/AbortSnapshotQuery"
 	ConsensusAdmin_ActivateQueryProfile_FullMethodName           = "/arbiter.ConsensusAdmin/ActivateQueryProfile"
+	ConsensusAdmin_GetNodeFeatures_FullMethodName                = "/arbiter.ConsensusAdmin/GetNodeFeatures"
 )
 
 // ConsensusAdminClient is the client API for ConsensusAdmin service.
@@ -53,6 +54,9 @@ type ConsensusAdminClient interface {
 	AbortSnapshotQuery(ctx context.Context, in *AbortSnapshotQueryRequest, opts ...grpc.CallOption) (*SnapshotQueryStatus, error)
 	// Leader-only, explicitly enabled mutation: proposes Raft tag 23.
 	ActivateQueryProfile(ctx context.Context, in *ActivateQueryProfileRequest, opts ...grpc.CallOption) (*Ack, error)
+	// Leader-only read with a barrier: one entry per non-evicted verifier and
+	// SNode registration joined with the leader's non-replicated feature book.
+	GetNodeFeatures(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*NodeFeatures, error)
 }
 
 type consensusAdminClient struct {
@@ -123,6 +127,16 @@ func (c *consensusAdminClient) ActivateQueryProfile(ctx context.Context, in *Act
 	return out, nil
 }
 
+func (c *consensusAdminClient) GetNodeFeatures(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*NodeFeatures, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NodeFeatures)
+	err := c.cc.Invoke(ctx, ConsensusAdmin_GetNodeFeatures_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsensusAdminServer is the server API for ConsensusAdmin service.
 // All implementations must embed UnimplementedConsensusAdminServer
 // for forward compatibility.
@@ -144,6 +158,9 @@ type ConsensusAdminServer interface {
 	AbortSnapshotQuery(context.Context, *AbortSnapshotQueryRequest) (*SnapshotQueryStatus, error)
 	// Leader-only, explicitly enabled mutation: proposes Raft tag 23.
 	ActivateQueryProfile(context.Context, *ActivateQueryProfileRequest) (*Ack, error)
+	// Leader-only read with a barrier: one entry per non-evicted verifier and
+	// SNode registration joined with the leader's non-replicated feature book.
+	GetNodeFeatures(context.Context, *emptypb.Empty) (*NodeFeatures, error)
 	mustEmbedUnimplementedConsensusAdminServer()
 }
 
@@ -171,6 +188,9 @@ func (UnimplementedConsensusAdminServer) AbortSnapshotQuery(context.Context, *Ab
 }
 func (UnimplementedConsensusAdminServer) ActivateQueryProfile(context.Context, *ActivateQueryProfileRequest) (*Ack, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ActivateQueryProfile not implemented")
+}
+func (UnimplementedConsensusAdminServer) GetNodeFeatures(context.Context, *emptypb.Empty) (*NodeFeatures, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNodeFeatures not implemented")
 }
 func (UnimplementedConsensusAdminServer) mustEmbedUnimplementedConsensusAdminServer() {}
 func (UnimplementedConsensusAdminServer) testEmbeddedByValue()                        {}
@@ -301,6 +321,24 @@ func _ConsensusAdmin_ActivateQueryProfile_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConsensusAdmin_GetNodeFeatures_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusAdminServer).GetNodeFeatures(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusAdmin_GetNodeFeatures_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusAdminServer).GetNodeFeatures(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConsensusAdmin_ServiceDesc is the grpc.ServiceDesc for ConsensusAdmin service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -331,6 +369,10 @@ var ConsensusAdmin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ActivateQueryProfile",
 			Handler:    _ConsensusAdmin_ActivateQueryProfile_Handler,
+		},
+		{
+			MethodName: "GetNodeFeatures",
+			Handler:    _ConsensusAdmin_GetNodeFeatures_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
