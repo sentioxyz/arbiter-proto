@@ -25,8 +25,8 @@ func TestTablePurgeContract(t *testing.T) {
 		t.Fatalf("PromotionGateway.AckCleanup = %v", ack)
 	}
 	cmd := (&pb.RecordTablePurgedCmd{}).ProtoReflect().Descriptor().Fields()
-	if cmd.Len() != 2 {
-		t.Fatalf("RecordTablePurgedCmd has %d fields, want 2", cmd.Len())
+	if cmd.Len() != 4 {
+		t.Fatalf("RecordTablePurgedCmd has %d fields, want 4", cmd.Len())
 	}
 	if f := cmd.ByName("node_id"); f == nil || f.Number() != 1 || f.Kind() != protoreflect.StringKind {
 		t.Fatalf("RecordTablePurgedCmd.node_id = %v", f)

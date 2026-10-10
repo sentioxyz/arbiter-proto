@@ -22,11 +22,11 @@ func TestTableRegistryContract(t *testing.T) {
 		{&pb.L2BlockRef{}, []field{{"number", protoreflect.Uint64Kind, false}, {"hash", protoreflect.StringKind, false}}},
 		{&pb.L2EventRef{}, []field{{"block_number", protoreflect.Uint64Kind, false}, {"block_hash", protoreflect.StringKind, false}, {"log_index", protoreflect.Uint64Kind, false}, {"tx_hash", protoreflect.StringKind, false}}},
 		{&pb.LegacyTable{}, []field{{"database_id", protoreflect.StringKind, false}, {"table_id", protoreflect.StringKind, false}, {"created", protoreflect.MessageKind, false}}},
-		{&pb.SeedLegacyTablesCmd{}, []field{{"at_block", protoreflect.MessageKind, false}, {"tables", protoreflect.MessageKind, true}}},
-		{&pb.AddTableCmd{}, []field{{"database_id", protoreflect.StringKind, false}, {"table_id", protoreflect.StringKind, false}, {"created", protoreflect.MessageKind, false}, {"schema", protoreflect.MessageKind, false}, {"schema_version", protoreflect.Uint32Kind, false}, {"schema_hash", protoreflect.StringKind, false}, {"schema_json", protoreflect.StringKind, false}}},
+		{&pb.SeedLegacyTablesCmd{}, []field{{"at_block", protoreflect.MessageKind, false}, {"tables", protoreflect.MessageKind, true}, {"indexer_id", protoreflect.Uint64Kind, false}}},
+		{&pb.AddTableCmd{}, []field{{"database_id", protoreflect.StringKind, false}, {"table_id", protoreflect.StringKind, false}, {"created", protoreflect.MessageKind, false}, {"schema", protoreflect.MessageKind, false}, {"schema_version", protoreflect.Uint32Kind, false}, {"schema_hash", protoreflect.StringKind, false}, {"schema_json", protoreflect.StringKind, false}, {"owner_indexer_id", protoreflect.Uint64Kind, false}}},
 		{&pb.RetireTablesCmd{}, []field{{"database_id", protoreflect.StringKind, false}, {"table_ids", protoreflect.StringKind, true}, {"deleted", protoreflect.MessageKind, false}, {"reason", protoreflect.EnumKind, false}}},
 		{&pb.AdvanceL2CursorCmd{}, []field{{"to", protoreflect.MessageKind, false}}},
-		{&pb.RecordTablePurgedCmd{}, []field{{"node_id", protoreflect.StringKind, false}, {"incarnation_seq", protoreflect.Uint64Kind, false}}},
+		{&pb.RecordTablePurgedCmd{}, []field{{"node_id", protoreflect.StringKind, false}, {"incarnation_seq", protoreflect.Uint64Kind, false}, {"signer_jws", protoreflect.StringKind, false}, {"ed25519_signature", protoreflect.StringKind, false}}},
 	}
 	for _, tt := range tests {
 		d := tt.message.ProtoReflect().Descriptor()

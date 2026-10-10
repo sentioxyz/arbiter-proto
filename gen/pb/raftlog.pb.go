@@ -235,8 +235,14 @@ func (x *MarkReplayingCmd) GetBlockSeq() uint64 {
 
 // RegisterRCCmd → UnsafeRegistered (late binding by statement_id, §5.5).
 type RegisterRCCmd struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Rc            *RCRecord              `protobuf:"bytes,1,opt,name=rc,proto3" json:"rc,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// rc.source_jws is always empty here; the signature rides in source_jws.
+	Rc *RCRecord `protobuf:"bytes,1,opt,name=rc,proto3" json:"rc,omitempty"`
+	// RCRecord.source_jws, moved out of rc (housegate spec 2026-10-10 §6.5). Set
+	// only after the signed-claims activation, when Apply verifies it before
+	// parking or binding the claim. Never proposed before it: a voter whose
+	// decoder lacks this field would refuse the command.
+	SourceJws     string `protobuf:"bytes,2,opt,name=source_jws,json=sourceJws,proto3" json:"source_jws,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -276,6 +282,13 @@ func (x *RegisterRCCmd) GetRc() *RCRecord {
 		return x.Rc
 	}
 	return nil
+}
+
+func (x *RegisterRCCmd) GetSourceJws() string {
+	if x != nil {
+		return x.SourceJws
+	}
+	return ""
 }
 
 // RecordAttestationCmd: verify ed25519 signature, recompute receipt_hash
@@ -499,8 +512,14 @@ func (x *RecordPromotionIssuedCmd) GetAuthorityJws() string {
 // RecordPromotionAckCmd records SNode's REPLACE PARTITION ack; the FSM
 // checks the closure equality before advancing the watermark (§7.3, §8.4).
 type RecordPromotionAckCmd struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ack           *PromotionAck          `protobuf:"bytes,1,opt,name=ack,proto3" json:"ack,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// ack.source_jws is always empty here; the signature rides in source_jws.
+	Ack *PromotionAck `protobuf:"bytes,1,opt,name=ack,proto3" json:"ack,omitempty"`
+	// PromotionAck.source_jws, moved out of ack. Set only after the
+	// signed-claims activation, when Apply takes the ack only from the
+	// promotion's expected source with a valid signature; never proposed before
+	// it.
+	SourceJws     string `protobuf:"bytes,2,opt,name=source_jws,json=sourceJws,proto3" json:"source_jws,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -540,6 +559,13 @@ func (x *RecordPromotionAckCmd) GetAck() *PromotionAck {
 		return x.Ack
 	}
 	return nil
+}
+
+func (x *RecordPromotionAckCmd) GetSourceJws() string {
+	if x != nil {
+		return x.SourceJws
+	}
+	return ""
 }
 
 // PublishSafeSnapshotCmd: validated via pkg/replay Seal/Validate in Apply,
@@ -644,8 +670,12 @@ func (x *ScheduleUnsafeCleanupCmd) GetAuthorityJws() string {
 
 // RecordCleanupAckCmd clears PromotedUnsafe entries (idempotent, §10.3).
 type RecordCleanupAckCmd struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ack           *CleanupAck            `protobuf:"bytes,1,opt,name=ack,proto3" json:"ack,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// ack.source_jws is always empty here; the signature rides in source_jws.
+	Ack *CleanupAck `protobuf:"bytes,1,opt,name=ack,proto3" json:"ack,omitempty"`
+	// CleanupAck.source_jws, moved out of ack; the same activation rule as
+	// RecordPromotionAckCmd.source_jws.
+	SourceJws     string `protobuf:"bytes,2,opt,name=source_jws,json=sourceJws,proto3" json:"source_jws,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -685,6 +715,13 @@ func (x *RecordCleanupAckCmd) GetAck() *CleanupAck {
 		return x.Ack
 	}
 	return nil
+}
+
+func (x *RecordCleanupAckCmd) GetSourceJws() string {
+	if x != nil {
+		return x.SourceJws
+	}
+	return ""
 }
 
 type OpenChallengeCmd struct {
@@ -803,10 +840,19 @@ func (x *ResolveChallengeCmd) GetVerdict() ChallengeVerdict {
 }
 
 type RegisterNodeCmd struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Registration  *NodeRegistration      `protobuf:"bytes,1,opt,name=registration,proto3" json:"registration,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// registration.registration_seq is replicated and signed;
+	// registration.features, signer_jws and ed25519_signature are request-only
+	// and always empty here.
+	Registration *NodeRegistration `protobuf:"bytes,1,opt,name=registration,proto3" json:"registration,omitempty"`
+	// NodeRegistration.signer_jws (SNODE role), moved out of registration.
+	SignerJws string `protobuf:"bytes,2,opt,name=signer_jws,json=signerJws,proto3" json:"signer_jws,omitempty"`
+	// NodeRegistration.ed25519_signature (VERIFIER role), moved out of
+	// registration. Both signatures and registration.registration_seq are set
+	// only after the signed-claims activation; never proposed before it.
+	Ed25519Signature string `protobuf:"bytes,3,opt,name=ed25519_signature,json=ed25519Signature,proto3" json:"ed25519_signature,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *RegisterNodeCmd) Reset() {
@@ -846,11 +892,32 @@ func (x *RegisterNodeCmd) GetRegistration() *NodeRegistration {
 	return nil
 }
 
+func (x *RegisterNodeCmd) GetSignerJws() string {
+	if x != nil {
+		return x.SignerJws
+	}
+	return ""
+}
+
+func (x *RegisterNodeCmd) GetEd25519Signature() string {
+	if x != nil {
+		return x.Ed25519Signature
+	}
+	return ""
+}
+
 type MarkActiveCmd struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	NodeId string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	// Copied from NodeRef. All three are set only after the signed-claims
+	// activation, when registration_seq must equal the node's last applied
+	// registration_seq and the signature must match the node's role; never
+	// proposed before it.
+	RegistrationSeq  uint64 `protobuf:"varint,2,opt,name=registration_seq,json=registrationSeq,proto3" json:"registration_seq,omitempty"`
+	SignerJws        string `protobuf:"bytes,3,opt,name=signer_jws,json=signerJws,proto3" json:"signer_jws,omitempty"`
+	Ed25519Signature string `protobuf:"bytes,4,opt,name=ed25519_signature,json=ed25519Signature,proto3" json:"ed25519_signature,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *MarkActiveCmd) Reset() {
@@ -890,12 +957,40 @@ func (x *MarkActiveCmd) GetNodeId() string {
 	return ""
 }
 
+func (x *MarkActiveCmd) GetRegistrationSeq() uint64 {
+	if x != nil {
+		return x.RegistrationSeq
+	}
+	return 0
+}
+
+func (x *MarkActiveCmd) GetSignerJws() string {
+	if x != nil {
+		return x.SignerJws
+	}
+	return ""
+}
+
+func (x *MarkActiveCmd) GetEd25519Signature() string {
+	if x != nil {
+		return x.Ed25519Signature
+	}
+	return ""
+}
+
 type EvictNodeCmd struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
-	Reason        string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	NodeId string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	Reason string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	// From EvictNodeRequest (ConsensusAdmin.EvictNode), set only after the
+	// signed-claims activation: Apply then requires expected_registration_seq
+	// to equal the node's last applied registration_seq and authority_jws to
+	// verify against the current authority set and epoch. Before the activation
+	// no RPC proposes EvictNodeCmd and both stay empty.
+	ExpectedRegistrationSeq uint64 `protobuf:"varint,3,opt,name=expected_registration_seq,json=expectedRegistrationSeq,proto3" json:"expected_registration_seq,omitempty"`
+	AuthorityJws            string `protobuf:"bytes,4,opt,name=authority_jws,json=authorityJws,proto3" json:"authority_jws,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *EvictNodeCmd) Reset() {
@@ -938,6 +1033,20 @@ func (x *EvictNodeCmd) GetNodeId() string {
 func (x *EvictNodeCmd) GetReason() string {
 	if x != nil {
 		return x.Reason
+	}
+	return ""
+}
+
+func (x *EvictNodeCmd) GetExpectedRegistrationSeq() uint64 {
+	if x != nil {
+		return x.ExpectedRegistrationSeq
+	}
+	return 0
+}
+
+func (x *EvictNodeCmd) GetAuthorityJws() string {
+	if x != nil {
+		return x.AuthorityJws
 	}
 	return ""
 }
@@ -2058,9 +2167,11 @@ const file_raftlog_proto_rawDesc = "" +
 	"\x14non_membership_proof\x18\x02 \x01(\fR\x12nonMembershipProof\"\x10\n" +
 	"\x0eSealL3BlockCmd\"/\n" +
 	"\x10MarkReplayingCmd\x12\x1b\n" +
-	"\tblock_seq\x18\x01 \x01(\x04R\bblockSeq\"2\n" +
+	"\tblock_seq\x18\x01 \x01(\x04R\bblockSeq\"Q\n" +
 	"\rRegisterRCCmd\x12!\n" +
-	"\x02rc\x18\x01 \x01(\v2\x11.arbiter.RCRecordR\x02rc\"T\n" +
+	"\x02rc\x18\x01 \x01(\v2\x11.arbiter.RCRecordR\x02rc\x12\x1d\n" +
+	"\n" +
+	"source_jws\x18\x02 \x01(\tR\tsourceJws\"T\n" +
 	"\x14RecordAttestationCmd\x12<\n" +
 	"\vattestation\x18\x01 \x01(\v2\x1a.arbiter.ReplayAttestationR\vattestation\"E\n" +
 	"\x15RecordByteSideScanCmd\x12,\n" +
@@ -2073,30 +2184,43 @@ const file_raftlog_proto_rawDesc = "" +
 	"\x16last_mergeable_reached\x18\x04 \x01(\bR\x14lastMergeableReached\"x\n" +
 	"\x18RecordPromotionIssuedCmd\x127\n" +
 	"\apromote\x18\x01 \x01(\v2\x1d.arbiter.PromoteSafePartitionR\apromote\x12#\n" +
-	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"@\n" +
+	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"_\n" +
 	"\x15RecordPromotionAckCmd\x12'\n" +
-	"\x03ack\x18\x01 \x01(\v2\x15.arbiter.PromotionAckR\x03ack\"S\n" +
+	"\x03ack\x18\x01 \x01(\v2\x15.arbiter.PromotionAckR\x03ack\x12\x1d\n" +
+	"\n" +
+	"source_jws\x18\x02 \x01(\tR\tsourceJws\"S\n" +
 	"\x16PublishSafeSnapshotCmd\x129\n" +
 	"\bmanifest\x18\x01 \x01(\v2\x1d.arbiter.SafeSnapshotManifestR\bmanifest\"q\n" +
 	"\x18ScheduleUnsafeCleanupCmd\x120\n" +
 	"\acleanup\x18\x01 \x01(\v2\x16.arbiter.UnsafeCleanupR\acleanup\x12#\n" +
-	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"<\n" +
+	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"[\n" +
 	"\x13RecordCleanupAckCmd\x12%\n" +
-	"\x03ack\x18\x01 \x01(\v2\x13.arbiter.CleanupAckR\x03ack\"d\n" +
+	"\x03ack\x18\x01 \x01(\v2\x13.arbiter.CleanupAckR\x03ack\x12\x1d\n" +
+	"\n" +
+	"source_jws\x18\x02 \x01(\tR\tsourceJws\"d\n" +
 	"\x10OpenChallengeCmd\x12\x1b\n" +
 	"\tblock_seq\x18\x01 \x01(\x04R\bblockSeq\x12\x16\n" +
 	"\x06reason\x18\x02 \x01(\tR\x06reason\x12\x1b\n" +
 	"\topened_by\x18\x03 \x01(\tR\bopenedBy\"g\n" +
 	"\x13ResolveChallengeCmd\x12\x1b\n" +
 	"\tblock_seq\x18\x01 \x01(\x04R\bblockSeq\x123\n" +
-	"\averdict\x18\x02 \x01(\x0e2\x19.arbiter.ChallengeVerdictR\averdict\"P\n" +
+	"\averdict\x18\x02 \x01(\x0e2\x19.arbiter.ChallengeVerdictR\averdict\"\x9c\x01\n" +
 	"\x0fRegisterNodeCmd\x12=\n" +
-	"\fregistration\x18\x01 \x01(\v2\x19.arbiter.NodeRegistrationR\fregistration\"(\n" +
+	"\fregistration\x18\x01 \x01(\v2\x19.arbiter.NodeRegistrationR\fregistration\x12\x1d\n" +
+	"\n" +
+	"signer_jws\x18\x02 \x01(\tR\tsignerJws\x12+\n" +
+	"\x11ed25519_signature\x18\x03 \x01(\tR\x10ed25519Signature\"\x9f\x01\n" +
 	"\rMarkActiveCmd\x12\x17\n" +
-	"\anode_id\x18\x01 \x01(\tR\x06nodeId\"?\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12)\n" +
+	"\x10registration_seq\x18\x02 \x01(\x04R\x0fregistrationSeq\x12\x1d\n" +
+	"\n" +
+	"signer_jws\x18\x03 \x01(\tR\tsignerJws\x12+\n" +
+	"\x11ed25519_signature\x18\x04 \x01(\tR\x10ed25519Signature\"\xa0\x01\n" +
 	"\fEvictNodeCmd\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x16\n" +
-	"\x06reason\x18\x02 \x01(\tR\x06reason\"\xfc\x15\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\x12:\n" +
+	"\x19expected_registration_seq\x18\x03 \x01(\x04R\x17expectedRegistrationSeq\x12#\n" +
+	"\rauthority_jws\x18\x04 \x01(\tR\fauthorityJws\"\xfc\x15\n" +
 	"\vRaftCommand\x12H\n" +
 	"\x10submit_statement\x18\x01 \x01(\v2\x1b.arbiter.SubmitStatementCmdH\x00R\x0fsubmitStatement\x12=\n" +
 	"\rseal_l3_block\x18\x02 \x01(\v2\x17.arbiter.SealL3BlockCmdH\x00R\vsealL3Block\x12B\n" +

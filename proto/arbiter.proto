@@ -113,6 +113,12 @@ enum AdmissionCode {
   // holds client_lanes.max_lanes_per_account lanes. The coordinate is unspent;
   // the client continues on a lane it already holds or on the legacy lane.
   ADMISSION_CODE_LANE_BUDGET_EXCEEDED = 9;
+  // The statement's source — the SNode of its target table's owner,
+  // si_indexers[owner].snode_node_id — is not registered and Active in
+  // committed state (housegate spec 2026-10-10 §6.4). Returned only after the
+  // signed-claims activation. Nothing changed: the coordinate is unspent, and
+  // HouseGate answers a retryable, session-preserving refusal.
+  ADMISSION_CODE_SOURCE_UNAVAILABLE = 10;
 }
 
 message SequencedAck {
@@ -155,17 +161,26 @@ message PartitionLtHashSum {
 // RCRecord is the source's result claim (§4.1, §7.3). Late binding: an
 // RCRecord may arrive before its statement_seq exists; the FSM parks it
 // under statement_id and binds when SubmitStatement assigns the seq (§5.5).
-// v1 trusts the gRPC channel for source identity; a source signature slot
-// can be added compatibly when P5+ decentralizes.
+// Before the signed-claims activation (housegate spec 2026-10-10 §6.7) the
+// FSM trusts the gRPC channel for source identity; after it every claim,
+// parked or bound, must carry a valid source_jws.
 message RCRecord {
   StatementID statement_id = 1;
-  // NodeID of the claiming source SNode; must match the FSM's deterministic
-  // source selection for this statement (§5.4).
+  // NodeID of the claiming source SNode. It must equal the statement's bound
+  // source: the deterministic hash selection (§5.4) before the signed-claims
+  // activation, the owner's SNode (si_indexers[owner].snode_node_id) after it.
   string source_node = 2;
   repeated CandidatePart candidate_parts = 3;
   // The source's claimed post-state root (check 1's right-hand side).
   string source_claim_root = 4;
   repeated PartitionLtHashSum partition_new_part_sums = 5;
+  // After the signed-claims activation: ES256K compact JWS by the signer of
+  // the si_indexers entry whose snode_node_id is source_node, purpose
+  // "arbiter-snode-message-v1", kind "result_claim", over this record without
+  // source_jws, bound to the network id and genesis snapshot id. Request-only:
+  // the server moves it into RegisterRCCmd.source_jws, and an RCRecord inside
+  // a RaftCommand never carries it. Dropped before the activation.
+  string source_jws = 6;
 }
 
 // ============================================================
@@ -309,6 +324,15 @@ message PromotionAck {
   // row LtHash, before replacing physical metadata. Missing inventory is only
   // equivalent to `parts` when the partition had no previously-safe parts.
   repeated SafePartMapping safe_partition_parts = 9;
+  // After the signed-claims activation (housegate spec 2026-10-10 §6.6):
+  // ES256K compact JWS by the signer of the si_indexers entry whose
+  // snode_node_id is node_id, purpose "arbiter-snode-message-v1", kind
+  // "promotion_ack", over this ack without source_jws, bound to the network id
+  // and genesis snapshot id. Only the promotion's expected source (the owner's
+  // SNode) may acknowledge it, and only its signed ack, applied=false
+  // included, changes state. Request-only: the server moves it into
+  // RecordPromotionAckCmd.source_jws. Dropped before the activation.
+  string source_jws = 10;
 }
 
 message CleanupAck {
@@ -316,6 +340,11 @@ message CleanupAck {
   uint64 promotion_seq = 2;
   string table_id = 3;
   string partition_id = 4;
+  // After the signed-claims activation: signed like PromotionAck.source_jws,
+  // with kind "cleanup_ack"; only the cleanup's expected source (the owner's
+  // SNode) may clear it. Request-only: the server moves it into
+  // RecordCleanupAckCmd.source_jws. Dropped before the activation.
+  string source_jws = 5;
 }
 
 // ============================================================
@@ -421,16 +450,53 @@ message NodeRegistration {
   // Advisory dial address, observability only — dispatch always rides
   // node-initiated subscribe streams (§11.1).
   string dial_addr = 4;
-  // Capability strings of the registering binary ("client_lanes_v1").
-  // Request-only: the leader records them in a non-replicated feature book and
-  // never copies them into a RaftCommand or replicated state (housegate spec
-  // 2026-10-09 §5.6), because a voter that does not know this field refuses
-  // every command that carries it.
+  // Capability strings of the registering binary ("client_lanes_v1",
+  // "signed_claims_v1"). Request-only: the leader records them in a
+  // non-replicated feature book and never copies them into a RaftCommand or
+  // replicated state (housegate spec 2026-10-09 §5.6), because a voter that
+  // does not know this field refuses every command that carries it.
   repeated string features = 5;
+  // The node's registration sequence (housegate spec 2026-10-10 §6.5): the
+  // node persists it and raises it before every RegisterNode. After the
+  // signed-claims activation it must exceed the last registration_seq applied
+  // for node_id, so a replayed registration cannot push a running node back to
+  // Syncing. Unlike features it is replicated, inside
+  // RegisterNodeCmd.registration, and covered by the signature; the server
+  // proposes 0 before the activation.
+  uint64 registration_seq = 6;
+  // SNODE role, after the signed-claims activation: ES256K compact JWS by the
+  // signer of the si_indexers entry whose snode_node_id is node_id, purpose
+  // "arbiter-snode-message-v1", kind "registration", over this registration
+  // without features, signer_jws and ed25519_signature, bound to the network
+  // id and genesis snapshot id. Request-only: the server moves it into
+  // RegisterNodeCmd.signer_jws. Dropped before the activation.
+  string signer_jws = 7;
+  // VERIFIER role, after the signed-claims activation: hex ed25519 signature
+  // by the node's verifiers-entry key (equal to ed25519_pubkey) over the
+  // "registration" verifier-message hash of the same body and context.
+  // Request-only: the server moves it into RegisterNodeCmd.ed25519_signature.
+  // Dropped before the activation.
+  string ed25519_signature = 8;
 }
 
+// NodeRef names one data-plane node. It is the MarkActive request and is
+// never embedded in a RaftCommand.
 message NodeRef {
   string node_id = 1;
+  // After the signed-claims activation it must equal the last
+  // registration_seq applied for node_id, binding this activation to that
+  // registration (housegate spec 2026-10-10 §6.5). Copied into MarkActiveCmd;
+  // 0 before the activation.
+  uint64 registration_seq = 2;
+  // SNODE, after the activation: ES256K compact JWS by the entry's signer,
+  // purpose "arbiter-snode-message-v1", kind "mark_active", body {node_id,
+  // registration_seq}. Copied into MarkActiveCmd.signer_jws.
+  string signer_jws = 3;
+  // VERIFIER, after the activation: hex ed25519 signature by the
+  // verifiers-entry key over the "mark_active" verifier-message hash of the
+  // same body. Copied into MarkActiveCmd.ed25519_signature. Both signatures
+  // are dropped before the activation.
+  string ed25519_signature = 4;
 }
 
 // Ack acknowledges an idempotent write; duplicates ack identically.
@@ -509,6 +575,9 @@ service VerifierGateway {
 
 // PromotionGateway is called by SNodes (data plane dials in).
 service PromotionGateway {
+  // Before the signed-claims activation every connected SNode receives every
+  // promotion and cleanup; after it only the table owner's SNode does
+  // (housegate spec 2026-10-10 §6.6).
   rpc SubscribePromotions (SNodeHello) returns (stream PromotionCommand) {}
   // Idempotency key: promotion_seq (per table/partition, §10.3).
   rpc AckPromotion (PromotionAck) returns (Ack) {}
@@ -517,10 +586,12 @@ service PromotionGateway {
   // its hg_* tables and Keeper replica for one Purging incarnation of the
   // dynamic SI table registry. Authenticated like AckCleanup: the node is named
   // by node_id and the FSM accepts only a registered, non-evicted SNode or
-  // verifier. Idempotent: an already-recorded node, or an incarnation that is
-  // already Purged, returns Ack. FAILED_PRECONDITION without a NotLeader
-  // detail means the incarnation is not Purging yet; the caller retries and
-  // never reads it as success.
+  // verifier; after the signed-claims activation the report also carries the
+  // reporter's signature (RecordTablePurgedCmd.signer_jws for an SNode,
+  // ed25519_signature for a verifier). Idempotent: an already-recorded node,
+  // or an incarnation that is already Purged, returns Ack. FAILED_PRECONDITION
+  // without a NotLeader detail means the incarnation is not Purging yet; the
+  // caller retries and never reads it as success.
   rpc SubmitTablePurged (RecordTablePurgedCmd) returns (Ack) {}
 }
 
@@ -564,9 +635,13 @@ service SafeState {
 
 // Membership is called by SNodes / Verifiers.
 service Membership {
+  // After the signed-claims activation (housegate spec 2026-10-10 §6.5) only
+  // an enrolled SNode (some si_indexers snode_node_id) or a listed verifier
+  // may register, signed and with a rising registration_seq.
   rpc RegisterNode (NodeRegistration) returns (Ack) {}
   // MarkActive is accepted only after snapshot sync; Active nodes enter the
-  // deterministic selection pools (§4.1, §7.4).
+  // deterministic selection pools (§4.1, §7.4). After the signed-claims
+  // activation it names the node's current registration_seq and is signed.
   rpc MarkActive (NodeRef) returns (Ack) {}
 }
 
