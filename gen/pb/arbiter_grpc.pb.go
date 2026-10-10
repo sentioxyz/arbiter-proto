@@ -811,6 +811,9 @@ const (
 //
 // PromotionGateway is called by SNodes (data plane dials in).
 type PromotionGatewayClient interface {
+	// Before the signed-claims activation every connected SNode receives every
+	// promotion and cleanup; after it only the table owner's SNode does
+	// (housegate spec 2026-10-10 §6.6).
 	SubscribePromotions(ctx context.Context, in *SNodeHello, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PromotionCommand], error)
 	// Idempotency key: promotion_seq (per table/partition, §10.3).
 	AckPromotion(ctx context.Context, in *PromotionAck, opts ...grpc.CallOption) (*Ack, error)
@@ -819,10 +822,12 @@ type PromotionGatewayClient interface {
 	// its hg_* tables and Keeper replica for one Purging incarnation of the
 	// dynamic SI table registry. Authenticated like AckCleanup: the node is named
 	// by node_id and the FSM accepts only a registered, non-evicted SNode or
-	// verifier. Idempotent: an already-recorded node, or an incarnation that is
-	// already Purged, returns Ack. FAILED_PRECONDITION without a NotLeader
-	// detail means the incarnation is not Purging yet; the caller retries and
-	// never reads it as success.
+	// verifier; after the signed-claims activation the report also carries the
+	// reporter's signature (RecordTablePurgedCmd.signer_jws for an SNode,
+	// ed25519_signature for a verifier). Idempotent: an already-recorded node,
+	// or an incarnation that is already Purged, returns Ack. FAILED_PRECONDITION
+	// without a NotLeader detail means the incarnation is not Purging yet; the
+	// caller retries and never reads it as success.
 	SubmitTablePurged(ctx context.Context, in *RecordTablePurgedCmd, opts ...grpc.CallOption) (*Ack, error)
 }
 
@@ -889,6 +894,9 @@ func (c *promotionGatewayClient) SubmitTablePurged(ctx context.Context, in *Reco
 //
 // PromotionGateway is called by SNodes (data plane dials in).
 type PromotionGatewayServer interface {
+	// Before the signed-claims activation every connected SNode receives every
+	// promotion and cleanup; after it only the table owner's SNode does
+	// (housegate spec 2026-10-10 §6.6).
 	SubscribePromotions(*SNodeHello, grpc.ServerStreamingServer[PromotionCommand]) error
 	// Idempotency key: promotion_seq (per table/partition, §10.3).
 	AckPromotion(context.Context, *PromotionAck) (*Ack, error)
@@ -897,10 +905,12 @@ type PromotionGatewayServer interface {
 	// its hg_* tables and Keeper replica for one Purging incarnation of the
 	// dynamic SI table registry. Authenticated like AckCleanup: the node is named
 	// by node_id and the FSM accepts only a registered, non-evicted SNode or
-	// verifier. Idempotent: an already-recorded node, or an incarnation that is
-	// already Purged, returns Ack. FAILED_PRECONDITION without a NotLeader
-	// detail means the incarnation is not Purging yet; the caller retries and
-	// never reads it as success.
+	// verifier; after the signed-claims activation the report also carries the
+	// reporter's signature (RecordTablePurgedCmd.signer_jws for an SNode,
+	// ed25519_signature for a verifier). Idempotent: an already-recorded node,
+	// or an incarnation that is already Purged, returns Ack. FAILED_PRECONDITION
+	// without a NotLeader detail means the incarnation is not Purging yet; the
+	// caller retries and never reads it as success.
 	SubmitTablePurged(context.Context, *RecordTablePurgedCmd) (*Ack, error)
 	mustEmbedUnimplementedPromotionGatewayServer()
 }
@@ -1395,9 +1405,13 @@ const (
 //
 // Membership is called by SNodes / Verifiers.
 type MembershipClient interface {
+	// After the signed-claims activation (housegate spec 2026-10-10 §6.5) only
+	// an enrolled SNode (some si_indexers snode_node_id) or a listed verifier
+	// may register, signed and with a rising registration_seq.
 	RegisterNode(ctx context.Context, in *NodeRegistration, opts ...grpc.CallOption) (*Ack, error)
 	// MarkActive is accepted only after snapshot sync; Active nodes enter the
-	// deterministic selection pools (§4.1, §7.4).
+	// deterministic selection pools (§4.1, §7.4). After the signed-claims
+	// activation it names the node's current registration_seq and is signed.
 	MarkActive(ctx context.Context, in *NodeRef, opts ...grpc.CallOption) (*Ack, error)
 }
 
@@ -1435,9 +1449,13 @@ func (c *membershipClient) MarkActive(ctx context.Context, in *NodeRef, opts ...
 //
 // Membership is called by SNodes / Verifiers.
 type MembershipServer interface {
+	// After the signed-claims activation (housegate spec 2026-10-10 §6.5) only
+	// an enrolled SNode (some si_indexers snode_node_id) or a listed verifier
+	// may register, signed and with a rising registration_seq.
 	RegisterNode(context.Context, *NodeRegistration) (*Ack, error)
 	// MarkActive is accepted only after snapshot sync; Active nodes enter the
-	// deterministic selection pools (§4.1, §7.4).
+	// deterministic selection pools (§4.1, §7.4). After the signed-claims
+	// activation it names the node's current registration_seq and is signed.
 	MarkActive(context.Context, *NodeRef) (*Ack, error)
 	mustEmbedUnimplementedMembershipServer()
 }

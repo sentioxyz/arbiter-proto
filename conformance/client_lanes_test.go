@@ -55,7 +55,7 @@ func TestClientLanesFieldNumbers(t *testing.T) {
 		})
 	}
 	for msg, want := range map[proto.Message]int{
-		&pb.StatementID{}: 4, &pb.NodeRegistration{}: 5, &pb.ClientLaneParams{}: 1,
+		&pb.StatementID{}: 4, &pb.NodeRegistration{}: 8, &pb.ClientLaneParams{}: 1,
 		&pb.NodeFeatures{}: 2, &pb.NodeFeatureEntry{}: 3, &pb.ProtocolInfo{}: 4,
 		&pb.GetClientSeqStateRequest{}: 2, &pb.ClientSeqRange{}: 2, &pb.ClientSeqState{}: 4,
 	} {
@@ -72,8 +72,8 @@ func TestLaneBudgetAdmissionCodeIsNine(t *testing.T) {
 	if got := int32(pb.AdmissionCode_ADMISSION_CODE_GAP_BUDGET_EXCEEDED); got != 8 {
 		t.Fatalf("ADMISSION_CODE_GAP_BUDGET_EXCEEDED moved to %d", got)
 	}
-	if n := pb.AdmissionCode(0).Descriptor().Values().Len(); n != 10 {
-		t.Fatalf("AdmissionCode has %d values, want 10", n)
+	if n := pb.AdmissionCode(0).Descriptor().Values().Len(); n != 11 {
+		t.Fatalf("AdmissionCode has %d values, want 11", n)
 	}
 }
 

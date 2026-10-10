@@ -31,6 +31,7 @@ const (
 	ConsensusAdmin_AbortSnapshotQuery_FullMethodName             = "/arbiter.ConsensusAdmin/AbortSnapshotQuery"
 	ConsensusAdmin_ActivateQueryProfile_FullMethodName           = "/arbiter.ConsensusAdmin/ActivateQueryProfile"
 	ConsensusAdmin_GetNodeFeatures_FullMethodName                = "/arbiter.ConsensusAdmin/GetNodeFeatures"
+	ConsensusAdmin_EvictNode_FullMethodName                      = "/arbiter.ConsensusAdmin/EvictNode"
 )
 
 // ConsensusAdminClient is the client API for ConsensusAdmin service.
@@ -57,6 +58,12 @@ type ConsensusAdminClient interface {
 	// Leader-only read with a barrier: one entry per non-evicted verifier and
 	// SNode registration joined with the leader's non-replicated feature book.
 	GetNodeFeatures(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*NodeFeatures, error)
+	// Leader-only, authority-authenticated eviction (housegate spec 2026-10-10
+	// §6.5): proposes EvictNodeCmd carrying expected_registration_seq and
+	// authority_jws. Refused with FAILED_PRECONDITION until the signed-claims
+	// activation has committed, because no earlier command may carry those
+	// fields. Ack means committed success.
+	EvictNode(ctx context.Context, in *EvictNodeRequest, opts ...grpc.CallOption) (*Ack, error)
 }
 
 type consensusAdminClient struct {
@@ -137,6 +144,16 @@ func (c *consensusAdminClient) GetNodeFeatures(ctx context.Context, in *emptypb.
 	return out, nil
 }
 
+func (c *consensusAdminClient) EvictNode(ctx context.Context, in *EvictNodeRequest, opts ...grpc.CallOption) (*Ack, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Ack)
+	err := c.cc.Invoke(ctx, ConsensusAdmin_EvictNode_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsensusAdminServer is the server API for ConsensusAdmin service.
 // All implementations must embed UnimplementedConsensusAdminServer
 // for forward compatibility.
@@ -161,6 +178,12 @@ type ConsensusAdminServer interface {
 	// Leader-only read with a barrier: one entry per non-evicted verifier and
 	// SNode registration joined with the leader's non-replicated feature book.
 	GetNodeFeatures(context.Context, *emptypb.Empty) (*NodeFeatures, error)
+	// Leader-only, authority-authenticated eviction (housegate spec 2026-10-10
+	// §6.5): proposes EvictNodeCmd carrying expected_registration_seq and
+	// authority_jws. Refused with FAILED_PRECONDITION until the signed-claims
+	// activation has committed, because no earlier command may carry those
+	// fields. Ack means committed success.
+	EvictNode(context.Context, *EvictNodeRequest) (*Ack, error)
 	mustEmbedUnimplementedConsensusAdminServer()
 }
 
@@ -191,6 +214,9 @@ func (UnimplementedConsensusAdminServer) ActivateQueryProfile(context.Context, *
 }
 func (UnimplementedConsensusAdminServer) GetNodeFeatures(context.Context, *emptypb.Empty) (*NodeFeatures, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNodeFeatures not implemented")
+}
+func (UnimplementedConsensusAdminServer) EvictNode(context.Context, *EvictNodeRequest) (*Ack, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EvictNode not implemented")
 }
 func (UnimplementedConsensusAdminServer) mustEmbedUnimplementedConsensusAdminServer() {}
 func (UnimplementedConsensusAdminServer) testEmbeddedByValue()                        {}
@@ -339,6 +365,24 @@ func _ConsensusAdmin_GetNodeFeatures_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConsensusAdmin_EvictNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EvictNodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusAdminServer).EvictNode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusAdmin_EvictNode_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusAdminServer).EvictNode(ctx, req.(*EvictNodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConsensusAdmin_ServiceDesc is the grpc.ServiceDesc for ConsensusAdmin service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -373,6 +417,10 @@ var ConsensusAdmin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetNodeFeatures",
 			Handler:    _ConsensusAdmin_GetNodeFeatures_Handler,
+		},
+		{
+			MethodName: "EvictNode",
+			Handler:    _ConsensusAdmin_EvictNode_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

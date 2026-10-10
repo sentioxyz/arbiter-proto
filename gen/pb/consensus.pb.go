@@ -39,7 +39,13 @@ type ConsensusMutableParams struct {
 	// update; absent means the dynamic table registry is disabled.
 	TableRegistry *TableRegistryParams `protobuf:"bytes,4,opt,name=table_registry,json=tableRegistry,proto3" json:"table_registry,omitempty"`
 	// Set once by a signed update, then carried by every update; raise-only.
-	ClientLanes   *ClientLaneParams `protobuf:"bytes,5,opt,name=client_lanes,json=clientLanes,proto3" json:"client_lanes,omitempty"`
+	ClientLanes *ClientLaneParams `protobuf:"bytes,5,opt,name=client_lanes,json=clientLanes,proto3" json:"client_lanes,omitempty"`
+	// Set once by the signed-claims activation, then carried complete by every
+	// update: append-only, sorted by indexer_id (housegate spec 2026-10-10 D3).
+	SiIndexers []*SIIndexerEntry `protobuf:"bytes,6,rep,name=si_indexers,json=siIndexers,proto3" json:"si_indexers,omitempty"`
+	// Set by the signed-claims activation together with si_indexers, then
+	// carried complete by every update; entries may be added and removed (D7).
+	Verifiers     []*VerifierEntry `protobuf:"bytes,7,rep,name=verifiers,proto3" json:"verifiers,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -109,6 +115,20 @@ func (x *ConsensusMutableParams) GetClientLanes() *ClientLaneParams {
 	return nil
 }
 
+func (x *ConsensusMutableParams) GetSiIndexers() []*SIIndexerEntry {
+	if x != nil {
+		return x.SiIndexers
+	}
+	return nil
+}
+
+func (x *ConsensusMutableParams) GetVerifiers() []*VerifierEntry {
+	if x != nil {
+		return x.Verifiers
+	}
+	return nil
+}
+
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
 // Authority addresses are lowercase, sorted and deduplicated before hashing.
 // authority_jws covers every field; it uses a dedicated versioned purpose
@@ -129,7 +149,25 @@ type ConsensusParamsUpdate struct {
 	// Absent keeps the registry disabled. Once set it must be resent unchanged.
 	TableRegistry *TableRegistryParams `protobuf:"bytes,9,opt,name=table_registry,json=tableRegistry,proto3" json:"table_registry,omitempty"`
 	// Absent keeps client lanes disabled. Once set it must be resent; lowering or removal is refused.
-	ClientLanes   *ClientLaneParams `protobuf:"bytes,10,opt,name=client_lanes,json=clientLanes,proto3" json:"client_lanes,omitempty"`
+	ClientLanes *ClientLaneParams `protobuf:"bytes,10,opt,name=client_lanes,json=clientLanes,proto3" json:"client_lanes,omitempty"`
+	// Enrolled SI indexers (housegate spec 2026-10-10 D3, §6.1), sorted by
+	// indexer_id. Empty keeps signed claims inactive. The update that first sets
+	// it is the irreversible signed-claims activation (§6.7): it needs
+	// table_registry (earlier or in the same update) and verifiers in the same
+	// update, and its entry for table_registry.si_indexer_id restates the
+	// founding indexer with table_registry.activation_block. Afterwards every
+	// update resends the complete list: entries are only appended (an
+	// enrolment, §6.2), and an entry's signer changes only with a new
+	// enrollment_jws. max_writers must be at least its length. It joins the
+	// params digest only once set, so earlier digests are unchanged.
+	SiIndexers []*SIIndexerEntry `protobuf:"bytes,11,rep,name=si_indexers,json=siIndexers,proto3" json:"si_indexers,omitempty"`
+	// The governed verifier set (D7), sorted by node_id. Empty until the
+	// signed-claims activation, which lists at least three verifiers, among them
+	// every registered, non-evicted verifier with its registered key. Afterwards
+	// every update resends the complete list; entries may be added and removed,
+	// a removed verifier is evicted, and no update may leave fewer than three
+	// non-evicted listed verifiers. It joins the params digest only once set.
+	Verifiers     []*VerifierEntry `protobuf:"bytes,12,rep,name=verifiers,proto3" json:"verifiers,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -230,6 +268,20 @@ func (x *ConsensusParamsUpdate) GetTableRegistry() *TableRegistryParams {
 func (x *ConsensusParamsUpdate) GetClientLanes() *ClientLaneParams {
 	if x != nil {
 		return x.ClientLanes
+	}
+	return nil
+}
+
+func (x *ConsensusParamsUpdate) GetSiIndexers() []*SIIndexerEntry {
+	if x != nil {
+		return x.SiIndexers
+	}
+	return nil
+}
+
+func (x *ConsensusParamsUpdate) GetVerifiers() []*VerifierEntry {
+	if x != nil {
+		return x.Verifiers
 	}
 	return nil
 }
@@ -477,8 +529,9 @@ type ProtocolInfo struct {
 	NodeId          string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
 	ProtocolVersion uint32                 `protobuf:"varint,2,opt,name=protocol_version,json=protocolVersion,proto3" json:"protocol_version,omitempty"`
 	UpdatesEnabled  bool                   `protobuf:"varint,3,opt,name=updates_enabled,json=updatesEnabled,proto3" json:"updates_enabled,omitempty"`
-	// Capability strings of this binary ("client_lanes_v1"); a static local
-	// property, read by arbiter-admin's activation gate on every voter.
+	// Capability strings of this binary ("client_lanes_v1", "signed_claims_v1");
+	// a static local property, read by arbiter-admin's activation gates on every
+	// voter.
 	Features      []string `protobuf:"bytes,4,rep,name=features,proto3" json:"features,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -764,18 +817,154 @@ func (x *NodeFeatures) GetRaftVoterIds() []string {
 	return nil
 }
 
+// VerifierEntry is one governed verifier (housegate spec 2026-10-10 D7).
+// ed25519_pubkey is the raw 32-byte key the verifier registers as
+// NodeRegistration.ed25519_pubkey and signs its evidence with; after the
+// signed-claims activation it also signs the node's registration, activation
+// and purge reports.
+type VerifierEntry struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	Ed25519Pubkey []byte                 `protobuf:"bytes,2,opt,name=ed25519_pubkey,json=ed25519Pubkey,proto3" json:"ed25519_pubkey,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VerifierEntry) Reset() {
+	*x = VerifierEntry{}
+	mi := &file_consensus_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VerifierEntry) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VerifierEntry) ProtoMessage() {}
+
+func (x *VerifierEntry) ProtoReflect() protoreflect.Message {
+	mi := &file_consensus_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VerifierEntry.ProtoReflect.Descriptor instead.
+func (*VerifierEntry) Descriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *VerifierEntry) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *VerifierEntry) GetEd25519Pubkey() []byte {
+	if x != nil {
+		return x.Ed25519Pubkey
+	}
+	return nil
+}
+
+// EvictNodeRequest is the authority-signed eviction of one data-plane node
+// (housegate spec 2026-10-10 §6.5). authority_jws is an ES256K JWS by a
+// current authority address with purpose "arbiter-evict-node-v1" over the
+// canonical digest of {node_id, expected_registration_seq, reason}, bound to
+// the network id, genesis snapshot id and authority epoch.
+// expected_registration_seq must equal the node's last applied
+// registration_seq, so an eviction signed against one registration never
+// evicts a later one.
+type EvictNodeRequest struct {
+	state                   protoimpl.MessageState `protogen:"open.v1"`
+	NodeId                  string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	ExpectedRegistrationSeq uint64                 `protobuf:"varint,2,opt,name=expected_registration_seq,json=expectedRegistrationSeq,proto3" json:"expected_registration_seq,omitempty"`
+	Reason                  string                 `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
+	AuthorityJws            string                 `protobuf:"bytes,4,opt,name=authority_jws,json=authorityJws,proto3" json:"authority_jws,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *EvictNodeRequest) Reset() {
+	*x = EvictNodeRequest{}
+	mi := &file_consensus_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EvictNodeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EvictNodeRequest) ProtoMessage() {}
+
+func (x *EvictNodeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_consensus_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EvictNodeRequest.ProtoReflect.Descriptor instead.
+func (*EvictNodeRequest) Descriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *EvictNodeRequest) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *EvictNodeRequest) GetExpectedRegistrationSeq() uint64 {
+	if x != nil {
+		return x.ExpectedRegistrationSeq
+	}
+	return 0
+}
+
+func (x *EvictNodeRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *EvictNodeRequest) GetAuthorityJws() string {
+	if x != nil {
+		return x.AuthorityJws
+	}
+	return ""
+}
+
 var File_consensus_proto protoreflect.FileDescriptor
 
 const file_consensus_proto_rawDesc = "" +
 	"\n" +
-	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xb5\x02\n" +
+	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xa5\x03\n" +
 	"\x16ConsensusMutableParams\x12/\n" +
 	"\x13authority_addresses\x18\x01 \x03(\tR\x12authorityAddresses\x12\x1f\n" +
 	"\vmax_writers\x18\x02 \x01(\x04R\n" +
 	"maxWriters\x12F\n" +
 	"\x1fartifact_disposition_capability\x18\x03 \x01(\rR\x1dartifactDispositionCapability\x12C\n" +
 	"\x0etable_registry\x18\x04 \x01(\v2\x1c.arbiter.TableRegistryParamsR\rtableRegistry\x12<\n" +
-	"\fclient_lanes\x18\x05 \x01(\v2\x19.arbiter.ClientLaneParamsR\vclientLanes\"\x96\x04\n" +
+	"\fclient_lanes\x18\x05 \x01(\v2\x19.arbiter.ClientLaneParamsR\vclientLanes\x128\n" +
+	"\vsi_indexers\x18\x06 \x03(\v2\x17.arbiter.SIIndexerEntryR\n" +
+	"siIndexers\x124\n" +
+	"\tverifiers\x18\a \x03(\v2\x16.arbiter.VerifierEntryR\tverifiers\"\x86\x05\n" +
 	"\x15ConsensusParamsUpdate\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12.\n" +
@@ -789,7 +978,10 @@ const file_consensus_proto_rawDesc = "" +
 	"\x1fartifact_disposition_capability\x18\b \x01(\rR\x1dartifactDispositionCapability\x12C\n" +
 	"\x0etable_registry\x18\t \x01(\v2\x1c.arbiter.TableRegistryParamsR\rtableRegistry\x12<\n" +
 	"\fclient_lanes\x18\n" +
-	" \x01(\v2\x19.arbiter.ClientLaneParamsR\vclientLanes\"w\n" +
+	" \x01(\v2\x19.arbiter.ClientLaneParamsR\vclientLanes\x128\n" +
+	"\vsi_indexers\x18\v \x03(\v2\x17.arbiter.SIIndexerEntryR\n" +
+	"siIndexers\x124\n" +
+	"\tverifiers\x18\f \x03(\v2\x16.arbiter.VerifierEntryR\tverifiers\"w\n" +
 	"\x18UpdateConsensusParamsCmd\x126\n" +
 	"\x06update\x18\x01 \x01(\v2\x1e.arbiter.ConsensusParamsUpdateR\x06update\x12#\n" +
 	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"\xb8\x01\n" +
@@ -828,7 +1020,15 @@ const file_consensus_proto_rawDesc = "" +
 	"\x0fregistered_unix\x18\x03 \x01(\x03R\x0eregisteredUnix\"i\n" +
 	"\fNodeFeatures\x123\n" +
 	"\aentries\x18\x01 \x03(\v2\x19.arbiter.NodeFeatureEntryR\aentries\x12$\n" +
-	"\x0eraft_voter_ids\x18\x02 \x03(\tR\fraftVoterIds2\xd2\x04\n" +
+	"\x0eraft_voter_ids\x18\x02 \x03(\tR\fraftVoterIds\"O\n" +
+	"\rVerifierEntry\x12\x17\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12%\n" +
+	"\x0eed25519_pubkey\x18\x02 \x01(\fR\red25519Pubkey\"\xa4\x01\n" +
+	"\x10EvictNodeRequest\x12\x17\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12:\n" +
+	"\x19expected_registration_seq\x18\x02 \x01(\x04R\x17expectedRegistrationSeq\x12\x16\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\x12#\n" +
+	"\rauthority_jws\x18\x04 \x01(\tR\fauthorityJws2\x8a\x05\n" +
 	"\x0eConsensusAdmin\x12B\n" +
 	"\x0fGetProtocolInfo\x12\x16.google.protobuf.Empty\x1a\x15.arbiter.ProtocolInfo\"\x00\x12M\n" +
 	"\x12GetConsensusParams\x12\x16.google.protobuf.Empty\x1a\x1d.arbiter.ConsensusParamsState\"\x00\x12J\n" +
@@ -836,7 +1036,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\x1eGetSnapshotQueryAbortCandidate\x12..arbiter.GetSnapshotQueryAbortCandidateRequest\x1a!.arbiter.SnapshotQueryAbortRecord\"\x00\x12X\n" +
 	"\x12AbortSnapshotQuery\x12\".arbiter.AbortSnapshotQueryRequest\x1a\x1c.arbiter.SnapshotQueryStatus\"\x00\x12L\n" +
 	"\x14ActivateQueryProfile\x12$.arbiter.ActivateQueryProfileRequest\x1a\f.arbiter.Ack\"\x00\x12B\n" +
-	"\x0fGetNodeFeatures\x12\x16.google.protobuf.Empty\x1a\x15.arbiter.NodeFeatures\"\x00B.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
+	"\x0fGetNodeFeatures\x12\x16.google.protobuf.Empty\x1a\x15.arbiter.NodeFeatures\"\x00\x126\n" +
+	"\tEvictNode\x12\x19.arbiter.EvictNodeRequest\x1a\f.arbiter.Ack\"\x00B.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
 
 var (
 	file_consensus_proto_rawDescOnce sync.Once
@@ -850,7 +1051,7 @@ func file_consensus_proto_rawDescGZIP() []byte {
 	return file_consensus_proto_rawDescData
 }
 
-var file_consensus_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_consensus_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_consensus_proto_goTypes = []any{
 	(*ConsensusMutableParams)(nil),                // 0: arbiter.ConsensusMutableParams
 	(*ConsensusParamsUpdate)(nil),                 // 1: arbiter.ConsensusParamsUpdate
@@ -862,44 +1063,53 @@ var file_consensus_proto_goTypes = []any{
 	(*ConsensusParamsState)(nil),                  // 7: arbiter.ConsensusParamsState
 	(*NodeFeatureEntry)(nil),                      // 8: arbiter.NodeFeatureEntry
 	(*NodeFeatures)(nil),                          // 9: arbiter.NodeFeatures
-	(*TableRegistryParams)(nil),                   // 10: arbiter.TableRegistryParams
-	(*ClientLaneParams)(nil),                      // 11: arbiter.ClientLaneParams
-	(*SnapshotQueryAbortRecord)(nil),              // 12: arbiter.SnapshotQueryAbortRecord
-	(*ActiveQueryPolicy)(nil),                     // 13: arbiter.ActiveQueryPolicy
-	(*emptypb.Empty)(nil),                         // 14: google.protobuf.Empty
-	(*Ack)(nil),                                   // 15: arbiter.Ack
-	(*SnapshotQueryStatus)(nil),                   // 16: arbiter.SnapshotQueryStatus
+	(*VerifierEntry)(nil),                         // 10: arbiter.VerifierEntry
+	(*EvictNodeRequest)(nil),                      // 11: arbiter.EvictNodeRequest
+	(*TableRegistryParams)(nil),                   // 12: arbiter.TableRegistryParams
+	(*ClientLaneParams)(nil),                      // 13: arbiter.ClientLaneParams
+	(*SIIndexerEntry)(nil),                        // 14: arbiter.SIIndexerEntry
+	(*SnapshotQueryAbortRecord)(nil),              // 15: arbiter.SnapshotQueryAbortRecord
+	(*ActiveQueryPolicy)(nil),                     // 16: arbiter.ActiveQueryPolicy
+	(*emptypb.Empty)(nil),                         // 17: google.protobuf.Empty
+	(*Ack)(nil),                                   // 18: arbiter.Ack
+	(*SnapshotQueryStatus)(nil),                   // 19: arbiter.SnapshotQueryStatus
 }
 var file_consensus_proto_depIdxs = []int32{
-	10, // 0: arbiter.ConsensusMutableParams.table_registry:type_name -> arbiter.TableRegistryParams
-	11, // 1: arbiter.ConsensusMutableParams.client_lanes:type_name -> arbiter.ClientLaneParams
-	10, // 2: arbiter.ConsensusParamsUpdate.table_registry:type_name -> arbiter.TableRegistryParams
-	11, // 3: arbiter.ConsensusParamsUpdate.client_lanes:type_name -> arbiter.ClientLaneParams
-	1,  // 4: arbiter.UpdateConsensusParamsCmd.update:type_name -> arbiter.ConsensusParamsUpdate
-	12, // 5: arbiter.AbortSnapshotQueryRequest.record:type_name -> arbiter.SnapshotQueryAbortRecord
-	13, // 6: arbiter.ActivateQueryProfileRequest.activation:type_name -> arbiter.ActiveQueryPolicy
-	0,  // 7: arbiter.ConsensusParamsState.bootstrap:type_name -> arbiter.ConsensusMutableParams
-	0,  // 8: arbiter.ConsensusParamsState.current:type_name -> arbiter.ConsensusMutableParams
-	8,  // 9: arbiter.NodeFeatures.entries:type_name -> arbiter.NodeFeatureEntry
-	14, // 10: arbiter.ConsensusAdmin.GetProtocolInfo:input_type -> google.protobuf.Empty
-	14, // 11: arbiter.ConsensusAdmin.GetConsensusParams:input_type -> google.protobuf.Empty
-	2,  // 12: arbiter.ConsensusAdmin.UpdateConsensusParams:input_type -> arbiter.UpdateConsensusParamsCmd
-	3,  // 13: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:input_type -> arbiter.GetSnapshotQueryAbortCandidateRequest
-	4,  // 14: arbiter.ConsensusAdmin.AbortSnapshotQuery:input_type -> arbiter.AbortSnapshotQueryRequest
-	5,  // 15: arbiter.ConsensusAdmin.ActivateQueryProfile:input_type -> arbiter.ActivateQueryProfileRequest
-	14, // 16: arbiter.ConsensusAdmin.GetNodeFeatures:input_type -> google.protobuf.Empty
-	6,  // 17: arbiter.ConsensusAdmin.GetProtocolInfo:output_type -> arbiter.ProtocolInfo
-	7,  // 18: arbiter.ConsensusAdmin.GetConsensusParams:output_type -> arbiter.ConsensusParamsState
-	15, // 19: arbiter.ConsensusAdmin.UpdateConsensusParams:output_type -> arbiter.Ack
-	12, // 20: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:output_type -> arbiter.SnapshotQueryAbortRecord
-	16, // 21: arbiter.ConsensusAdmin.AbortSnapshotQuery:output_type -> arbiter.SnapshotQueryStatus
-	15, // 22: arbiter.ConsensusAdmin.ActivateQueryProfile:output_type -> arbiter.Ack
-	9,  // 23: arbiter.ConsensusAdmin.GetNodeFeatures:output_type -> arbiter.NodeFeatures
-	17, // [17:24] is the sub-list for method output_type
-	10, // [10:17] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	12, // 0: arbiter.ConsensusMutableParams.table_registry:type_name -> arbiter.TableRegistryParams
+	13, // 1: arbiter.ConsensusMutableParams.client_lanes:type_name -> arbiter.ClientLaneParams
+	14, // 2: arbiter.ConsensusMutableParams.si_indexers:type_name -> arbiter.SIIndexerEntry
+	10, // 3: arbiter.ConsensusMutableParams.verifiers:type_name -> arbiter.VerifierEntry
+	12, // 4: arbiter.ConsensusParamsUpdate.table_registry:type_name -> arbiter.TableRegistryParams
+	13, // 5: arbiter.ConsensusParamsUpdate.client_lanes:type_name -> arbiter.ClientLaneParams
+	14, // 6: arbiter.ConsensusParamsUpdate.si_indexers:type_name -> arbiter.SIIndexerEntry
+	10, // 7: arbiter.ConsensusParamsUpdate.verifiers:type_name -> arbiter.VerifierEntry
+	1,  // 8: arbiter.UpdateConsensusParamsCmd.update:type_name -> arbiter.ConsensusParamsUpdate
+	15, // 9: arbiter.AbortSnapshotQueryRequest.record:type_name -> arbiter.SnapshotQueryAbortRecord
+	16, // 10: arbiter.ActivateQueryProfileRequest.activation:type_name -> arbiter.ActiveQueryPolicy
+	0,  // 11: arbiter.ConsensusParamsState.bootstrap:type_name -> arbiter.ConsensusMutableParams
+	0,  // 12: arbiter.ConsensusParamsState.current:type_name -> arbiter.ConsensusMutableParams
+	8,  // 13: arbiter.NodeFeatures.entries:type_name -> arbiter.NodeFeatureEntry
+	17, // 14: arbiter.ConsensusAdmin.GetProtocolInfo:input_type -> google.protobuf.Empty
+	17, // 15: arbiter.ConsensusAdmin.GetConsensusParams:input_type -> google.protobuf.Empty
+	2,  // 16: arbiter.ConsensusAdmin.UpdateConsensusParams:input_type -> arbiter.UpdateConsensusParamsCmd
+	3,  // 17: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:input_type -> arbiter.GetSnapshotQueryAbortCandidateRequest
+	4,  // 18: arbiter.ConsensusAdmin.AbortSnapshotQuery:input_type -> arbiter.AbortSnapshotQueryRequest
+	5,  // 19: arbiter.ConsensusAdmin.ActivateQueryProfile:input_type -> arbiter.ActivateQueryProfileRequest
+	17, // 20: arbiter.ConsensusAdmin.GetNodeFeatures:input_type -> google.protobuf.Empty
+	11, // 21: arbiter.ConsensusAdmin.EvictNode:input_type -> arbiter.EvictNodeRequest
+	6,  // 22: arbiter.ConsensusAdmin.GetProtocolInfo:output_type -> arbiter.ProtocolInfo
+	7,  // 23: arbiter.ConsensusAdmin.GetConsensusParams:output_type -> arbiter.ConsensusParamsState
+	18, // 24: arbiter.ConsensusAdmin.UpdateConsensusParams:output_type -> arbiter.Ack
+	15, // 25: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:output_type -> arbiter.SnapshotQueryAbortRecord
+	19, // 26: arbiter.ConsensusAdmin.AbortSnapshotQuery:output_type -> arbiter.SnapshotQueryStatus
+	18, // 27: arbiter.ConsensusAdmin.ActivateQueryProfile:output_type -> arbiter.Ack
+	9,  // 28: arbiter.ConsensusAdmin.GetNodeFeatures:output_type -> arbiter.NodeFeatures
+	18, // 29: arbiter.ConsensusAdmin.EvictNode:output_type -> arbiter.Ack
+	22, // [22:30] is the sub-list for method output_type
+	14, // [14:22] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_consensus_proto_init() }
@@ -916,7 +1126,7 @@ func file_consensus_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_consensus_proto_rawDesc), len(file_consensus_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

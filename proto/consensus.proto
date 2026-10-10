@@ -24,6 +24,12 @@ message ConsensusMutableParams {
   TableRegistryParams table_registry = 4;
   // Set once by a signed update, then carried by every update; raise-only.
   ClientLaneParams client_lanes = 5;
+  // Set once by the signed-claims activation, then carried complete by every
+  // update: append-only, sorted by indexer_id (housegate spec 2026-10-10 D3).
+  repeated SIIndexerEntry si_indexers = 6;
+  // Set by the signed-claims activation together with si_indexers, then
+  // carried complete by every update; entries may be added and removed (D7).
+  repeated VerifierEntry verifiers = 7;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -46,6 +52,24 @@ message ConsensusParamsUpdate {
   TableRegistryParams table_registry = 9;
   // Absent keeps client lanes disabled. Once set it must be resent; lowering or removal is refused.
   ClientLaneParams client_lanes = 10;
+  // Enrolled SI indexers (housegate spec 2026-10-10 D3, §6.1), sorted by
+  // indexer_id. Empty keeps signed claims inactive. The update that first sets
+  // it is the irreversible signed-claims activation (§6.7): it needs
+  // table_registry (earlier or in the same update) and verifiers in the same
+  // update, and its entry for table_registry.si_indexer_id restates the
+  // founding indexer with table_registry.activation_block. Afterwards every
+  // update resends the complete list: entries are only appended (an
+  // enrolment, §6.2), and an entry's signer changes only with a new
+  // enrollment_jws. max_writers must be at least its length. It joins the
+  // params digest only once set, so earlier digests are unchanged.
+  repeated SIIndexerEntry si_indexers = 11;
+  // The governed verifier set (D7), sorted by node_id. Empty until the
+  // signed-claims activation, which lists at least three verifiers, among them
+  // every registered, non-evicted verifier with its registered key. Afterwards
+  // every update resends the complete list; entries may be added and removed,
+  // a removed verifier is evicted, and no update may leave fewer than three
+  // non-evicted listed verifiers. It joins the params digest only once set.
+  repeated VerifierEntry verifiers = 12;
 }
 
 // UpdateConsensusParamsCmd is both the administration request and the
@@ -88,8 +112,9 @@ message ProtocolInfo {
   string node_id = 1;
   uint32 protocol_version = 2;
   bool updates_enabled = 3;
-  // Capability strings of this binary ("client_lanes_v1"); a static local
-  // property, read by arbiter-admin's activation gate on every voter.
+  // Capability strings of this binary ("client_lanes_v1", "signed_claims_v1");
+  // a static local property, read by arbiter-admin's activation gates on every
+  // voter.
   repeated string features = 4;
 }
 
@@ -125,6 +150,31 @@ message NodeFeatures {
   repeated string raft_voter_ids = 2;
 }
 
+// VerifierEntry is one governed verifier (housegate spec 2026-10-10 D7).
+// ed25519_pubkey is the raw 32-byte key the verifier registers as
+// NodeRegistration.ed25519_pubkey and signs its evidence with; after the
+// signed-claims activation it also signs the node's registration, activation
+// and purge reports.
+message VerifierEntry {
+  string node_id = 1;
+  bytes ed25519_pubkey = 2;
+}
+
+// EvictNodeRequest is the authority-signed eviction of one data-plane node
+// (housegate spec 2026-10-10 §6.5). authority_jws is an ES256K JWS by a
+// current authority address with purpose "arbiter-evict-node-v1" over the
+// canonical digest of {node_id, expected_registration_seq, reason}, bound to
+// the network id, genesis snapshot id and authority epoch.
+// expected_registration_seq must equal the node's last applied
+// registration_seq, so an eviction signed against one registration never
+// evicts a later one.
+message EvictNodeRequest {
+  string node_id = 1;
+  uint64 expected_registration_seq = 2;
+  string reason = 3;
+  string authority_jws = 4;
+}
+
 service ConsensusAdmin {
   // Local static capability probe: no leader redirection or Raft barrier.
   rpc GetProtocolInfo (google.protobuf.Empty) returns (ProtocolInfo) {}
@@ -146,4 +196,10 @@ service ConsensusAdmin {
   // Leader-only read with a barrier: one entry per non-evicted verifier and
   // SNode registration joined with the leader's non-replicated feature book.
   rpc GetNodeFeatures (google.protobuf.Empty) returns (NodeFeatures) {}
+  // Leader-only, authority-authenticated eviction (housegate spec 2026-10-10
+  // §6.5): proposes EvictNodeCmd carrying expected_registration_seq and
+  // authority_jws. Refused with FAILED_PRECONDITION until the signed-claims
+  // activation has committed, because no earlier command may carry those
+  // fields. Ack means committed success.
+  rpc EvictNode (EvictNodeRequest) returns (Ack) {}
 }

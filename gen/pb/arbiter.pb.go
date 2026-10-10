@@ -118,21 +118,28 @@ const (
 	// holds client_lanes.max_lanes_per_account lanes. The coordinate is unspent;
 	// the client continues on a lane it already holds or on the legacy lane.
 	AdmissionCode_ADMISSION_CODE_LANE_BUDGET_EXCEEDED AdmissionCode = 9
+	// The statement's source — the SNode of its target table's owner,
+	// si_indexers[owner].snode_node_id — is not registered and Active in
+	// committed state (housegate spec 2026-10-10 §6.4). Returned only after the
+	// signed-claims activation. Nothing changed: the coordinate is unspent, and
+	// HouseGate answers a retryable, session-preserving refusal.
+	AdmissionCode_ADMISSION_CODE_SOURCE_UNAVAILABLE AdmissionCode = 10
 )
 
 // Enum value maps for AdmissionCode.
 var (
 	AdmissionCode_name = map[int32]string{
-		0: "ADMISSION_CODE_UNSPECIFIED",
-		1: "ADMISSION_CODE_ACCEPTED",
-		2: "ADMISSION_CODE_DUPLICATE_CLIENT_SEQ",
-		3: "ADMISSION_CODE_SCHEMA_NOT_ALLOWED",
-		4: "ADMISSION_CODE_KIND_NOT_ADMITTED",
-		5: "ADMISSION_CODE_INVALID_SIGNATURE",
-		6: "ADMISSION_CODE_INVALID_PROOF",
-		7: "ADMISSION_CODE_MALFORMED",
-		8: "ADMISSION_CODE_GAP_BUDGET_EXCEEDED",
-		9: "ADMISSION_CODE_LANE_BUDGET_EXCEEDED",
+		0:  "ADMISSION_CODE_UNSPECIFIED",
+		1:  "ADMISSION_CODE_ACCEPTED",
+		2:  "ADMISSION_CODE_DUPLICATE_CLIENT_SEQ",
+		3:  "ADMISSION_CODE_SCHEMA_NOT_ALLOWED",
+		4:  "ADMISSION_CODE_KIND_NOT_ADMITTED",
+		5:  "ADMISSION_CODE_INVALID_SIGNATURE",
+		6:  "ADMISSION_CODE_INVALID_PROOF",
+		7:  "ADMISSION_CODE_MALFORMED",
+		8:  "ADMISSION_CODE_GAP_BUDGET_EXCEEDED",
+		9:  "ADMISSION_CODE_LANE_BUDGET_EXCEEDED",
+		10: "ADMISSION_CODE_SOURCE_UNAVAILABLE",
 	}
 	AdmissionCode_value = map[string]int32{
 		"ADMISSION_CODE_UNSPECIFIED":          0,
@@ -145,6 +152,7 @@ var (
 		"ADMISSION_CODE_MALFORMED":            7,
 		"ADMISSION_CODE_GAP_BUDGET_EXCEEDED":  8,
 		"ADMISSION_CODE_LANE_BUDGET_EXCEEDED": 9,
+		"ADMISSION_CODE_SOURCE_UNAVAILABLE":   10,
 	}
 )
 
@@ -715,20 +723,29 @@ func (x *PartitionLtHashSum) GetNewPartsLthashSum() string {
 // RCRecord is the source's result claim (§4.1, §7.3). Late binding: an
 // RCRecord may arrive before its statement_seq exists; the FSM parks it
 // under statement_id and binds when SubmitStatement assigns the seq (§5.5).
-// v1 trusts the gRPC channel for source identity; a source signature slot
-// can be added compatibly when P5+ decentralizes.
+// Before the signed-claims activation (housegate spec 2026-10-10 §6.7) the
+// FSM trusts the gRPC channel for source identity; after it every claim,
+// parked or bound, must carry a valid source_jws.
 type RCRecord struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	StatementId *StatementID           `protobuf:"bytes,1,opt,name=statement_id,json=statementId,proto3" json:"statement_id,omitempty"`
-	// NodeID of the claiming source SNode; must match the FSM's deterministic
-	// source selection for this statement (§5.4).
+	// NodeID of the claiming source SNode. It must equal the statement's bound
+	// source: the deterministic hash selection (§5.4) before the signed-claims
+	// activation, the owner's SNode (si_indexers[owner].snode_node_id) after it.
 	SourceNode     string           `protobuf:"bytes,2,opt,name=source_node,json=sourceNode,proto3" json:"source_node,omitempty"`
 	CandidateParts []*CandidatePart `protobuf:"bytes,3,rep,name=candidate_parts,json=candidateParts,proto3" json:"candidate_parts,omitempty"`
 	// The source's claimed post-state root (check 1's right-hand side).
 	SourceClaimRoot      string                `protobuf:"bytes,4,opt,name=source_claim_root,json=sourceClaimRoot,proto3" json:"source_claim_root,omitempty"`
 	PartitionNewPartSums []*PartitionLtHashSum `protobuf:"bytes,5,rep,name=partition_new_part_sums,json=partitionNewPartSums,proto3" json:"partition_new_part_sums,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// After the signed-claims activation: ES256K compact JWS by the signer of
+	// the si_indexers entry whose snode_node_id is source_node, purpose
+	// "arbiter-snode-message-v1", kind "result_claim", over this record without
+	// source_jws, bound to the network id and genesis snapshot id. Request-only:
+	// the server moves it into RegisterRCCmd.source_jws, and an RCRecord inside
+	// a RaftCommand never carries it. Dropped before the activation.
+	SourceJws     string `protobuf:"bytes,6,opt,name=source_jws,json=sourceJws,proto3" json:"source_jws,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RCRecord) Reset() {
@@ -794,6 +811,13 @@ func (x *RCRecord) GetPartitionNewPartSums() []*PartitionLtHashSum {
 		return x.PartitionNewPartSums
 	}
 	return nil
+}
+
+func (x *RCRecord) GetSourceJws() string {
+	if x != nil {
+		return x.SourceJws
+	}
+	return ""
 }
 
 type VerifierHello struct {
@@ -1616,8 +1640,17 @@ type PromotionAck struct {
 	// row LtHash, before replacing physical metadata. Missing inventory is only
 	// equivalent to `parts` when the partition had no previously-safe parts.
 	SafePartitionParts []*SafePartMapping `protobuf:"bytes,9,rep,name=safe_partition_parts,json=safePartitionParts,proto3" json:"safe_partition_parts,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// After the signed-claims activation (housegate spec 2026-10-10 §6.6):
+	// ES256K compact JWS by the signer of the si_indexers entry whose
+	// snode_node_id is node_id, purpose "arbiter-snode-message-v1", kind
+	// "promotion_ack", over this ack without source_jws, bound to the network id
+	// and genesis snapshot id. Only the promotion's expected source (the owner's
+	// SNode) may acknowledge it, and only its signed ack, applied=false
+	// included, changes state. Request-only: the server moves it into
+	// RecordPromotionAckCmd.source_jws. Dropped before the activation.
+	SourceJws     string `protobuf:"bytes,10,opt,name=source_jws,json=sourceJws,proto3" json:"source_jws,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PromotionAck) Reset() {
@@ -1713,12 +1746,24 @@ func (x *PromotionAck) GetSafePartitionParts() []*SafePartMapping {
 	return nil
 }
 
+func (x *PromotionAck) GetSourceJws() string {
+	if x != nil {
+		return x.SourceJws
+	}
+	return ""
+}
+
 type CleanupAck struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
-	PromotionSeq  uint64                 `protobuf:"varint,2,opt,name=promotion_seq,json=promotionSeq,proto3" json:"promotion_seq,omitempty"`
-	TableId       string                 `protobuf:"bytes,3,opt,name=table_id,json=tableId,proto3" json:"table_id,omitempty"`
-	PartitionId   string                 `protobuf:"bytes,4,opt,name=partition_id,json=partitionId,proto3" json:"partition_id,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	NodeId       string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	PromotionSeq uint64                 `protobuf:"varint,2,opt,name=promotion_seq,json=promotionSeq,proto3" json:"promotion_seq,omitempty"`
+	TableId      string                 `protobuf:"bytes,3,opt,name=table_id,json=tableId,proto3" json:"table_id,omitempty"`
+	PartitionId  string                 `protobuf:"bytes,4,opt,name=partition_id,json=partitionId,proto3" json:"partition_id,omitempty"`
+	// After the signed-claims activation: signed like PromotionAck.source_jws,
+	// with kind "cleanup_ack"; only the cleanup's expected source (the owner's
+	// SNode) may clear it. Request-only: the server moves it into
+	// RecordCleanupAckCmd.source_jws. Dropped before the activation.
+	SourceJws     string `protobuf:"bytes,5,opt,name=source_jws,json=sourceJws,proto3" json:"source_jws,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1777,6 +1822,13 @@ func (x *CleanupAck) GetTableId() string {
 func (x *CleanupAck) GetPartitionId() string {
 	if x != nil {
 		return x.PartitionId
+	}
+	return ""
+}
+
+func (x *CleanupAck) GetSourceJws() string {
+	if x != nil {
+		return x.SourceJws
 	}
 	return ""
 }
@@ -2430,14 +2482,35 @@ type NodeRegistration struct {
 	// Advisory dial address, observability only — dispatch always rides
 	// node-initiated subscribe streams (§11.1).
 	DialAddr string `protobuf:"bytes,4,opt,name=dial_addr,json=dialAddr,proto3" json:"dial_addr,omitempty"`
-	// Capability strings of the registering binary ("client_lanes_v1").
-	// Request-only: the leader records them in a non-replicated feature book and
-	// never copies them into a RaftCommand or replicated state (housegate spec
-	// 2026-10-09 §5.6), because a voter that does not know this field refuses
-	// every command that carries it.
-	Features      []string `protobuf:"bytes,5,rep,name=features,proto3" json:"features,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// Capability strings of the registering binary ("client_lanes_v1",
+	// "signed_claims_v1"). Request-only: the leader records them in a
+	// non-replicated feature book and never copies them into a RaftCommand or
+	// replicated state (housegate spec 2026-10-09 §5.6), because a voter that
+	// does not know this field refuses every command that carries it.
+	Features []string `protobuf:"bytes,5,rep,name=features,proto3" json:"features,omitempty"`
+	// The node's registration sequence (housegate spec 2026-10-10 §6.5): the
+	// node persists it and raises it before every RegisterNode. After the
+	// signed-claims activation it must exceed the last registration_seq applied
+	// for node_id, so a replayed registration cannot push a running node back to
+	// Syncing. Unlike features it is replicated, inside
+	// RegisterNodeCmd.registration, and covered by the signature; the server
+	// proposes 0 before the activation.
+	RegistrationSeq uint64 `protobuf:"varint,6,opt,name=registration_seq,json=registrationSeq,proto3" json:"registration_seq,omitempty"`
+	// SNODE role, after the signed-claims activation: ES256K compact JWS by the
+	// signer of the si_indexers entry whose snode_node_id is node_id, purpose
+	// "arbiter-snode-message-v1", kind "registration", over this registration
+	// without features, signer_jws and ed25519_signature, bound to the network
+	// id and genesis snapshot id. Request-only: the server moves it into
+	// RegisterNodeCmd.signer_jws. Dropped before the activation.
+	SignerJws string `protobuf:"bytes,7,opt,name=signer_jws,json=signerJws,proto3" json:"signer_jws,omitempty"`
+	// VERIFIER role, after the signed-claims activation: hex ed25519 signature
+	// by the node's verifiers-entry key (equal to ed25519_pubkey) over the
+	// "registration" verifier-message hash of the same body and context.
+	// Request-only: the server moves it into RegisterNodeCmd.ed25519_signature.
+	// Dropped before the activation.
+	Ed25519Signature string `protobuf:"bytes,8,opt,name=ed25519_signature,json=ed25519Signature,proto3" json:"ed25519_signature,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *NodeRegistration) Reset() {
@@ -2505,11 +2578,48 @@ func (x *NodeRegistration) GetFeatures() []string {
 	return nil
 }
 
+func (x *NodeRegistration) GetRegistrationSeq() uint64 {
+	if x != nil {
+		return x.RegistrationSeq
+	}
+	return 0
+}
+
+func (x *NodeRegistration) GetSignerJws() string {
+	if x != nil {
+		return x.SignerJws
+	}
+	return ""
+}
+
+func (x *NodeRegistration) GetEd25519Signature() string {
+	if x != nil {
+		return x.Ed25519Signature
+	}
+	return ""
+}
+
+// NodeRef names one data-plane node. It is the MarkActive request and is
+// never embedded in a RaftCommand.
 type NodeRef struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	NodeId string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	// After the signed-claims activation it must equal the last
+	// registration_seq applied for node_id, binding this activation to that
+	// registration (housegate spec 2026-10-10 §6.5). Copied into MarkActiveCmd;
+	// 0 before the activation.
+	RegistrationSeq uint64 `protobuf:"varint,2,opt,name=registration_seq,json=registrationSeq,proto3" json:"registration_seq,omitempty"`
+	// SNODE, after the activation: ES256K compact JWS by the entry's signer,
+	// purpose "arbiter-snode-message-v1", kind "mark_active", body {node_id,
+	// registration_seq}. Copied into MarkActiveCmd.signer_jws.
+	SignerJws string `protobuf:"bytes,3,opt,name=signer_jws,json=signerJws,proto3" json:"signer_jws,omitempty"`
+	// VERIFIER, after the activation: hex ed25519 signature by the
+	// verifiers-entry key over the "mark_active" verifier-message hash of the
+	// same body. Copied into MarkActiveCmd.ed25519_signature. Both signatures
+	// are dropped before the activation.
+	Ed25519Signature string `protobuf:"bytes,4,opt,name=ed25519_signature,json=ed25519Signature,proto3" json:"ed25519_signature,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *NodeRef) Reset() {
@@ -2545,6 +2655,27 @@ func (*NodeRef) Descriptor() ([]byte, []int) {
 func (x *NodeRef) GetNodeId() string {
 	if x != nil {
 		return x.NodeId
+	}
+	return ""
+}
+
+func (x *NodeRef) GetRegistrationSeq() uint64 {
+	if x != nil {
+		return x.RegistrationSeq
+	}
+	return 0
+}
+
+func (x *NodeRef) GetSignerJws() string {
+	if x != nil {
+		return x.SignerJws
+	}
+	return ""
+}
+
+func (x *NodeRef) GetEd25519Signature() string {
+	if x != nil {
+		return x.Ed25519Signature
 	}
 	return ""
 }
@@ -4025,14 +4156,16 @@ const file_arbiter_proto_rawDesc = "" +
 	"\x12PartitionLtHashSum\x12\x19\n" +
 	"\btable_id\x18\x01 \x01(\tR\atableId\x12!\n" +
 	"\fpartition_id\x18\x02 \x01(\tR\vpartitionId\x12/\n" +
-	"\x14new_parts_lthash_sum\x18\x03 \x01(\tR\x11newPartsLthashSum\"\xa5\x02\n" +
+	"\x14new_parts_lthash_sum\x18\x03 \x01(\tR\x11newPartsLthashSum\"\xc4\x02\n" +
 	"\bRCRecord\x127\n" +
 	"\fstatement_id\x18\x01 \x01(\v2\x14.arbiter.StatementIDR\vstatementId\x12\x1f\n" +
 	"\vsource_node\x18\x02 \x01(\tR\n" +
 	"sourceNode\x12?\n" +
 	"\x0fcandidate_parts\x18\x03 \x03(\v2\x16.arbiter.CandidatePartR\x0ecandidateParts\x12*\n" +
 	"\x11source_claim_root\x18\x04 \x01(\tR\x0fsourceClaimRoot\x12R\n" +
-	"\x17partition_new_part_sums\x18\x05 \x03(\v2\x1b.arbiter.PartitionLtHashSumR\x14partitionNewPartSums\".\n" +
+	"\x17partition_new_part_sums\x18\x05 \x03(\v2\x1b.arbiter.PartitionLtHashSumR\x14partitionNewPartSums\x12\x1d\n" +
+	"\n" +
+	"source_jws\x18\x06 \x01(\tR\tsourceJws\".\n" +
 	"\rVerifierHello\x12\x1d\n" +
 	"\n" +
 	"replica_id\x18\x01 \x01(\tR\treplicaId\"\xe4\x01\n" +
@@ -4087,7 +4220,7 @@ const file_arbiter_proto_rawDesc = "" +
 	"\x0fSafePartMapping\x12&\n" +
 	"\x0fpart_row_lthash\x18\x01 \x01(\tR\rpartRowLthash\x12$\n" +
 	"\x0esafe_part_name\x18\x02 \x01(\tR\fsafePartName\x12$\n" +
-	"\x0epart_phys_hash\x18\x03 \x01(\tR\fpartPhysHash\"\xf4\x02\n" +
+	"\x0epart_phys_hash\x18\x03 \x01(\tR\fpartPhysHash\"\x93\x03\n" +
 	"\fPromotionAck\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12#\n" +
 	"\rpromotion_seq\x18\x02 \x01(\x04R\fpromotionSeq\x12\x19\n" +
@@ -4097,13 +4230,18 @@ const file_arbiter_proto_rawDesc = "" +
 	"\x05parts\x18\x06 \x03(\v2\x18.arbiter.SafePartMappingR\x05parts\x12\x18\n" +
 	"\aapplied\x18\a \x01(\bR\aapplied\x12\x16\n" +
 	"\x06detail\x18\b \x01(\tR\x06detail\x12J\n" +
-	"\x14safe_partition_parts\x18\t \x03(\v2\x18.arbiter.SafePartMappingR\x12safePartitionParts\"\x88\x01\n" +
+	"\x14safe_partition_parts\x18\t \x03(\v2\x18.arbiter.SafePartMappingR\x12safePartitionParts\x12\x1d\n" +
+	"\n" +
+	"source_jws\x18\n" +
+	" \x01(\tR\tsourceJws\"\xa7\x01\n" +
 	"\n" +
 	"CleanupAck\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12#\n" +
 	"\rpromotion_seq\x18\x02 \x01(\x04R\fpromotionSeq\x12\x19\n" +
 	"\btable_id\x18\x03 \x01(\tR\atableId\x12!\n" +
-	"\fpartition_id\x18\x04 \x01(\tR\vpartitionId\"\xa9\x01\n" +
+	"\fpartition_id\x18\x04 \x01(\tR\vpartitionId\x12\x1d\n" +
+	"\n" +
+	"source_jws\x18\x05 \x01(\tR\tsourceJws\"\xa9\x01\n" +
 	"\tAnchorRef\x12\"\n" +
 	"\rl3_block_hash\x18\x01 \x01(\tR\vl3BlockHash\x12\x1d\n" +
 	"\n" +
@@ -4157,15 +4295,23 @@ const file_arbiter_proto_rawDesc = "" +
 	"chain_hash\x18\x02 \x01(\tR\tchainHash\x12<\n" +
 	"\n" +
 	"statements\x18\x03 \x03(\v2\x1c.arbiter.StatementEnvelopeV2R\n" +
-	"statements\"\xb4\x01\n" +
+	"statements\"\xab\x02\n" +
 	"\x10NodeRegistration\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12'\n" +
 	"\x05roles\x18\x02 \x03(\x0e2\x11.arbiter.NodeRoleR\x05roles\x12%\n" +
 	"\x0eed25519_pubkey\x18\x03 \x01(\fR\red25519Pubkey\x12\x1b\n" +
 	"\tdial_addr\x18\x04 \x01(\tR\bdialAddr\x12\x1a\n" +
-	"\bfeatures\x18\x05 \x03(\tR\bfeatures\"\"\n" +
+	"\bfeatures\x18\x05 \x03(\tR\bfeatures\x12)\n" +
+	"\x10registration_seq\x18\x06 \x01(\x04R\x0fregistrationSeq\x12\x1d\n" +
+	"\n" +
+	"signer_jws\x18\a \x01(\tR\tsignerJws\x12+\n" +
+	"\x11ed25519_signature\x18\b \x01(\tR\x10ed25519Signature\"\x99\x01\n" +
 	"\aNodeRef\x12\x17\n" +
-	"\anode_id\x18\x01 \x01(\tR\x06nodeId\"\x05\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12)\n" +
+	"\x10registration_seq\x18\x02 \x01(\x04R\x0fregistrationSeq\x12\x1d\n" +
+	"\n" +
+	"signer_jws\x18\x03 \x01(\tR\tsignerJws\x12+\n" +
+	"\x11ed25519_signature\x18\x04 \x01(\tR\x10ed25519Signature\"\x05\n" +
 	"\x03Ack\",\n" +
 	"\tNotLeader\x12\x1f\n" +
 	"\vleader_addr\x18\x01 \x01(\tR\n" +
@@ -4295,7 +4441,7 @@ const file_arbiter_proto_rawDesc = "" +
 	"\rStatementKind\x12\x1e\n" +
 	"\x1aSTATEMENT_KIND_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15STATEMENT_KIND_INSERT\x10\x01\x12!\n" +
-	"\x1dSTATEMENT_KIND_SNAPSHOT_QUERY\x10\x02*\xf9\x02\n" +
+	"\x1dSTATEMENT_KIND_SNAPSHOT_QUERY\x10\x02*\xa0\x03\n" +
 	"\rAdmissionCode\x12\x1e\n" +
 	"\x1aADMISSION_CODE_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17ADMISSION_CODE_ACCEPTED\x10\x01\x12'\n" +
@@ -4306,7 +4452,9 @@ const file_arbiter_proto_rawDesc = "" +
 	"\x1cADMISSION_CODE_INVALID_PROOF\x10\x06\x12\x1c\n" +
 	"\x18ADMISSION_CODE_MALFORMED\x10\a\x12&\n" +
 	"\"ADMISSION_CODE_GAP_BUDGET_EXCEEDED\x10\b\x12'\n" +
-	"#ADMISSION_CODE_LANE_BUDGET_EXCEEDED\x10\t*R\n" +
+	"#ADMISSION_CODE_LANE_BUDGET_EXCEEDED\x10\t\x12%\n" +
+	"!ADMISSION_CODE_SOURCE_UNAVAILABLE\x10\n" +
+	"*R\n" +
 	"\bNodeRole\x12\x19\n" +
 	"\x15NODE_ROLE_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12NODE_ROLE_VERIFIER\x10\x01\x12\x13\n" +

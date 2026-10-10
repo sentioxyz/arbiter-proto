@@ -307,6 +307,73 @@ var l3BlockHeaderWireFields = []*descriptorpb.FieldDescriptorProto{
 	},
 }
 
+// signedClaimsFields pins the exact trailing fields the multi-source SI stage-1
+// work (housegate spec 2026-10-10 §6; Plan S1-A contract §1) appended to
+// messages that exist in the baselines. They are the last fields of every
+// message they touch, so they are stripped first, before every older
+// exemption below runs. Every existing baseline predates them, so the
+// exemption applies unconditionally.
+var signedClaimsFields = map[string][]*descriptorpb.FieldDescriptorProto{
+	"RCRecord":     {signedClaimsField("source_jws", "sourceJws", 6, signedClaimsString)},
+	"PromotionAck": {signedClaimsField("source_jws", "sourceJws", 10, signedClaimsString)},
+	"CleanupAck":   {signedClaimsField("source_jws", "sourceJws", 5, signedClaimsString)},
+	"NodeRegistration": {
+		signedClaimsField("registration_seq", "registrationSeq", 6, signedClaimsUint64),
+		signedClaimsField("signer_jws", "signerJws", 7, signedClaimsString),
+		signedClaimsField("ed25519_signature", "ed25519Signature", 8, signedClaimsString),
+	},
+	"NodeRef": {
+		signedClaimsField("registration_seq", "registrationSeq", 2, signedClaimsUint64),
+		signedClaimsField("signer_jws", "signerJws", 3, signedClaimsString),
+		signedClaimsField("ed25519_signature", "ed25519Signature", 4, signedClaimsString),
+	},
+	"ConsensusMutableParams": {
+		signedClaimsList("si_indexers", "siIndexers", 6, ".arbiter.SIIndexerEntry"),
+		signedClaimsList("verifiers", "verifiers", 7, ".arbiter.VerifierEntry"),
+	},
+	"ConsensusParamsUpdate": {
+		signedClaimsList("si_indexers", "siIndexers", 11, ".arbiter.SIIndexerEntry"),
+		signedClaimsList("verifiers", "verifiers", 12, ".arbiter.VerifierEntry"),
+	},
+	"RegisterRCCmd":         {signedClaimsField("source_jws", "sourceJws", 2, signedClaimsString)},
+	"RecordPromotionAckCmd": {signedClaimsField("source_jws", "sourceJws", 2, signedClaimsString)},
+	"RecordCleanupAckCmd":   {signedClaimsField("source_jws", "sourceJws", 2, signedClaimsString)},
+	"RegisterNodeCmd": {
+		signedClaimsField("signer_jws", "signerJws", 2, signedClaimsString),
+		signedClaimsField("ed25519_signature", "ed25519Signature", 3, signedClaimsString),
+	},
+	"MarkActiveCmd": {
+		signedClaimsField("registration_seq", "registrationSeq", 2, signedClaimsUint64),
+		signedClaimsField("signer_jws", "signerJws", 3, signedClaimsString),
+		signedClaimsField("ed25519_signature", "ed25519Signature", 4, signedClaimsString),
+	},
+	"EvictNodeCmd": {
+		signedClaimsField("expected_registration_seq", "expectedRegistrationSeq", 3, signedClaimsUint64),
+		signedClaimsField("authority_jws", "authorityJws", 4, signedClaimsString),
+	},
+}
+
+const (
+	signedClaimsString = descriptorpb.FieldDescriptorProto_TYPE_STRING
+	signedClaimsUint64 = descriptorpb.FieldDescriptorProto_TYPE_UINT64
+)
+
+// signedClaimsField is the descriptor protodesc reports for a plain appended
+// proto3 scalar: no options, no optional keyword and no oneof.
+func signedClaimsField(name, jsonName string, number int32, typ descriptorpb.FieldDescriptorProto_Type) *descriptorpb.FieldDescriptorProto {
+	return &descriptorpb.FieldDescriptorProto{
+		Name: proto.String(name), JsonName: proto.String(jsonName), Number: proto.Int32(number),
+		Label: descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(), Type: typ.Enum(),
+	}
+}
+
+// signedClaimsList is signedClaimsField for an appended repeated message field.
+func signedClaimsList(name, jsonName string, number int32, typeName string) *descriptorpb.FieldDescriptorProto {
+	f := signedClaimsField(name, jsonName, number, descriptorpb.FieldDescriptorProto_TYPE_MESSAGE)
+	f.Label, f.TypeName = descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum(), proto.String(typeName)
+	return f
+}
+
 func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.FileDescriptorSet, allowPromotionInventory bool) {
 	t.Helper()
 	for _, old := range baseline.File {
@@ -324,6 +391,18 @@ func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.File
 			}
 			if got == nil {
 				t.Fatalf("old message removed: %s", m.GetName())
+			}
+			if want, ok := signedClaimsFields[m.GetName()]; ok {
+				if len(got.Field) < len(want) {
+					t.Fatalf("%s lacks its signed-claims fields: %v", m.GetName(), got)
+				}
+				tail := got.Field[len(got.Field)-len(want):]
+				for i := range want {
+					if !proto.Equal(tail[i], want[i]) {
+						t.Fatalf("%s signed-claims addition must be exactly %s = %d: %v", m.GetName(), want[i].GetName(), want[i].GetNumber(), got)
+					}
+				}
+				got.Field = got.Field[:len(got.Field)-len(want)]
 			}
 			if m.GetName() == "RaftCommand" || m.GetName() == "VerifierDispatch" {
 				if len(got.Field) < len(m.Field) {

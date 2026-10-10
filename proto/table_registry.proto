@@ -27,6 +27,37 @@ message ClientLaneParams {
   uint32 max_lanes_per_account = 1;
 }
 
+// SIIndexerEntry enrols one indexer in the network's storage-integrity layer
+// (housegate spec 2026-10-10 D3, §6.1-§6.2). The si_indexers consensus
+// parameter lists these entries sorted by indexer_id and is append-only:
+// indexer_id, activation_block and snode_node_id never change, and signer
+// changes only together with a new enrollment_jws signed by the new signer.
+// The founding indexer of an existing registry is restated as the entry whose
+// indexer_id and activation_block equal TableRegistryParams.si_indexer_id and
+// TableRegistryParams.activation_block. Defined here because consensus.proto
+// imports this file and TableRegistrySnapshot carries the list.
+message SIIndexerEntry {
+  // IndexerRegistry id. 0 is a valid id (devnet2's founding indexer): an
+  // entry exists because it is listed, never because its id is nonzero.
+  uint64 indexer_id = 1;
+  // First L2 block whose TableCreated events open SI incarnations for this
+  // indexer; at least 1. An appended entry's value must exceed the registry's
+  // committed L2 cursor block. Its Legacy seed is read at activation_block - 1.
+  uint64 activation_block = 2;
+  // Lowercase 0x + 40 hex: the indexer's IndexerRegistry signer. Its
+  // secp256k1 key signs every message of the indexer's SNode (D6).
+  string signer = 3;
+  // Node id of the indexer's SNode, the source of every statement on the
+  // indexer's tables (D5). Unique across entries and verifier entries, and
+  // never the id of another registered node.
+  string snode_node_id = 4;
+  // ES256K compact JWS by signer with purpose "arbiter-snode-enrollment-v1"
+  // over {network_id, genesis_snapshot_id, indexer_id, snode_node_id}: the
+  // indexer operator consents to, and controls, this SNode identity (§6.2).
+  // Byte-identical in every later update unless signer rotates.
+  string enrollment_jws = 5;
+}
+
 message L2BlockRef {
   uint64 number = 1;
   string hash = 2;
@@ -52,10 +83,19 @@ enum TableRetireReason {
   TABLE_RETIRE_REASON_DATABASE_DELETED = 2;
 }
 
-// Once, at activation_block - 1: every table active on the SI indexer.
+// Once per SI indexer, at that indexer's activation_block - 1: every table
+// active on the indexer.
 message SeedLegacyTablesCmd {
   L2BlockRef at_block = 1;
   repeated LegacyTable tables = 2;
+  // The seeded indexer (housegate spec 2026-10-10 §6.3). Absent: the founding
+  // indexer's seed at TableRegistryParams.activation_block - 1, the only form
+  // before the signed-claims activation. Present only after the activation,
+  // naming an unseeded si_indexers entry whose activation_block - 1 is
+  // at_block.number. optional because indexer 0 is a valid id; never proposed
+  // before the activation, when a voter whose decoder lacks this field would
+  // refuse the command.
+  optional uint64 indexer_id = 3;
 }
 
 // One SI incarnation: its TableCreated plus the first TableSchemaSet after it.
@@ -67,6 +107,13 @@ message AddTableCmd {
   uint32 schema_version = 5;
   string schema_hash = 6;
   string schema_json = 7;
+  // The owning indexer (housegate spec 2026-10-10 D4): the database's indexer
+  // at the created block, resolved by the leader and re-derived by every
+  // auditor. Required after the signed-claims activation, where it names an
+  // si_indexers entry whose activation_block <= created.block_number; absent
+  // before it. Apply refuses either violation. optional because indexer 0 is
+  // a valid owner.
+  optional uint64 owner_indexer_id = 8;
 }
 
 // A TableDeleted (one table) or a database deletion (every live table of the
@@ -83,10 +130,23 @@ message AdvanceL2CursorCmd {
   L2BlockRef to = 1;
 }
 
-// A data-plane role dropped its hg_* tables for this incarnation.
+// A data-plane role dropped its hg_* tables for this incarnation. Also the
+// request of PromotionGateway.SubmitTablePurged, so the signature fields below
+// are carried by the RPC and the Raft command alike.
 message RecordTablePurgedCmd {
   string node_id = 1;
   uint64 incarnation_seq = 2;
+  // SNODE reporter, after the signed-claims activation (housegate spec
+  // 2026-10-10 §6.5): ES256K compact JWS by the signer of the si_indexers entry
+  // whose snode_node_id is node_id, purpose "arbiter-snode-message-v1", kind
+  // "table_purged", body {node_id, incarnation_seq}, bound to the network id
+  // and genesis snapshot id. Empty for a verifier.
+  string signer_jws = 3;
+  // VERIFIER reporter, after the signed-claims activation: hex ed25519
+  // signature by the node's verifiers-entry key over the "table_purged"
+  // verifier-message hash of the same body and context. Empty for an SNode.
+  // Before the activation the leader proposes neither signature.
+  string ed25519_signature = 4;
 }
 
 // ============================================================
@@ -146,6 +206,13 @@ message TableIncarnation {
   uint64 add_block_seq = 15;
   uint64 retire_block_seq = 16;
   repeated string purged_by = 17;
+  // The owning SI indexer (housegate spec 2026-10-10 D4): the database's
+  // indexer at the TableCreated block; never changes. Absent before the
+  // signed-claims activation, when every incarnation belongs to
+  // TableRegistryParams.si_indexer_id; the activation sets it on every
+  // existing incarnation and every later one is recorded with it. optional
+  // because indexer 0 is a valid owner.
+  optional uint64 owner_indexer_id = 18;
 }
 
 // TableRegistrySnapshot is the whole committed registry at one version.
@@ -159,12 +226,24 @@ message TableRegistrySnapshot {
   // The committed client-lane parameter, so data-plane nodes learn activation
   // through the registry follower. Setting or raising it bumps version.
   ClientLaneParams client_lanes = 6;
+  // The committed si_indexers parameter, sorted by indexer_id, so data-plane
+  // nodes and hosts learn enrolments through the registry follower (housegate
+  // spec 2026-10-10 §6.3). Empty before the signed-claims activation. Every
+  // committed change bumps version.
+  repeated SIIndexerEntry si_indexers = 7;
+  // Ids of the indexers whose Legacy seed is recorded, ascending and unique.
+  // Empty before the signed-claims activation, when seeded alone describes the
+  // founding indexer; from the activation on it holds the founding indexer iff
+  // seeded is true.
+  repeated uint64 seeded_indexers = 8;
 }
 
 // PurgeNodeSet is the committed set of data-plane nodes whose
 // SubmitTablePurged completes a purge: every registered, non-evicted SNode and
-// verifier, sorted ascending. A replica under a table's Keeper path whose name
-// is not in the set belongs to a decommissioned node.
+// verifier, sorted ascending. After the signed-claims activation one
+// incarnation's purge waits only on its owner's SNode and every non-evicted
+// verifier (housegate spec 2026-10-10 §6.6). A replica under a table's Keeper
+// path whose name is not in the set belongs to a decommissioned node.
 message PurgeNodeSet {
   repeated string node_ids = 1;
 }

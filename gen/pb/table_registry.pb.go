@@ -318,6 +318,105 @@ func (x *ClientLaneParams) GetMaxLanesPerAccount() uint32 {
 	return 0
 }
 
+// SIIndexerEntry enrols one indexer in the network's storage-integrity layer
+// (housegate spec 2026-10-10 D3, §6.1-§6.2). The si_indexers consensus
+// parameter lists these entries sorted by indexer_id and is append-only:
+// indexer_id, activation_block and snode_node_id never change, and signer
+// changes only together with a new enrollment_jws signed by the new signer.
+// The founding indexer of an existing registry is restated as the entry whose
+// indexer_id and activation_block equal TableRegistryParams.si_indexer_id and
+// TableRegistryParams.activation_block. Defined here because consensus.proto
+// imports this file and TableRegistrySnapshot carries the list.
+type SIIndexerEntry struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// IndexerRegistry id. 0 is a valid id (devnet2's founding indexer): an
+	// entry exists because it is listed, never because its id is nonzero.
+	IndexerId uint64 `protobuf:"varint,1,opt,name=indexer_id,json=indexerId,proto3" json:"indexer_id,omitempty"`
+	// First L2 block whose TableCreated events open SI incarnations for this
+	// indexer; at least 1. An appended entry's value must exceed the registry's
+	// committed L2 cursor block. Its Legacy seed is read at activation_block - 1.
+	ActivationBlock uint64 `protobuf:"varint,2,opt,name=activation_block,json=activationBlock,proto3" json:"activation_block,omitempty"`
+	// Lowercase 0x + 40 hex: the indexer's IndexerRegistry signer. Its
+	// secp256k1 key signs every message of the indexer's SNode (D6).
+	Signer string `protobuf:"bytes,3,opt,name=signer,proto3" json:"signer,omitempty"`
+	// Node id of the indexer's SNode, the source of every statement on the
+	// indexer's tables (D5). Unique across entries and verifier entries, and
+	// never the id of another registered node.
+	SnodeNodeId string `protobuf:"bytes,4,opt,name=snode_node_id,json=snodeNodeId,proto3" json:"snode_node_id,omitempty"`
+	// ES256K compact JWS by signer with purpose "arbiter-snode-enrollment-v1"
+	// over {network_id, genesis_snapshot_id, indexer_id, snode_node_id}: the
+	// indexer operator consents to, and controls, this SNode identity (§6.2).
+	// Byte-identical in every later update unless signer rotates.
+	EnrollmentJws string `protobuf:"bytes,5,opt,name=enrollment_jws,json=enrollmentJws,proto3" json:"enrollment_jws,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SIIndexerEntry) Reset() {
+	*x = SIIndexerEntry{}
+	mi := &file_table_registry_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SIIndexerEntry) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SIIndexerEntry) ProtoMessage() {}
+
+func (x *SIIndexerEntry) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SIIndexerEntry.ProtoReflect.Descriptor instead.
+func (*SIIndexerEntry) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SIIndexerEntry) GetIndexerId() uint64 {
+	if x != nil {
+		return x.IndexerId
+	}
+	return 0
+}
+
+func (x *SIIndexerEntry) GetActivationBlock() uint64 {
+	if x != nil {
+		return x.ActivationBlock
+	}
+	return 0
+}
+
+func (x *SIIndexerEntry) GetSigner() string {
+	if x != nil {
+		return x.Signer
+	}
+	return ""
+}
+
+func (x *SIIndexerEntry) GetSnodeNodeId() string {
+	if x != nil {
+		return x.SnodeNodeId
+	}
+	return ""
+}
+
+func (x *SIIndexerEntry) GetEnrollmentJws() string {
+	if x != nil {
+		return x.EnrollmentJws
+	}
+	return ""
+}
+
 type L2BlockRef struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Number        uint64                 `protobuf:"varint,1,opt,name=number,proto3" json:"number,omitempty"`
@@ -328,7 +427,7 @@ type L2BlockRef struct {
 
 func (x *L2BlockRef) Reset() {
 	*x = L2BlockRef{}
-	mi := &file_table_registry_proto_msgTypes[2]
+	mi := &file_table_registry_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -340,7 +439,7 @@ func (x *L2BlockRef) String() string {
 func (*L2BlockRef) ProtoMessage() {}
 
 func (x *L2BlockRef) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[2]
+	mi := &file_table_registry_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -353,7 +452,7 @@ func (x *L2BlockRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use L2BlockRef.ProtoReflect.Descriptor instead.
 func (*L2BlockRef) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{2}
+	return file_table_registry_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *L2BlockRef) GetNumber() uint64 {
@@ -383,7 +482,7 @@ type L2EventRef struct {
 
 func (x *L2EventRef) Reset() {
 	*x = L2EventRef{}
-	mi := &file_table_registry_proto_msgTypes[3]
+	mi := &file_table_registry_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -395,7 +494,7 @@ func (x *L2EventRef) String() string {
 func (*L2EventRef) ProtoMessage() {}
 
 func (x *L2EventRef) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[3]
+	mi := &file_table_registry_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -408,7 +507,7 @@ func (x *L2EventRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use L2EventRef.ProtoReflect.Descriptor instead.
 func (*L2EventRef) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{3}
+	return file_table_registry_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *L2EventRef) GetBlockNumber() uint64 {
@@ -450,7 +549,7 @@ type LegacyTable struct {
 
 func (x *LegacyTable) Reset() {
 	*x = LegacyTable{}
-	mi := &file_table_registry_proto_msgTypes[4]
+	mi := &file_table_registry_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -462,7 +561,7 @@ func (x *LegacyTable) String() string {
 func (*LegacyTable) ProtoMessage() {}
 
 func (x *LegacyTable) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[4]
+	mi := &file_table_registry_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -475,7 +574,7 @@ func (x *LegacyTable) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LegacyTable.ProtoReflect.Descriptor instead.
 func (*LegacyTable) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{4}
+	return file_table_registry_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *LegacyTable) GetDatabaseId() string {
@@ -499,18 +598,27 @@ func (x *LegacyTable) GetCreated() *L2EventRef {
 	return nil
 }
 
-// Once, at activation_block - 1: every table active on the SI indexer.
+// Once per SI indexer, at that indexer's activation_block - 1: every table
+// active on the indexer.
 type SeedLegacyTablesCmd struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AtBlock       *L2BlockRef            `protobuf:"bytes,1,opt,name=at_block,json=atBlock,proto3" json:"at_block,omitempty"`
-	Tables        []*LegacyTable         `protobuf:"bytes,2,rep,name=tables,proto3" json:"tables,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	AtBlock *L2BlockRef            `protobuf:"bytes,1,opt,name=at_block,json=atBlock,proto3" json:"at_block,omitempty"`
+	Tables  []*LegacyTable         `protobuf:"bytes,2,rep,name=tables,proto3" json:"tables,omitempty"`
+	// The seeded indexer (housegate spec 2026-10-10 §6.3). Absent: the founding
+	// indexer's seed at TableRegistryParams.activation_block - 1, the only form
+	// before the signed-claims activation. Present only after the activation,
+	// naming an unseeded si_indexers entry whose activation_block - 1 is
+	// at_block.number. optional because indexer 0 is a valid id; never proposed
+	// before the activation, when a voter whose decoder lacks this field would
+	// refuse the command.
+	IndexerId     *uint64 `protobuf:"varint,3,opt,name=indexer_id,json=indexerId,proto3,oneof" json:"indexer_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SeedLegacyTablesCmd) Reset() {
 	*x = SeedLegacyTablesCmd{}
-	mi := &file_table_registry_proto_msgTypes[5]
+	mi := &file_table_registry_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -522,7 +630,7 @@ func (x *SeedLegacyTablesCmd) String() string {
 func (*SeedLegacyTablesCmd) ProtoMessage() {}
 
 func (x *SeedLegacyTablesCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[5]
+	mi := &file_table_registry_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -535,7 +643,7 @@ func (x *SeedLegacyTablesCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SeedLegacyTablesCmd.ProtoReflect.Descriptor instead.
 func (*SeedLegacyTablesCmd) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{5}
+	return file_table_registry_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SeedLegacyTablesCmd) GetAtBlock() *L2BlockRef {
@@ -552,6 +660,13 @@ func (x *SeedLegacyTablesCmd) GetTables() []*LegacyTable {
 	return nil
 }
 
+func (x *SeedLegacyTablesCmd) GetIndexerId() uint64 {
+	if x != nil && x.IndexerId != nil {
+		return *x.IndexerId
+	}
+	return 0
+}
+
 // One SI incarnation: its TableCreated plus the first TableSchemaSet after it.
 type AddTableCmd struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -562,13 +677,20 @@ type AddTableCmd struct {
 	SchemaVersion uint32                 `protobuf:"varint,5,opt,name=schema_version,json=schemaVersion,proto3" json:"schema_version,omitempty"`
 	SchemaHash    string                 `protobuf:"bytes,6,opt,name=schema_hash,json=schemaHash,proto3" json:"schema_hash,omitempty"`
 	SchemaJson    string                 `protobuf:"bytes,7,opt,name=schema_json,json=schemaJson,proto3" json:"schema_json,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// The owning indexer (housegate spec 2026-10-10 D4): the database's indexer
+	// at the created block, resolved by the leader and re-derived by every
+	// auditor. Required after the signed-claims activation, where it names an
+	// si_indexers entry whose activation_block <= created.block_number; absent
+	// before it. Apply refuses either violation. optional because indexer 0 is
+	// a valid owner.
+	OwnerIndexerId *uint64 `protobuf:"varint,8,opt,name=owner_indexer_id,json=ownerIndexerId,proto3,oneof" json:"owner_indexer_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *AddTableCmd) Reset() {
 	*x = AddTableCmd{}
-	mi := &file_table_registry_proto_msgTypes[6]
+	mi := &file_table_registry_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -580,7 +702,7 @@ func (x *AddTableCmd) String() string {
 func (*AddTableCmd) ProtoMessage() {}
 
 func (x *AddTableCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[6]
+	mi := &file_table_registry_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -593,7 +715,7 @@ func (x *AddTableCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddTableCmd.ProtoReflect.Descriptor instead.
 func (*AddTableCmd) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{6}
+	return file_table_registry_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *AddTableCmd) GetDatabaseId() string {
@@ -645,6 +767,13 @@ func (x *AddTableCmd) GetSchemaJson() string {
 	return ""
 }
 
+func (x *AddTableCmd) GetOwnerIndexerId() uint64 {
+	if x != nil && x.OwnerIndexerId != nil {
+		return *x.OwnerIndexerId
+	}
+	return 0
+}
+
 // A TableDeleted (one table) or a database deletion (every live table of the
 // database, table_ids sorted ascending).
 type RetireTablesCmd struct {
@@ -659,7 +788,7 @@ type RetireTablesCmd struct {
 
 func (x *RetireTablesCmd) Reset() {
 	*x = RetireTablesCmd{}
-	mi := &file_table_registry_proto_msgTypes[7]
+	mi := &file_table_registry_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -671,7 +800,7 @@ func (x *RetireTablesCmd) String() string {
 func (*RetireTablesCmd) ProtoMessage() {}
 
 func (x *RetireTablesCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[7]
+	mi := &file_table_registry_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -684,7 +813,7 @@ func (x *RetireTablesCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RetireTablesCmd.ProtoReflect.Descriptor instead.
 func (*RetireTablesCmd) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{7}
+	return file_table_registry_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *RetireTablesCmd) GetDatabaseId() string {
@@ -725,7 +854,7 @@ type AdvanceL2CursorCmd struct {
 
 func (x *AdvanceL2CursorCmd) Reset() {
 	*x = AdvanceL2CursorCmd{}
-	mi := &file_table_registry_proto_msgTypes[8]
+	mi := &file_table_registry_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -737,7 +866,7 @@ func (x *AdvanceL2CursorCmd) String() string {
 func (*AdvanceL2CursorCmd) ProtoMessage() {}
 
 func (x *AdvanceL2CursorCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[8]
+	mi := &file_table_registry_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -750,7 +879,7 @@ func (x *AdvanceL2CursorCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AdvanceL2CursorCmd.ProtoReflect.Descriptor instead.
 func (*AdvanceL2CursorCmd) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{8}
+	return file_table_registry_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *AdvanceL2CursorCmd) GetTo() *L2BlockRef {
@@ -760,18 +889,31 @@ func (x *AdvanceL2CursorCmd) GetTo() *L2BlockRef {
 	return nil
 }
 
-// A data-plane role dropped its hg_* tables for this incarnation.
+// A data-plane role dropped its hg_* tables for this incarnation. Also the
+// request of PromotionGateway.SubmitTablePurged, so the signature fields below
+// are carried by the RPC and the Raft command alike.
 type RecordTablePurgedCmd struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	NodeId         string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
 	IncarnationSeq uint64                 `protobuf:"varint,2,opt,name=incarnation_seq,json=incarnationSeq,proto3" json:"incarnation_seq,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// SNODE reporter, after the signed-claims activation (housegate spec
+	// 2026-10-10 §6.5): ES256K compact JWS by the signer of the si_indexers entry
+	// whose snode_node_id is node_id, purpose "arbiter-snode-message-v1", kind
+	// "table_purged", body {node_id, incarnation_seq}, bound to the network id
+	// and genesis snapshot id. Empty for a verifier.
+	SignerJws string `protobuf:"bytes,3,opt,name=signer_jws,json=signerJws,proto3" json:"signer_jws,omitempty"`
+	// VERIFIER reporter, after the signed-claims activation: hex ed25519
+	// signature by the node's verifiers-entry key over the "table_purged"
+	// verifier-message hash of the same body and context. Empty for an SNode.
+	// Before the activation the leader proposes neither signature.
+	Ed25519Signature string `protobuf:"bytes,4,opt,name=ed25519_signature,json=ed25519Signature,proto3" json:"ed25519_signature,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *RecordTablePurgedCmd) Reset() {
 	*x = RecordTablePurgedCmd{}
-	mi := &file_table_registry_proto_msgTypes[9]
+	mi := &file_table_registry_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -783,7 +925,7 @@ func (x *RecordTablePurgedCmd) String() string {
 func (*RecordTablePurgedCmd) ProtoMessage() {}
 
 func (x *RecordTablePurgedCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[9]
+	mi := &file_table_registry_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -796,7 +938,7 @@ func (x *RecordTablePurgedCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecordTablePurgedCmd.ProtoReflect.Descriptor instead.
 func (*RecordTablePurgedCmd) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{9}
+	return file_table_registry_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *RecordTablePurgedCmd) GetNodeId() string {
@@ -813,6 +955,20 @@ func (x *RecordTablePurgedCmd) GetIncarnationSeq() uint64 {
 	return 0
 }
 
+func (x *RecordTablePurgedCmd) GetSignerJws() string {
+	if x != nil {
+		return x.SignerJws
+	}
+	return ""
+}
+
+func (x *RecordTablePurgedCmd) GetEd25519Signature() string {
+	if x != nil {
+		return x.Ed25519Signature
+	}
+	return ""
+}
+
 // TableRegistryCursor is the registry's L2 position: the last consumed log,
 // or the whole block when block_complete.
 type TableRegistryCursor struct {
@@ -827,7 +983,7 @@ type TableRegistryCursor struct {
 
 func (x *TableRegistryCursor) Reset() {
 	*x = TableRegistryCursor{}
-	mi := &file_table_registry_proto_msgTypes[10]
+	mi := &file_table_registry_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -839,7 +995,7 @@ func (x *TableRegistryCursor) String() string {
 func (*TableRegistryCursor) ProtoMessage() {}
 
 func (x *TableRegistryCursor) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[10]
+	mi := &file_table_registry_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -852,7 +1008,7 @@ func (x *TableRegistryCursor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TableRegistryCursor.ProtoReflect.Descriptor instead.
 func (*TableRegistryCursor) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{10}
+	return file_table_registry_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *TableRegistryCursor) GetBlockNumber() uint64 {
@@ -909,13 +1065,20 @@ type TableIncarnation struct {
 	AddBlockSeq    uint64                 `protobuf:"varint,15,opt,name=add_block_seq,json=addBlockSeq,proto3" json:"add_block_seq,omitempty"`
 	RetireBlockSeq uint64                 `protobuf:"varint,16,opt,name=retire_block_seq,json=retireBlockSeq,proto3" json:"retire_block_seq,omitempty"`
 	PurgedBy       []string               `protobuf:"bytes,17,rep,name=purged_by,json=purgedBy,proto3" json:"purged_by,omitempty"`
+	// The owning SI indexer (housegate spec 2026-10-10 D4): the database's
+	// indexer at the TableCreated block; never changes. Absent before the
+	// signed-claims activation, when every incarnation belongs to
+	// TableRegistryParams.si_indexer_id; the activation sets it on every
+	// existing incarnation and every later one is recorded with it. optional
+	// because indexer 0 is a valid owner.
+	OwnerIndexerId *uint64 `protobuf:"varint,18,opt,name=owner_indexer_id,json=ownerIndexerId,proto3,oneof" json:"owner_indexer_id,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
 
 func (x *TableIncarnation) Reset() {
 	*x = TableIncarnation{}
-	mi := &file_table_registry_proto_msgTypes[11]
+	mi := &file_table_registry_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -927,7 +1090,7 @@ func (x *TableIncarnation) String() string {
 func (*TableIncarnation) ProtoMessage() {}
 
 func (x *TableIncarnation) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[11]
+	mi := &file_table_registry_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -940,7 +1103,7 @@ func (x *TableIncarnation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TableIncarnation.ProtoReflect.Descriptor instead.
 func (*TableIncarnation) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{11}
+	return file_table_registry_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *TableIncarnation) GetSeq() uint64 {
@@ -1062,6 +1225,13 @@ func (x *TableIncarnation) GetPurgedBy() []string {
 	return nil
 }
 
+func (x *TableIncarnation) GetOwnerIndexerId() uint64 {
+	if x != nil && x.OwnerIndexerId != nil {
+		return *x.OwnerIndexerId
+	}
+	return 0
+}
+
 // TableRegistrySnapshot is the whole committed registry at one version.
 // incarnations are in seq order (seq = index + 1).
 type TableRegistrySnapshot struct {
@@ -1073,14 +1243,24 @@ type TableRegistrySnapshot struct {
 	Incarnations []*TableIncarnation    `protobuf:"bytes,5,rep,name=incarnations,proto3" json:"incarnations,omitempty"`
 	// The committed client-lane parameter, so data-plane nodes learn activation
 	// through the registry follower. Setting or raising it bumps version.
-	ClientLanes   *ClientLaneParams `protobuf:"bytes,6,opt,name=client_lanes,json=clientLanes,proto3" json:"client_lanes,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	ClientLanes *ClientLaneParams `protobuf:"bytes,6,opt,name=client_lanes,json=clientLanes,proto3" json:"client_lanes,omitempty"`
+	// The committed si_indexers parameter, sorted by indexer_id, so data-plane
+	// nodes and hosts learn enrolments through the registry follower (housegate
+	// spec 2026-10-10 §6.3). Empty before the signed-claims activation. Every
+	// committed change bumps version.
+	SiIndexers []*SIIndexerEntry `protobuf:"bytes,7,rep,name=si_indexers,json=siIndexers,proto3" json:"si_indexers,omitempty"`
+	// Ids of the indexers whose Legacy seed is recorded, ascending and unique.
+	// Empty before the signed-claims activation, when seeded alone describes the
+	// founding indexer; from the activation on it holds the founding indexer iff
+	// seeded is true.
+	SeededIndexers []uint64 `protobuf:"varint,8,rep,packed,name=seeded_indexers,json=seededIndexers,proto3" json:"seeded_indexers,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *TableRegistrySnapshot) Reset() {
 	*x = TableRegistrySnapshot{}
-	mi := &file_table_registry_proto_msgTypes[12]
+	mi := &file_table_registry_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1092,7 +1272,7 @@ func (x *TableRegistrySnapshot) String() string {
 func (*TableRegistrySnapshot) ProtoMessage() {}
 
 func (x *TableRegistrySnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[12]
+	mi := &file_table_registry_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1105,7 +1285,7 @@ func (x *TableRegistrySnapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TableRegistrySnapshot.ProtoReflect.Descriptor instead.
 func (*TableRegistrySnapshot) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{12}
+	return file_table_registry_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *TableRegistrySnapshot) GetParams() *TableRegistryParams {
@@ -1150,10 +1330,26 @@ func (x *TableRegistrySnapshot) GetClientLanes() *ClientLaneParams {
 	return nil
 }
 
+func (x *TableRegistrySnapshot) GetSiIndexers() []*SIIndexerEntry {
+	if x != nil {
+		return x.SiIndexers
+	}
+	return nil
+}
+
+func (x *TableRegistrySnapshot) GetSeededIndexers() []uint64 {
+	if x != nil {
+		return x.SeededIndexers
+	}
+	return nil
+}
+
 // PurgeNodeSet is the committed set of data-plane nodes whose
 // SubmitTablePurged completes a purge: every registered, non-evicted SNode and
-// verifier, sorted ascending. A replica under a table's Keeper path whose name
-// is not in the set belongs to a decommissioned node.
+// verifier, sorted ascending. After the signed-claims activation one
+// incarnation's purge waits only on its owner's SNode and every non-evicted
+// verifier (housegate spec 2026-10-10 §6.6). A replica under a table's Keeper
+// path whose name is not in the set belongs to a decommissioned node.
 type PurgeNodeSet struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NodeIds       []string               `protobuf:"bytes,1,rep,name=node_ids,json=nodeIds,proto3" json:"node_ids,omitempty"`
@@ -1163,7 +1359,7 @@ type PurgeNodeSet struct {
 
 func (x *PurgeNodeSet) Reset() {
 	*x = PurgeNodeSet{}
-	mi := &file_table_registry_proto_msgTypes[13]
+	mi := &file_table_registry_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1175,7 +1371,7 @@ func (x *PurgeNodeSet) String() string {
 func (*PurgeNodeSet) ProtoMessage() {}
 
 func (x *PurgeNodeSet) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[13]
+	mi := &file_table_registry_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1188,7 +1384,7 @@ func (x *PurgeNodeSet) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PurgeNodeSet.ProtoReflect.Descriptor instead.
 func (*PurgeNodeSet) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{13}
+	return file_table_registry_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *PurgeNodeSet) GetNodeIds() []string {
@@ -1209,7 +1405,7 @@ type WatchTableRegistryRequest struct {
 
 func (x *WatchTableRegistryRequest) Reset() {
 	*x = WatchTableRegistryRequest{}
-	mi := &file_table_registry_proto_msgTypes[14]
+	mi := &file_table_registry_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1221,7 +1417,7 @@ func (x *WatchTableRegistryRequest) String() string {
 func (*WatchTableRegistryRequest) ProtoMessage() {}
 
 func (x *WatchTableRegistryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[14]
+	mi := &file_table_registry_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1234,7 +1430,7 @@ func (x *WatchTableRegistryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchTableRegistryRequest.ProtoReflect.Descriptor instead.
 func (*WatchTableRegistryRequest) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{14}
+	return file_table_registry_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *WatchTableRegistryRequest) GetSinceVersion() uint64 {
@@ -1256,7 +1452,14 @@ const file_table_registry_proto_rawDesc = "" +
 	"\x10activation_block\x18\x04 \x01(\x04R\x0factivationBlock\x12\"\n" +
 	"\fconfirmation\x18\x05 \x01(\tR\fconfirmation\"E\n" +
 	"\x10ClientLaneParams\x121\n" +
-	"\x15max_lanes_per_account\x18\x01 \x01(\rR\x12maxLanesPerAccount\"8\n" +
+	"\x15max_lanes_per_account\x18\x01 \x01(\rR\x12maxLanesPerAccount\"\xbd\x01\n" +
+	"\x0eSIIndexerEntry\x12\x1d\n" +
+	"\n" +
+	"indexer_id\x18\x01 \x01(\x04R\tindexerId\x12)\n" +
+	"\x10activation_block\x18\x02 \x01(\x04R\x0factivationBlock\x12\x16\n" +
+	"\x06signer\x18\x03 \x01(\tR\x06signer\x12\"\n" +
+	"\rsnode_node_id\x18\x04 \x01(\tR\vsnodeNodeId\x12%\n" +
+	"\x0eenrollment_jws\x18\x05 \x01(\tR\renrollmentJws\"8\n" +
 	"\n" +
 	"L2BlockRef\x12\x16\n" +
 	"\x06number\x18\x01 \x01(\x04R\x06number\x12\x12\n" +
@@ -1272,10 +1475,13 @@ const file_table_registry_proto_rawDesc = "" +
 	"\vdatabase_id\x18\x01 \x01(\tR\n" +
 	"databaseId\x12\x19\n" +
 	"\btable_id\x18\x02 \x01(\tR\atableId\x12-\n" +
-	"\acreated\x18\x03 \x01(\v2\x13.arbiter.L2EventRefR\acreated\"s\n" +
+	"\acreated\x18\x03 \x01(\v2\x13.arbiter.L2EventRefR\acreated\"\xa6\x01\n" +
 	"\x13SeedLegacyTablesCmd\x12.\n" +
 	"\bat_block\x18\x01 \x01(\v2\x13.arbiter.L2BlockRefR\aatBlock\x12,\n" +
-	"\x06tables\x18\x02 \x03(\v2\x14.arbiter.LegacyTableR\x06tables\"\x8e\x02\n" +
+	"\x06tables\x18\x02 \x03(\v2\x14.arbiter.LegacyTableR\x06tables\x12\"\n" +
+	"\n" +
+	"indexer_id\x18\x03 \x01(\x04H\x00R\tindexerId\x88\x01\x01B\r\n" +
+	"\v_indexer_id\"\xd2\x02\n" +
 	"\vAddTableCmd\x12\x1f\n" +
 	"\vdatabase_id\x18\x01 \x01(\tR\n" +
 	"databaseId\x12\x19\n" +
@@ -1286,7 +1492,9 @@ const file_table_registry_proto_rawDesc = "" +
 	"\vschema_hash\x18\x06 \x01(\tR\n" +
 	"schemaHash\x12\x1f\n" +
 	"\vschema_json\x18\a \x01(\tR\n" +
-	"schemaJson\"\xb2\x01\n" +
+	"schemaJson\x12-\n" +
+	"\x10owner_indexer_id\x18\b \x01(\x04H\x00R\x0eownerIndexerId\x88\x01\x01B\x13\n" +
+	"\x11_owner_indexer_id\"\xb2\x01\n" +
 	"\x0fRetireTablesCmd\x12\x1f\n" +
 	"\vdatabase_id\x18\x01 \x01(\tR\n" +
 	"databaseId\x12\x1b\n" +
@@ -1294,16 +1502,19 @@ const file_table_registry_proto_rawDesc = "" +
 	"\adeleted\x18\x03 \x01(\v2\x13.arbiter.L2EventRefR\adeleted\x122\n" +
 	"\x06reason\x18\x04 \x01(\x0e2\x1a.arbiter.TableRetireReasonR\x06reason\"9\n" +
 	"\x12AdvanceL2CursorCmd\x12#\n" +
-	"\x02to\x18\x01 \x01(\v2\x13.arbiter.L2BlockRefR\x02to\"X\n" +
+	"\x02to\x18\x01 \x01(\v2\x13.arbiter.L2BlockRefR\x02to\"\xa4\x01\n" +
 	"\x14RecordTablePurgedCmd\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12'\n" +
-	"\x0fincarnation_seq\x18\x02 \x01(\x04R\x0eincarnationSeq\"\x9b\x01\n" +
+	"\x0fincarnation_seq\x18\x02 \x01(\x04R\x0eincarnationSeq\x12\x1d\n" +
+	"\n" +
+	"signer_jws\x18\x03 \x01(\tR\tsignerJws\x12+\n" +
+	"\x11ed25519_signature\x18\x04 \x01(\tR\x10ed25519Signature\"\x9b\x01\n" +
 	"\x13TableRegistryCursor\x12!\n" +
 	"\fblock_number\x18\x01 \x01(\x04R\vblockNumber\x12\x1d\n" +
 	"\n" +
 	"block_hash\x18\x02 \x01(\tR\tblockHash\x12\x1b\n" +
 	"\tlog_index\x18\x03 \x01(\x04R\blogIndex\x12%\n" +
-	"\x0eblock_complete\x18\x04 \x01(\bR\rblockComplete\"\xc3\x05\n" +
+	"\x0eblock_complete\x18\x04 \x01(\bR\rblockComplete\"\x87\x06\n" +
 	"\x10TableIncarnation\x12\x10\n" +
 	"\x03seq\x18\x01 \x01(\x04R\x03seq\x12\x1f\n" +
 	"\vdatabase_id\x18\x02 \x01(\tR\n" +
@@ -1326,14 +1537,19 @@ const file_table_registry_proto_rawDesc = "" +
 	"\rretire_reason\x18\x0e \x01(\x0e2\x1a.arbiter.TableRetireReasonR\fretireReason\x12\"\n" +
 	"\radd_block_seq\x18\x0f \x01(\x04R\vaddBlockSeq\x12(\n" +
 	"\x10retire_block_seq\x18\x10 \x01(\x04R\x0eretireBlockSeq\x12\x1b\n" +
-	"\tpurged_by\x18\x11 \x03(\tR\bpurgedBy\"\xb2\x02\n" +
+	"\tpurged_by\x18\x11 \x03(\tR\bpurgedBy\x12-\n" +
+	"\x10owner_indexer_id\x18\x12 \x01(\x04H\x00R\x0eownerIndexerId\x88\x01\x01B\x13\n" +
+	"\x11_owner_indexer_id\"\x95\x03\n" +
 	"\x15TableRegistrySnapshot\x124\n" +
 	"\x06params\x18\x01 \x01(\v2\x1c.arbiter.TableRegistryParamsR\x06params\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\x04R\aversion\x12\x16\n" +
 	"\x06seeded\x18\x03 \x01(\bR\x06seeded\x124\n" +
 	"\x06cursor\x18\x04 \x01(\v2\x1c.arbiter.TableRegistryCursorR\x06cursor\x12=\n" +
 	"\fincarnations\x18\x05 \x03(\v2\x19.arbiter.TableIncarnationR\fincarnations\x12<\n" +
-	"\fclient_lanes\x18\x06 \x01(\v2\x19.arbiter.ClientLaneParamsR\vclientLanes\")\n" +
+	"\fclient_lanes\x18\x06 \x01(\v2\x19.arbiter.ClientLaneParamsR\vclientLanes\x128\n" +
+	"\vsi_indexers\x18\a \x03(\v2\x17.arbiter.SIIndexerEntryR\n" +
+	"siIndexers\x12'\n" +
+	"\x0fseeded_indexers\x18\b \x03(\x04R\x0eseededIndexers\")\n" +
 	"\fPurgeNodeSet\x12\x19\n" +
 	"\bnode_ids\x18\x01 \x03(\tR\anodeIds\"@\n" +
 	"\x19WatchTableRegistryRequest\x12#\n" +
@@ -1374,58 +1590,60 @@ func file_table_registry_proto_rawDescGZIP() []byte {
 }
 
 var file_table_registry_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_table_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_table_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_table_registry_proto_goTypes = []any{
 	(TableRetireReason)(0),            // 0: arbiter.TableRetireReason
 	(TableIncarnationStatus)(0),       // 1: arbiter.TableIncarnationStatus
 	(TableIncarnationOrigin)(0),       // 2: arbiter.TableIncarnationOrigin
 	(*TableRegistryParams)(nil),       // 3: arbiter.TableRegistryParams
 	(*ClientLaneParams)(nil),          // 4: arbiter.ClientLaneParams
-	(*L2BlockRef)(nil),                // 5: arbiter.L2BlockRef
-	(*L2EventRef)(nil),                // 6: arbiter.L2EventRef
-	(*LegacyTable)(nil),               // 7: arbiter.LegacyTable
-	(*SeedLegacyTablesCmd)(nil),       // 8: arbiter.SeedLegacyTablesCmd
-	(*AddTableCmd)(nil),               // 9: arbiter.AddTableCmd
-	(*RetireTablesCmd)(nil),           // 10: arbiter.RetireTablesCmd
-	(*AdvanceL2CursorCmd)(nil),        // 11: arbiter.AdvanceL2CursorCmd
-	(*RecordTablePurgedCmd)(nil),      // 12: arbiter.RecordTablePurgedCmd
-	(*TableRegistryCursor)(nil),       // 13: arbiter.TableRegistryCursor
-	(*TableIncarnation)(nil),          // 14: arbiter.TableIncarnation
-	(*TableRegistrySnapshot)(nil),     // 15: arbiter.TableRegistrySnapshot
-	(*PurgeNodeSet)(nil),              // 16: arbiter.PurgeNodeSet
-	(*WatchTableRegistryRequest)(nil), // 17: arbiter.WatchTableRegistryRequest
-	(*emptypb.Empty)(nil),             // 18: google.protobuf.Empty
+	(*SIIndexerEntry)(nil),            // 5: arbiter.SIIndexerEntry
+	(*L2BlockRef)(nil),                // 6: arbiter.L2BlockRef
+	(*L2EventRef)(nil),                // 7: arbiter.L2EventRef
+	(*LegacyTable)(nil),               // 8: arbiter.LegacyTable
+	(*SeedLegacyTablesCmd)(nil),       // 9: arbiter.SeedLegacyTablesCmd
+	(*AddTableCmd)(nil),               // 10: arbiter.AddTableCmd
+	(*RetireTablesCmd)(nil),           // 11: arbiter.RetireTablesCmd
+	(*AdvanceL2CursorCmd)(nil),        // 12: arbiter.AdvanceL2CursorCmd
+	(*RecordTablePurgedCmd)(nil),      // 13: arbiter.RecordTablePurgedCmd
+	(*TableRegistryCursor)(nil),       // 14: arbiter.TableRegistryCursor
+	(*TableIncarnation)(nil),          // 15: arbiter.TableIncarnation
+	(*TableRegistrySnapshot)(nil),     // 16: arbiter.TableRegistrySnapshot
+	(*PurgeNodeSet)(nil),              // 17: arbiter.PurgeNodeSet
+	(*WatchTableRegistryRequest)(nil), // 18: arbiter.WatchTableRegistryRequest
+	(*emptypb.Empty)(nil),             // 19: google.protobuf.Empty
 }
 var file_table_registry_proto_depIdxs = []int32{
-	6,  // 0: arbiter.LegacyTable.created:type_name -> arbiter.L2EventRef
-	5,  // 1: arbiter.SeedLegacyTablesCmd.at_block:type_name -> arbiter.L2BlockRef
-	7,  // 2: arbiter.SeedLegacyTablesCmd.tables:type_name -> arbiter.LegacyTable
-	6,  // 3: arbiter.AddTableCmd.created:type_name -> arbiter.L2EventRef
-	6,  // 4: arbiter.AddTableCmd.schema:type_name -> arbiter.L2EventRef
-	6,  // 5: arbiter.RetireTablesCmd.deleted:type_name -> arbiter.L2EventRef
+	7,  // 0: arbiter.LegacyTable.created:type_name -> arbiter.L2EventRef
+	6,  // 1: arbiter.SeedLegacyTablesCmd.at_block:type_name -> arbiter.L2BlockRef
+	8,  // 2: arbiter.SeedLegacyTablesCmd.tables:type_name -> arbiter.LegacyTable
+	7,  // 3: arbiter.AddTableCmd.created:type_name -> arbiter.L2EventRef
+	7,  // 4: arbiter.AddTableCmd.schema:type_name -> arbiter.L2EventRef
+	7,  // 5: arbiter.RetireTablesCmd.deleted:type_name -> arbiter.L2EventRef
 	0,  // 6: arbiter.RetireTablesCmd.reason:type_name -> arbiter.TableRetireReason
-	5,  // 7: arbiter.AdvanceL2CursorCmd.to:type_name -> arbiter.L2BlockRef
+	6,  // 7: arbiter.AdvanceL2CursorCmd.to:type_name -> arbiter.L2BlockRef
 	2,  // 8: arbiter.TableIncarnation.origin:type_name -> arbiter.TableIncarnationOrigin
 	1,  // 9: arbiter.TableIncarnation.status:type_name -> arbiter.TableIncarnationStatus
-	6,  // 10: arbiter.TableIncarnation.created:type_name -> arbiter.L2EventRef
-	6,  // 11: arbiter.TableIncarnation.schema_ref:type_name -> arbiter.L2EventRef
-	6,  // 12: arbiter.TableIncarnation.deleted:type_name -> arbiter.L2EventRef
+	7,  // 10: arbiter.TableIncarnation.created:type_name -> arbiter.L2EventRef
+	7,  // 11: arbiter.TableIncarnation.schema_ref:type_name -> arbiter.L2EventRef
+	7,  // 12: arbiter.TableIncarnation.deleted:type_name -> arbiter.L2EventRef
 	0,  // 13: arbiter.TableIncarnation.retire_reason:type_name -> arbiter.TableRetireReason
 	3,  // 14: arbiter.TableRegistrySnapshot.params:type_name -> arbiter.TableRegistryParams
-	13, // 15: arbiter.TableRegistrySnapshot.cursor:type_name -> arbiter.TableRegistryCursor
-	14, // 16: arbiter.TableRegistrySnapshot.incarnations:type_name -> arbiter.TableIncarnation
+	14, // 15: arbiter.TableRegistrySnapshot.cursor:type_name -> arbiter.TableRegistryCursor
+	15, // 16: arbiter.TableRegistrySnapshot.incarnations:type_name -> arbiter.TableIncarnation
 	4,  // 17: arbiter.TableRegistrySnapshot.client_lanes:type_name -> arbiter.ClientLaneParams
-	18, // 18: arbiter.TableRegistry.GetTableRegistry:input_type -> google.protobuf.Empty
-	17, // 19: arbiter.TableRegistry.WatchTableRegistry:input_type -> arbiter.WatchTableRegistryRequest
-	18, // 20: arbiter.TableRegistry.GetPurgeNodeSet:input_type -> google.protobuf.Empty
-	15, // 21: arbiter.TableRegistry.GetTableRegistry:output_type -> arbiter.TableRegistrySnapshot
-	15, // 22: arbiter.TableRegistry.WatchTableRegistry:output_type -> arbiter.TableRegistrySnapshot
-	16, // 23: arbiter.TableRegistry.GetPurgeNodeSet:output_type -> arbiter.PurgeNodeSet
-	21, // [21:24] is the sub-list for method output_type
-	18, // [18:21] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	5,  // 18: arbiter.TableRegistrySnapshot.si_indexers:type_name -> arbiter.SIIndexerEntry
+	19, // 19: arbiter.TableRegistry.GetTableRegistry:input_type -> google.protobuf.Empty
+	18, // 20: arbiter.TableRegistry.WatchTableRegistry:input_type -> arbiter.WatchTableRegistryRequest
+	19, // 21: arbiter.TableRegistry.GetPurgeNodeSet:input_type -> google.protobuf.Empty
+	16, // 22: arbiter.TableRegistry.GetTableRegistry:output_type -> arbiter.TableRegistrySnapshot
+	16, // 23: arbiter.TableRegistry.WatchTableRegistry:output_type -> arbiter.TableRegistrySnapshot
+	17, // 24: arbiter.TableRegistry.GetPurgeNodeSet:output_type -> arbiter.PurgeNodeSet
+	22, // [22:25] is the sub-list for method output_type
+	19, // [19:22] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_table_registry_proto_init() }
@@ -1433,13 +1651,16 @@ func file_table_registry_proto_init() {
 	if File_table_registry_proto != nil {
 		return
 	}
+	file_table_registry_proto_msgTypes[6].OneofWrappers = []any{}
+	file_table_registry_proto_msgTypes[7].OneofWrappers = []any{}
+	file_table_registry_proto_msgTypes[12].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_table_registry_proto_rawDesc), len(file_table_registry_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   15,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
