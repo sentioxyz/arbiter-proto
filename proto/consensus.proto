@@ -30,6 +30,10 @@ message ConsensusMutableParams {
   // Set by the signed-claims activation together with si_indexers, then
   // carried complete by every update; entries may be added and removed (D7).
   repeated VerifierEntry verifiers = 7;
+  // The tracks activation (housegate spec 2026-10-10 §7.6): false until one
+  // authority-signed update after the signed-claims activation sets it, then
+  // carried by every update and never lowered.
+  bool tracks_enabled = 8;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -75,6 +79,19 @@ message ConsensusParamsUpdate {
   // a removed verifier is evicted, and no update may leave fewer than three
   // non-evicted listed verifiers. It joins the params digest only once set.
   repeated VerifierEntry verifiers = 12;
+  // The tracks activation (housegate spec 2026-10-10 §7): raise-only; once set
+  // every update must carry it. Only an update after the one that first set
+  // si_indexers may set it, never the signed-claims activation itself. The
+  // update that first sets it is the irreversible tracks activation and the
+  // first command to carry any stage-2 field: on top of the writer and drain
+  // gates, Apply refuses it unless the open block is empty, every sealed block
+  // is safe, the published manifest covers the sealed tip,
+  // artifact_disposition_capability is 0 and the snapshot-query barrier is
+  // idle, and applying it records the track cutover {sealed tip,
+  // promotion_seq}. Every voter, verifier and SNode must advertise
+  // "track_manifests_v1" first. It joins the params digest only once set, so
+  // earlier digests are unchanged.
+  bool tracks_enabled = 13;
 }
 
 // UpdateConsensusParamsCmd is both the administration request and the
@@ -117,9 +134,9 @@ message ProtocolInfo {
   string node_id = 1;
   uint32 protocol_version = 2;
   bool updates_enabled = 3;
-  // Capability strings of this binary ("client_lanes_v1", "signed_claims_v1");
-  // a static local property, read by arbiter-admin's activation gates on every
-  // voter.
+  // Capability strings of this binary ("client_lanes_v1", "signed_claims_v1",
+  // "track_manifests_v1"); a static local property, read by arbiter-admin's
+  // activation gates on every voter.
   repeated string features = 4;
 }
 
@@ -180,6 +197,80 @@ message EvictNodeRequest {
   string authority_jws = 4;
 }
 
+// QuarantineIndexerCmd is both the ConsensusAdmin request and the Raft
+// command (the UpdateConsensusParamsCmd precedent). authority_jws is an
+// ES256K JWS by a current authority address with purpose
+// "arbiter-quarantine-indexer-v1" over the canonical digest of
+// {indexer_id, expected_generation, reason}, bound to the network id,
+// genesis snapshot id and authority epoch. expected_generation must equal the
+// indexer's quarantine_generation, which every applied quarantine, release and
+// automatic quarantine increments, so a replayed command is refused (housegate
+// spec 2026-10-10 §7.4); reason is non-empty. Proposed only after the tracks
+// activation, as Raft tag 36.
+message QuarantineIndexerCmd {
+  uint64 indexer_id = 1;
+  uint64 expected_generation = 2;
+  string reason = 3;
+  string authority_jws = 4;
+}
+
+// ReleaseIndexerCmd: purpose "arbiter-release-indexer-v1" over
+// {indexer_id, expected_generation, acknowledged_rejected_blocks}; the list
+// is sorted ascending and unique, empty when there is nothing to acknowledge.
+// It must equal the indexer's unacknowledged rejected blocks exactly
+// (housegate spec 2026-10-10 §7.5); each then counts as passed for the track
+// and its rejected candidate parts are cleaned up. The same context binding
+// and generation rule as QuarantineIndexerCmd; proposed only after the tracks
+// activation, as Raft tag 37.
+message ReleaseIndexerCmd {
+  uint64 indexer_id = 1;
+  uint64 expected_generation = 2;
+  repeated uint64 acknowledged_rejected_blocks = 3;
+  string authority_jws = 4;
+}
+
+// IndexerTrackView is one enrolled SI indexer's track in committed state
+// (housegate spec 2026-10-10 §7.2-§7.6).
+message IndexerTrackView {
+  uint64 indexer_id = 1;
+  // The track's frontier before its first own block: the activation cutover,
+  // or {global safe prefix, promotion_seq} at its enrolment commit for an
+  // indexer enrolled after the activation.
+  TrackFrontier initial = 2;
+  // Starts at 0; every applied quarantine, release and automatic quarantine
+  // increments it. The next QuarantineIndexerCmd or ReleaseIndexerCmd names
+  // it as expected_generation.
+  uint64 quarantine_generation = 3;
+  bool quarantined = 4;
+  string quarantine_reason = 5;
+  // The track's rejected blocks no release has acknowledged yet, ascending;
+  // a release must list exactly these.
+  repeated uint64 rejected_blocks = 6;
+  // The rejected blocks a release acknowledged, ascending; each counts as
+  // passed for the track.
+  repeated uint64 acknowledged_rejected_blocks = 7;
+  // The track's current safe prefix.
+  uint64 prefix_block_seq = 8;
+  // The track's entry in the latest published manifest, or initial when that
+  // manifest carries none.
+  TrackFrontier published = 9;
+}
+
+// TrackStateView answers ConsensusAdmin.GetTrackState. Before the tracks
+// activation tracks_enabled is false and every other field is empty.
+message TrackStateView {
+  bool tracks_enabled = 1;
+  // The track cutover the activation recorded: the sealed tip and the
+  // promotion sequence when it applied.
+  uint64 cutover_block_seq = 2;
+  uint64 cutover_promotion_seq = 3;
+  // The contiguous safe prefix over all blocks.
+  uint64 global_safe_block_seq = 4;
+  // safe_block_seq of the latest published manifest.
+  uint64 published_safe_block_seq = 5;
+  repeated IndexerTrackView indexers = 6;   // sorted by indexer_id
+}
+
 service ConsensusAdmin {
   // Local static capability probe: no leader redirection or Raft barrier.
   rpc GetProtocolInfo (google.protobuf.Empty) returns (ProtocolInfo) {}
@@ -207,4 +298,17 @@ service ConsensusAdmin {
   // activation has committed, because no earlier command may carry those
   // fields. Ack means committed success.
   rpc EvictNode (EvictNodeRequest) returns (Ack) {}
+  // Leader-only, authority-authenticated quarantine of one SI indexer
+  // (housegate spec 2026-10-10 §7.4): proposes Raft tag 36. Refused with
+  // FAILED_PRECONDITION until the tracks activation has committed, because no
+  // earlier command may carry it. Ack means committed success.
+  rpc QuarantineIndexer (QuarantineIndexerCmd) returns (Ack) {}
+  // Leader-only, authority-authenticated release (housegate spec 2026-10-10
+  // §7.4-§7.5): proposes Raft tag 37. FAILED_PRECONDITION before the tracks
+  // activation. Ack means committed success.
+  rpc ReleaseIndexer (ReleaseIndexerCmd) returns (Ack) {}
+  // Leader-only read with a barrier; followers return NotLeader details.
+  // Before the tracks activation it answers tracks_enabled false and no
+  // indexers.
+  rpc GetTrackState (google.protobuf.Empty) returns (TrackStateView) {}
 }

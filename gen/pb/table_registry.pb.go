@@ -1254,8 +1254,14 @@ type TableRegistrySnapshot struct {
 	// founding indexer; from the activation on it holds the founding indexer iff
 	// seeded is true.
 	SeededIndexers []uint64 `protobuf:"varint,8,rep,packed,name=seeded_indexers,json=seededIndexers,proto3" json:"seeded_indexers,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Ids of the quarantined SI indexers, ascending (housegate spec 2026-10-10
+	// §7.4, §10), so hosts learn a quarantine through the registry follower and
+	// report their own tables as refused. Empty before the tracks activation;
+	// every committed quarantine, release and automatic quarantine bumps
+	// version.
+	QuarantinedIndexers []uint64 `protobuf:"varint,9,rep,packed,name=quarantined_indexers,json=quarantinedIndexers,proto3" json:"quarantined_indexers,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *TableRegistrySnapshot) Reset() {
@@ -1340,6 +1346,13 @@ func (x *TableRegistrySnapshot) GetSiIndexers() []*SIIndexerEntry {
 func (x *TableRegistrySnapshot) GetSeededIndexers() []uint64 {
 	if x != nil {
 		return x.SeededIndexers
+	}
+	return nil
+}
+
+func (x *TableRegistrySnapshot) GetQuarantinedIndexers() []uint64 {
+	if x != nil {
+		return x.QuarantinedIndexers
 	}
 	return nil
 }
@@ -1539,7 +1552,7 @@ const file_table_registry_proto_rawDesc = "" +
 	"\x10retire_block_seq\x18\x10 \x01(\x04R\x0eretireBlockSeq\x12\x1b\n" +
 	"\tpurged_by\x18\x11 \x03(\tR\bpurgedBy\x12-\n" +
 	"\x10owner_indexer_id\x18\x12 \x01(\x04H\x00R\x0eownerIndexerId\x88\x01\x01B\x13\n" +
-	"\x11_owner_indexer_id\"\x95\x03\n" +
+	"\x11_owner_indexer_id\"\xc8\x03\n" +
 	"\x15TableRegistrySnapshot\x124\n" +
 	"\x06params\x18\x01 \x01(\v2\x1c.arbiter.TableRegistryParamsR\x06params\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\x04R\aversion\x12\x16\n" +
@@ -1549,7 +1562,8 @@ const file_table_registry_proto_rawDesc = "" +
 	"\fclient_lanes\x18\x06 \x01(\v2\x19.arbiter.ClientLaneParamsR\vclientLanes\x128\n" +
 	"\vsi_indexers\x18\a \x03(\v2\x17.arbiter.SIIndexerEntryR\n" +
 	"siIndexers\x12'\n" +
-	"\x0fseeded_indexers\x18\b \x03(\x04R\x0eseededIndexers\")\n" +
+	"\x0fseeded_indexers\x18\b \x03(\x04R\x0eseededIndexers\x121\n" +
+	"\x14quarantined_indexers\x18\t \x03(\x04R\x13quarantinedIndexers\")\n" +
 	"\fPurgeNodeSet\x12\x19\n" +
 	"\bnode_ids\x18\x01 \x03(\tR\anodeIds\"@\n" +
 	"\x19WatchTableRegistryRequest\x12#\n" +

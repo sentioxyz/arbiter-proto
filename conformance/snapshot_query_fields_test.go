@@ -57,4 +57,6 @@ var snapshotQueryFields = map[string]string{
 	"GetClientSeqStateRequest":            "client_account:string client_lane:string",
 	"ClientSeqRange":                      "start:uint64 end:uint64",
 	"ClientSeqState":                      "found:bool subject:string hi:uint64 ranges:[]ClientSeqRange",
+	"TrackFrontier":                       "indexer_id:uint64 safe_block_seq:uint64 applied_promotion_seq:uint64",
+	"L3BlockTrack":                        "indexer_id:uint64",
 }

@@ -119,6 +119,14 @@ enum AdmissionCode {
   // signed-claims activation. Nothing changed: the coordinate is unspent, and
   // HouseGate answers a retryable, session-preserving refusal.
   ADMISSION_CODE_SOURCE_UNAVAILABLE = 10;
+  // The statement's target table belongs to an SI indexer that is quarantined
+  // (housegate spec 2026-10-10 §7.4). Admission checks it immediately before
+  // the owner-source check, so a quarantined indexer's tables never answer
+  // SOURCE_UNAVAILABLE. Returned only after the tracks activation. Nothing
+  // changed: the coordinate is unspent. Not retryable until an
+  // authority-signed ReleaseIndexerCmd releases the indexer; HouseGate
+  // answers a non-retryable, session-preserving refusal (ClickHouse 392).
+  ADMISSION_CODE_INDEXER_QUARANTINED = 11;
 }
 
 message SequencedAck {
@@ -273,6 +281,15 @@ message UnsafeCleanup {
   string partition_id = 2;
   uint64 promotion_seq = 3;
   repeated PartRef parts = 4;
+  // Non-zero only for a rejected-part cleanup (housegate spec 2026-10-10
+  // §7.5): parts are never-promoted candidate parts of the Rejected
+  // statements of block rejected_block_seq in this partition, and
+  // promotion_seq is then 0. Only a ReleaseIndexerCmd that acknowledges the
+  // block creates such work, so it is set only after the tracks activation;
+  // never proposed before it in ScheduleUnsafeCleanupCmd, where a voter whose
+  // decoder lacks this field refuses the command. The authority JWS covers it
+  // through arbiter-core's canonical cleanup body, which omits it when zero.
+  uint64 rejected_block_seq = 5;
 }
 
 // PromotionCommand is the leader→SNode dispatch stream payload. authority_jws
@@ -345,6 +362,13 @@ message CleanupAck {
   // SNode) may clear it. Request-only: the server moves it into
   // RecordCleanupAckCmd.source_jws. Dropped before the activation.
   string source_jws = 5;
+  // Echoes UnsafeCleanup.rejected_block_seq of the cleanup it acknowledges
+  // (housegate spec 2026-10-10 §7.5): non-zero only for a rejected-part
+  // cleanup, whose promotion_seq is 0, and covered by source_jws like the rest
+  // of the ack. Only after the tracks activation: before it the promotion
+  // gateway refuses an AckCleanup that carries it, and no RecordCleanupAckCmd
+  // carries it.
+  uint64 rejected_block_seq = 6;
 }
 
 // ============================================================
@@ -403,6 +427,13 @@ message L3BlockHeader {
   // Set only on a zero-statement table-set transition block (dynamic SI
   // table set, spec D7).
   TableSetTransition table_set_transition = 13;
+  // The block's track (housegate spec 2026-10-10 §7.1): the SI indexer that
+  // owns every statement, or every table change, of the block. Set on every
+  // block sealed after the tracks activation and absent on every earlier one;
+  // part of the ChainHash preimage (fsm json tag "track") only when set.
+  // Headers are FSM state and never travel in a Raft command
+  // (SealL3BlockCmd carries nothing); this field serves the read API.
+  L3BlockTrack track = 14;
 }
 
 // TableSetAdd is one table a transition block brings into the SI state root,
@@ -420,6 +451,13 @@ message TableSetTransition {
   repeated TableSetAdd adds = 1;
   repeated string retires = 2;
   string new_schema_root = 3;
+}
+
+// L3BlockTrack is a block header's track (spec §7.1): set on every block
+// sealed after the tracks activation; message presence keeps indexer 0
+// distinct from absent.
+message L3BlockTrack {
+  uint64 indexer_id = 1;
 }
 
 message L3BlockRef {
@@ -451,10 +489,13 @@ message NodeRegistration {
   // node-initiated subscribe streams (§11.1).
   string dial_addr = 4;
   // Capability strings of the registering binary ("client_lanes_v1",
-  // "signed_claims_v1"). Request-only: the leader records them in a
-  // non-replicated feature book and never copies them into a RaftCommand or
-  // replicated state (housegate spec 2026-10-09 §5.6), because a voter that
-  // does not know this field refuses every command that carries it.
+  // "signed_claims_v1", "track_manifests_v1"). Request-only: the leader
+  // records them in a non-replicated feature book and never copies them into
+  // a RaftCommand or replicated state (housegate spec 2026-10-09 §5.6),
+  // because a voter that does not know this field refuses every command that
+  // carries it. After the tracks activation the leader refuses a data-plane
+  // registration whose features lack "track_manifests_v1" (housegate spec
+  // 2026-10-10 §7.6).
   repeated string features = 5;
   // The node's registration sequence (housegate spec 2026-10-10 §6.5): the
   // node persists it and raises it before every RegisterNode. After the

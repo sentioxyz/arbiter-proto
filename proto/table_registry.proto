@@ -236,6 +236,12 @@ message TableRegistrySnapshot {
   // founding indexer; from the activation on it holds the founding indexer iff
   // seeded is true.
   repeated uint64 seeded_indexers = 8;
+  // Ids of the quarantined SI indexers, ascending (housegate spec 2026-10-10
+  // §7.4, §10), so hosts learn a quarantine through the registry follower and
+  // report their own tables as refused. Empty before the tracks activation;
+  // every committed quarantine, release and automatic quarantine bumps
+  // version.
+  repeated uint64 quarantined_indexers = 9;
 }
 
 // PurgeNodeSet is the committed set of data-plane nodes whose

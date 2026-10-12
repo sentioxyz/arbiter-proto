@@ -152,6 +152,21 @@ message TableManifest {
   repeated PartManifestEntry active_parts = 4;
 }
 
+// TrackFrontier is one SI indexer's entry in a track-aware safe-snapshot
+// manifest (housegate spec 2026-10-10 §7.3). Mirrors housegate
+// pkg/replay.TrackFrontier; indexer 0 and zero values are serialized.
+// safe_block_seq: the manifest holds the effects of every block up to the
+// tracks-activation cutover block and of every block of this track up to
+// this value. applied_promotion_seq is a cutoff: every promotion of this
+// track at or below it is represented in the manifest's tables, and none
+// above it is. Carried only by manifests published after the tracks
+// activation.
+message TrackFrontier {
+  uint64 indexer_id = 1;
+  uint64 safe_block_seq = 2;
+  uint64 applied_promotion_seq = 3;
+}
+
 // SafeSnapshotManifest is the published safe watermark
 // (pkg/replay.SafeSnapshotManifest). The FSM validates it via pkg/replay
 // Seal/Validate before recording (§8.5); ordering is normalized (tables by
@@ -169,6 +184,16 @@ message SafeSnapshotManifest {
   string data_root = 8;
   string manifest_root = 9;
   repeated TableManifest tables = 10;
+  // One entry per enrolled SI indexer, strictly ascending by indexer_id and
+  // never reordered by normalization (housegate spec 2026-10-10 §7.3). Set
+  // only on a manifest published after the tracks activation (the first
+  // UpdateConsensusParams that sets tracks_enabled) and empty on every
+  // earlier manifest, whose roots it leaves unchanged: it enters only the
+  // manifest root, and only when non-empty. Never proposed before the
+  // activation, in PublishSafeSnapshotCmd, PublishExecutorProfileTransitionCmd
+  // or ArtifactDispositionCmd: a voter whose decoder lacks this field refuses
+  // the command.
+  repeated TrackFrontier track_frontiers = 11;
 }
 
 // Snapshot-query canonical mirrors. Protobuf defaults are not canonical JSON.

@@ -15,14 +15,14 @@ func TestConsensusUpdateContract(t *testing.T) {
 		kinds   []protoreflect.Kind
 	}{
 		{&pb.ConsensusParamsUpdate{},
-			[]protoreflect.Name{"network_id", "genesis_snapshot_id", "expected_epoch", "previous_params_digest", "authority_addresses", "max_writers", "expected_promotion_seq", "artifact_disposition_capability", "table_registry", "client_lanes", "si_indexers", "verifiers"},
-			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.StringKind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.Uint64Kind, protoreflect.Uint32Kind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.MessageKind}},
+			[]protoreflect.Name{"network_id", "genesis_snapshot_id", "expected_epoch", "previous_params_digest", "authority_addresses", "max_writers", "expected_promotion_seq", "artifact_disposition_capability", "table_registry", "client_lanes", "si_indexers", "verifiers", "tracks_enabled"},
+			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.StringKind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.Uint64Kind, protoreflect.Uint32Kind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.BoolKind}},
 		{&pb.UpdateConsensusParamsCmd{},
 			[]protoreflect.Name{"update", "authority_jws"},
 			[]protoreflect.Kind{protoreflect.MessageKind, protoreflect.StringKind}},
 		{&pb.ConsensusMutableParams{},
-			[]protoreflect.Name{"authority_addresses", "max_writers", "artifact_disposition_capability", "table_registry", "client_lanes", "si_indexers", "verifiers"},
-			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.Uint32Kind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.MessageKind}},
+			[]protoreflect.Name{"authority_addresses", "max_writers", "artifact_disposition_capability", "table_registry", "client_lanes", "si_indexers", "verifiers", "tracks_enabled"},
+			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.Uint32Kind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.BoolKind}},
 		{&pb.ProtocolInfo{},
 			[]protoreflect.Name{"node_id", "protocol_version", "updates_enabled", "features"},
 			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.Uint32Kind, protoreflect.BoolKind, protoreflect.StringKind}},
@@ -88,7 +88,7 @@ func TestConsensusUpdateAppendsRaftSlot18(t *testing.T) {
 
 func TestConsensusAdminRPCSignatures(t *testing.T) {
 	service := pb.File_consensus_proto.Services().ByName("ConsensusAdmin")
-	if service == nil || service.Methods().Len() != 8 {
+	if service == nil || service.Methods().Len() != 11 {
 		t.Fatalf("ConsensusAdmin service = %v", service)
 	}
 	for _, tt := range []struct {
@@ -103,6 +103,9 @@ func TestConsensusAdminRPCSignatures(t *testing.T) {
 		{"ActivateQueryProfile", "arbiter.ActivateQueryProfileRequest", "arbiter.Ack"},
 		{"GetNodeFeatures", "google.protobuf.Empty", "arbiter.NodeFeatures"},
 		{"EvictNode", "arbiter.EvictNodeRequest", "arbiter.Ack"},
+		{"QuarantineIndexer", "arbiter.QuarantineIndexerCmd", "arbiter.Ack"},
+		{"ReleaseIndexer", "arbiter.ReleaseIndexerCmd", "arbiter.Ack"},
+		{"GetTrackState", "google.protobuf.Empty", "arbiter.TrackStateView"},
 	} {
 		method := service.Methods().ByName(tt.name)
 		if method == nil || method.Input().FullName() != tt.input || method.Output().FullName() != tt.output || method.IsStreamingClient() || method.IsStreamingServer() {
