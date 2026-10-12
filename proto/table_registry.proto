@@ -236,6 +236,19 @@ message TableRegistrySnapshot {
   // founding indexer; from the activation on it holds the founding indexer iff
   // seeded is true.
   repeated uint64 seeded_indexers = 8;
+  // Ids of the SI indexers whose host must refuse its own tables, ascending
+  // (housegate spec 2026-10-10 §7.4, §7.5, §10): those that are quarantined, or
+  // released with rejected parts not yet cleaned. A release clears the FSM's
+  // quarantine flag at once (admission reads only that flag, and
+  // IndexerTrackView.quarantined reports it), but the rejected candidate rows
+  // stay in hg_unsafe until their cleanup is acknowledged, so the id stays
+  // listed, and its host keeps refusing reads and writes, until the cleanup of
+  // all its rejected parts is acknowledged. Hosts learn the list through the
+  // registry follower. Empty before the tracks activation, so set only after
+  // it. Every committed quarantine, release and automatic quarantine bumps
+  // version, and so does the acknowledgement of an indexer's last uncleaned
+  // rejected part.
+  repeated uint64 quarantined_indexers = 9;
 }
 
 // PurgeNodeSet is the committed set of data-plane nodes whose

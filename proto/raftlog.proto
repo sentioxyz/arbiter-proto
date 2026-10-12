@@ -220,6 +220,13 @@ message RaftCommand {
     RetireTablesCmd retire_tables = 33;
     AdvanceL2CursorCmd advance_l2_cursor = 34;
     RecordTablePurgedCmd record_table_purged = 35;
+    // Multi-source SI stage 2 (housegate spec 2026-10-10 §7.4; tag 29 stays
+    // unused): the authority-signed quarantine and release of one SI indexer,
+    // proposed only through ConsensusAdmin and only after the tracks
+    // activation, because a voter whose decoder lacks these tags refuses the
+    // command.
+    QuarantineIndexerCmd quarantine_indexer = 36;
+    ReleaseIndexerCmd release_indexer = 37;
   }
 }
 

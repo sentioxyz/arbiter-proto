@@ -374,6 +374,28 @@ func signedClaimsList(name, jsonName string, number int32, typeName string) *des
 	return f
 }
 
+// tracksFields pins the exact trailing fields the multi-source SI stage-2 work
+// (housegate spec 2026-10-10 §7; Plan S2-A contract §1) appended to messages
+// that exist in the baselines. Each is the last field of its message, and the
+// older exemptions below (signedClaimsFields first) inspect the then-last
+// fields, so they are stripped before every other exemption. Every existing
+// baseline predates them, so the exemption applies unconditionally.
+var tracksFields = map[string][]*descriptorpb.FieldDescriptorProto{
+	"SafeSnapshotManifest":   {signedClaimsList("track_frontiers", "trackFrontiers", 11, ".arbiter.TrackFrontier")},
+	"L3BlockHeader":          {tracksMessage("track", "track", 14, ".arbiter.L3BlockTrack")},
+	"UnsafeCleanup":          {signedClaimsField("rejected_block_seq", "rejectedBlockSeq", 5, signedClaimsUint64)},
+	"CleanupAck":             {signedClaimsField("rejected_block_seq", "rejectedBlockSeq", 6, signedClaimsUint64)},
+	"ConsensusMutableParams": {signedClaimsField("tracks_enabled", "tracksEnabled", 8, descriptorpb.FieldDescriptorProto_TYPE_BOOL)},
+	"ConsensusParamsUpdate":  {signedClaimsField("tracks_enabled", "tracksEnabled", 13, descriptorpb.FieldDescriptorProto_TYPE_BOOL)},
+}
+
+// tracksMessage is signedClaimsField for an appended singular message field.
+func tracksMessage(name, jsonName string, number int32, typeName string) *descriptorpb.FieldDescriptorProto {
+	f := signedClaimsField(name, jsonName, number, descriptorpb.FieldDescriptorProto_TYPE_MESSAGE)
+	f.TypeName = proto.String(typeName)
+	return f
+}
+
 func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.FileDescriptorSet, allowPromotionInventory bool) {
 	t.Helper()
 	for _, old := range baseline.File {
@@ -391,6 +413,18 @@ func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.File
 			}
 			if got == nil {
 				t.Fatalf("old message removed: %s", m.GetName())
+			}
+			if want, ok := tracksFields[m.GetName()]; ok {
+				if len(got.Field) < len(want) {
+					t.Fatalf("%s lacks its tracks fields: %v", m.GetName(), got)
+				}
+				tail := got.Field[len(got.Field)-len(want):]
+				for i := range want {
+					if !proto.Equal(tail[i], want[i]) {
+						t.Fatalf("%s tracks addition must be exactly %s = %d: %v", m.GetName(), want[i].GetName(), want[i].GetNumber(), got)
+					}
+				}
+				got.Field = got.Field[:len(got.Field)-len(want)]
 			}
 			if want, ok := signedClaimsFields[m.GetName()]; ok {
 				if len(got.Field) < len(want) {

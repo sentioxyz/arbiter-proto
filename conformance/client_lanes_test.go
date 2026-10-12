@@ -72,8 +72,8 @@ func TestLaneBudgetAdmissionCodeIsNine(t *testing.T) {
 	if got := int32(pb.AdmissionCode_ADMISSION_CODE_GAP_BUDGET_EXCEEDED); got != 8 {
 		t.Fatalf("ADMISSION_CODE_GAP_BUDGET_EXCEEDED moved to %d", got)
 	}
-	if n := pb.AdmissionCode(0).Descriptor().Values().Len(); n != 11 {
-		t.Fatalf("AdmissionCode has %d values, want 11", n)
+	if n := pb.AdmissionCode(0).Descriptor().Values().Len(); n != 12 {
+		t.Fatalf("AdmissionCode has %d values, want 12", n)
 	}
 }
 

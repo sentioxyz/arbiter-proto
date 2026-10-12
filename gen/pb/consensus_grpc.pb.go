@@ -32,6 +32,9 @@ const (
 	ConsensusAdmin_ActivateQueryProfile_FullMethodName           = "/arbiter.ConsensusAdmin/ActivateQueryProfile"
 	ConsensusAdmin_GetNodeFeatures_FullMethodName                = "/arbiter.ConsensusAdmin/GetNodeFeatures"
 	ConsensusAdmin_EvictNode_FullMethodName                      = "/arbiter.ConsensusAdmin/EvictNode"
+	ConsensusAdmin_QuarantineIndexer_FullMethodName              = "/arbiter.ConsensusAdmin/QuarantineIndexer"
+	ConsensusAdmin_ReleaseIndexer_FullMethodName                 = "/arbiter.ConsensusAdmin/ReleaseIndexer"
+	ConsensusAdmin_GetTrackState_FullMethodName                  = "/arbiter.ConsensusAdmin/GetTrackState"
 )
 
 // ConsensusAdminClient is the client API for ConsensusAdmin service.
@@ -64,6 +67,19 @@ type ConsensusAdminClient interface {
 	// activation has committed, because no earlier command may carry those
 	// fields. Ack means committed success.
 	EvictNode(ctx context.Context, in *EvictNodeRequest, opts ...grpc.CallOption) (*Ack, error)
+	// Leader-only, authority-authenticated quarantine of one SI indexer
+	// (housegate spec 2026-10-10 §7.4): proposes Raft tag 36. Refused with
+	// FAILED_PRECONDITION until the tracks activation has committed, because no
+	// earlier command may carry it. Ack means committed success.
+	QuarantineIndexer(ctx context.Context, in *QuarantineIndexerCmd, opts ...grpc.CallOption) (*Ack, error)
+	// Leader-only, authority-authenticated release (housegate spec 2026-10-10
+	// §7.4-§7.5): proposes Raft tag 37. FAILED_PRECONDITION before the tracks
+	// activation. Ack means committed success.
+	ReleaseIndexer(ctx context.Context, in *ReleaseIndexerCmd, opts ...grpc.CallOption) (*Ack, error)
+	// Leader-only read with a barrier; followers return NotLeader details.
+	// Before the tracks activation it answers tracks_enabled false and no
+	// indexers.
+	GetTrackState(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*TrackStateView, error)
 }
 
 type consensusAdminClient struct {
@@ -154,6 +170,36 @@ func (c *consensusAdminClient) EvictNode(ctx context.Context, in *EvictNodeReque
 	return out, nil
 }
 
+func (c *consensusAdminClient) QuarantineIndexer(ctx context.Context, in *QuarantineIndexerCmd, opts ...grpc.CallOption) (*Ack, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Ack)
+	err := c.cc.Invoke(ctx, ConsensusAdmin_QuarantineIndexer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consensusAdminClient) ReleaseIndexer(ctx context.Context, in *ReleaseIndexerCmd, opts ...grpc.CallOption) (*Ack, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Ack)
+	err := c.cc.Invoke(ctx, ConsensusAdmin_ReleaseIndexer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consensusAdminClient) GetTrackState(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*TrackStateView, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TrackStateView)
+	err := c.cc.Invoke(ctx, ConsensusAdmin_GetTrackState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsensusAdminServer is the server API for ConsensusAdmin service.
 // All implementations must embed UnimplementedConsensusAdminServer
 // for forward compatibility.
@@ -184,6 +230,19 @@ type ConsensusAdminServer interface {
 	// activation has committed, because no earlier command may carry those
 	// fields. Ack means committed success.
 	EvictNode(context.Context, *EvictNodeRequest) (*Ack, error)
+	// Leader-only, authority-authenticated quarantine of one SI indexer
+	// (housegate spec 2026-10-10 §7.4): proposes Raft tag 36. Refused with
+	// FAILED_PRECONDITION until the tracks activation has committed, because no
+	// earlier command may carry it. Ack means committed success.
+	QuarantineIndexer(context.Context, *QuarantineIndexerCmd) (*Ack, error)
+	// Leader-only, authority-authenticated release (housegate spec 2026-10-10
+	// §7.4-§7.5): proposes Raft tag 37. FAILED_PRECONDITION before the tracks
+	// activation. Ack means committed success.
+	ReleaseIndexer(context.Context, *ReleaseIndexerCmd) (*Ack, error)
+	// Leader-only read with a barrier; followers return NotLeader details.
+	// Before the tracks activation it answers tracks_enabled false and no
+	// indexers.
+	GetTrackState(context.Context, *emptypb.Empty) (*TrackStateView, error)
 	mustEmbedUnimplementedConsensusAdminServer()
 }
 
@@ -217,6 +276,15 @@ func (UnimplementedConsensusAdminServer) GetNodeFeatures(context.Context, *empty
 }
 func (UnimplementedConsensusAdminServer) EvictNode(context.Context, *EvictNodeRequest) (*Ack, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EvictNode not implemented")
+}
+func (UnimplementedConsensusAdminServer) QuarantineIndexer(context.Context, *QuarantineIndexerCmd) (*Ack, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QuarantineIndexer not implemented")
+}
+func (UnimplementedConsensusAdminServer) ReleaseIndexer(context.Context, *ReleaseIndexerCmd) (*Ack, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReleaseIndexer not implemented")
+}
+func (UnimplementedConsensusAdminServer) GetTrackState(context.Context, *emptypb.Empty) (*TrackStateView, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTrackState not implemented")
 }
 func (UnimplementedConsensusAdminServer) mustEmbedUnimplementedConsensusAdminServer() {}
 func (UnimplementedConsensusAdminServer) testEmbeddedByValue()                        {}
@@ -383,6 +451,60 @@ func _ConsensusAdmin_EvictNode_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConsensusAdmin_QuarantineIndexer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QuarantineIndexerCmd)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusAdminServer).QuarantineIndexer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusAdmin_QuarantineIndexer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusAdminServer).QuarantineIndexer(ctx, req.(*QuarantineIndexerCmd))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConsensusAdmin_ReleaseIndexer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReleaseIndexerCmd)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusAdminServer).ReleaseIndexer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusAdmin_ReleaseIndexer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusAdminServer).ReleaseIndexer(ctx, req.(*ReleaseIndexerCmd))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConsensusAdmin_GetTrackState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusAdminServer).GetTrackState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusAdmin_GetTrackState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusAdminServer).GetTrackState(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConsensusAdmin_ServiceDesc is the grpc.ServiceDesc for ConsensusAdmin service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -421,6 +543,18 @@ var ConsensusAdmin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "EvictNode",
 			Handler:    _ConsensusAdmin_EvictNode_Handler,
+		},
+		{
+			MethodName: "QuarantineIndexer",
+			Handler:    _ConsensusAdmin_QuarantineIndexer_Handler,
+		},
+		{
+			MethodName: "ReleaseIndexer",
+			Handler:    _ConsensusAdmin_ReleaseIndexer_Handler,
+		},
+		{
+			MethodName: "GetTrackState",
+			Handler:    _ConsensusAdmin_GetTrackState_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
