@@ -1254,11 +1254,18 @@ type TableRegistrySnapshot struct {
 	// founding indexer; from the activation on it holds the founding indexer iff
 	// seeded is true.
 	SeededIndexers []uint64 `protobuf:"varint,8,rep,packed,name=seeded_indexers,json=seededIndexers,proto3" json:"seeded_indexers,omitempty"`
-	// Ids of the quarantined SI indexers, ascending (housegate spec 2026-10-10
-	// §7.4, §10), so hosts learn a quarantine through the registry follower and
-	// report their own tables as refused. Empty before the tracks activation;
-	// every committed quarantine, release and automatic quarantine bumps
-	// version.
+	// Ids of the SI indexers whose host must refuse its own tables, ascending
+	// (housegate spec 2026-10-10 §7.4, §7.5, §10): those that are quarantined, or
+	// released with rejected parts not yet cleaned. A release clears the FSM's
+	// quarantine flag at once (admission reads only that flag, and
+	// IndexerTrackView.quarantined reports it), but the rejected candidate rows
+	// stay in hg_unsafe until their cleanup is acknowledged, so the id stays
+	// listed, and its host keeps refusing reads and writes, until the cleanup of
+	// all its rejected parts is acknowledged. Hosts learn the list through the
+	// registry follower. Empty before the tracks activation, so set only after
+	// it. Every committed quarantine, release and automatic quarantine bumps
+	// version, and so does the acknowledgement of an indexer's last uncleaned
+	// rejected part.
 	QuarantinedIndexers []uint64 `protobuf:"varint,9,rep,packed,name=quarantined_indexers,json=quarantinedIndexers,proto3" json:"quarantined_indexers,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache

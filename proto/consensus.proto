@@ -241,6 +241,10 @@ message IndexerTrackView {
   // increments it. The next QuarantineIndexerCmd or ReleaseIndexerCmd names
   // it as expected_generation.
   uint64 quarantine_generation = 3;
+  // The FSM's quarantine flag: set by a quarantine, manual or automatic, and
+  // cleared by a release; admission reads only this flag. A released indexer
+  // whose rejected parts are not yet cleaned is false here but is still listed
+  // in TableRegistrySnapshot.quarantined_indexers, which its host reads.
   bool quarantined = 4;
   string quarantine_reason = 5;
   // The track's rejected blocks no release has acknowledged yet, ascending;

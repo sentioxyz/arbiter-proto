@@ -1153,8 +1153,12 @@ type IndexerTrackView struct {
 	// increments it. The next QuarantineIndexerCmd or ReleaseIndexerCmd names
 	// it as expected_generation.
 	QuarantineGeneration uint64 `protobuf:"varint,3,opt,name=quarantine_generation,json=quarantineGeneration,proto3" json:"quarantine_generation,omitempty"`
-	Quarantined          bool   `protobuf:"varint,4,opt,name=quarantined,proto3" json:"quarantined,omitempty"`
-	QuarantineReason     string `protobuf:"bytes,5,opt,name=quarantine_reason,json=quarantineReason,proto3" json:"quarantine_reason,omitempty"`
+	// The FSM's quarantine flag: set by a quarantine, manual or automatic, and
+	// cleared by a release; admission reads only this flag. A released indexer
+	// whose rejected parts are not yet cleaned is false here but is still listed
+	// in TableRegistrySnapshot.quarantined_indexers, which its host reads.
+	Quarantined      bool   `protobuf:"varint,4,opt,name=quarantined,proto3" json:"quarantined,omitempty"`
+	QuarantineReason string `protobuf:"bytes,5,opt,name=quarantine_reason,json=quarantineReason,proto3" json:"quarantine_reason,omitempty"`
 	// The track's rejected blocks no release has acknowledged yet, ascending;
 	// a release must list exactly these.
 	RejectedBlocks []uint64 `protobuf:"varint,6,rep,packed,name=rejected_blocks,json=rejectedBlocks,proto3" json:"rejected_blocks,omitempty"`
