@@ -275,6 +275,104 @@ message TrackStateView {
   repeated IndexerTrackView indexers = 6;   // sorted by indexer_id
 }
 
+// ConsensusHoldMode selects what a consensus hold freezes (housegate spec
+// 2026-10-14 §10.1-§10.2). A hold is leader-local and never replicated: it
+// lives on the leader that granted it, in the Raft term it was granted in,
+// and ends when the update that names it commits or is refused, when it is
+// released, when it times out, or when that leader loses leadership.
+enum ConsensusHoldMode {
+  CONSENSUS_HOLD_MODE_UNSPECIFIED = 0;
+  // The issuance hold (§10.1): the leader proposes no RecordPromotionIssued
+  // on any track, so promotion_seq stays frozen, while acknowledgements,
+  // publication and cleanups continue.
+  CONSENSUS_HOLD_MODE_ISSUANCE = 1;
+  // Leader drain mode (§10.2): the leader records each non-quarantined
+  // track's promotion frontier block (before the tracks activation, the
+  // global one), keeps issuing and re-issuing promotions for blocks at or
+  // below it, and refuses only the first promotion of a later block.
+  CONSENSUS_HOLD_MODE_DRAIN = 2;
+}
+
+// PrepareConsensusUpdateRequest asks the leader for a hold before an update
+// is signed against the promotion_seq the hold reports.
+message PrepareConsensusUpdateRequest {
+  // Required: UNSPECIFIED is INVALID_ARGUMENT.
+  ConsensusHoldMode mode = 1;
+  // Required: an authority-signed update that authorizes the hold, signed
+  // against the current epoch, params digest and promotion_seq. The leader
+  // checks it exactly as UpdateConsensusParams does (token shape, current
+  // authority set, max token age, preconditions, update validator) and never
+  // proposes it. In ISSUANCE mode it is the update to submit under the hold;
+  // in DRAIN mode the update to submit is signed against the promotion_seq
+  // the ready hold reports.
+  UpdateConsensusParamsCmd draft = 2;
+  // The hold's lifetime in milliseconds: 0 selects the leader's maximum for
+  // the mode (consensus_admin.max_issuance_hold or
+  // consensus_admin.max_drain_mode), and a larger value is capped to it.
+  uint64 timeout_ms = 3;
+}
+
+// ConsensusHoldRef names one hold. hold_id is 128 random bits as 32 lowercase
+// hex characters, returned only to the caller that took the hold; knowing it
+// is the capability to read or release the hold. UpdateConsensusParams names
+// the hold it settles in the gRPC metadata key "arbiter-consensus-hold",
+// never inside the Raft command.
+message ConsensusHoldRef {
+  string hold_id = 1;
+}
+
+// TrackDrain is one track's progress under a DRAIN hold.
+message TrackDrain {
+  uint64 indexer_id = 1;
+  // A quarantined track does not hold the drain.
+  bool quarantined = 2;
+  // The track's current safe prefix.
+  uint64 prefix_block_seq = 3;
+  // The track's promotion frontier block recorded when the hold started, 0
+  // for a track that was quarantined then. The leader issues no first
+  // promotion of a later block of this track while the hold lasts.
+  uint64 frontier_block_seq = 4;
+  // The track's blocks that still hold the drain, ascending: blocks above
+  // the prefix up to the frontier that have not passed, and the blocks of
+  // its promotions that are unacknowledged, wait for a cleanup
+  // acknowledgement or still have promoted hg_unsafe parts.
+  repeated uint64 in_flight_blocks = 5;
+}
+
+// ConsensusHold is a granted hold as the leader holding it sees it now.
+message ConsensusHold {
+  string hold_id = 1;
+  ConsensusHoldMode mode = 2;
+  // The Raft term the hold was granted in; it is void in any other term.
+  uint64 raft_term = 3;
+  // The FSM's PromotionSeq now. ISSUANCE: frozen while the hold lasts and
+  // equal to the draft's expected_promotion_seq. DRAIN: once ready is true it
+  // no longer moves; sign the update's expected_promotion_seq with it.
+  uint64 promotion_seq = 4;
+  // When the hold expires on the leader's clock, Unix milliseconds.
+  uint64 expires_unix_ms = 5;
+  // ISSUANCE: true once the stage-2 drain gate passes (no promotion is
+  // issued meanwhile, so acknowledgements and cleanups can finish). DRAIN:
+  // true once the stage-2 drain gate passes and every non-quarantined
+  // track's prefix has reached its recorded frontier (before the tracks
+  // activation, the global prefix the global frontier).
+  bool ready = 6;
+  // The stage-2 drain gate's refusal at the read, verbatim; empty once it
+  // passes. A hold of either mode is ready only when it is empty, because
+  // UpdateConsensusParams is refused while it is set.
+  string drain_refusal = 7;
+  // A DRAIN hold before the tracks activation: the global safe prefix, the
+  // global promotion frontier block recorded when the hold started, and the
+  // blocks still in flight, ascending (the TrackDrain rules over every
+  // block). Zero and empty otherwise.
+  uint64 global_prefix_block_seq = 8;
+  uint64 global_frontier_block_seq = 9;
+  repeated uint64 in_flight_blocks = 10;
+  // A DRAIN hold after the tracks activation: one entry per enrolled
+  // indexer, ascending by indexer_id. Empty otherwise.
+  repeated TrackDrain tracks = 11;
+}
+
 service ConsensusAdmin {
   // Local static capability probe: no leader redirection or Raft barrier.
   rpc GetProtocolInfo (google.protobuf.Empty) returns (ProtocolInfo) {}
@@ -315,4 +413,17 @@ service ConsensusAdmin {
   // Before the tracks activation it answers tracks_enabled false and no
   // indexers.
   rpc GetTrackState (google.protobuf.Empty) returns (TrackStateView) {}
+  // Leader-only, explicitly enabled (consensus_updates_enabled), authorized
+  // by the request's draft (housegate spec 2026-10-14 §10.1-§10.2): grants
+  // one leader-local hold and returns it. Every refusal comes before any log
+  // write; a second hold while one is active is FAILED_PRECONDITION. Nothing
+  // is proposed: the hold is not replicated, and followers return NotLeader
+  // details.
+  rpc PrepareConsensusUpdate (PrepareConsensusUpdateRequest) returns (ConsensusHold) {}
+  // Leader-only read with a barrier. NOT_FOUND for a hold_id this leader does
+  // not hold, including a hold that has ended ("unknown consensus hold").
+  rpc GetConsensusHold (ConsensusHoldRef) returns (ConsensusHold) {}
+  // Leader-only: ends the hold. Idempotent: a hold_id this leader does not
+  // hold answers Ack.
+  rpc ReleaseConsensusHold (ConsensusHoldRef) returns (Ack) {}
 }

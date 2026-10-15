@@ -658,6 +658,203 @@ message ClientSeqState {
   repeated ClientSeqRange ranges = 4;
 }
 
+// ============================================================
+// Stage-3 reads (housegate spec 2026-10-14 §14, §15, §16 P0)
+// ============================================================
+
+// The messages below answer the three stage-3 SafeState reads: committed FSM
+// state that the owner SNode's hg_safe audit (§14), member installs (§8) and
+// shadow verification (§16 P2) need without a consensus change. The leader
+// refuses a malformed request with INVALID_ARGUMENT before any log write and
+// answers after exactly one leader read barrier; a follower answers
+// FAILED_PRECONDITION with a NotLeader detail. No RaftCommand reaches any of
+// them: they are never proposed, replicated or snapshotted.
+
+// GetPartitionStatesRequest selects partitions of one SI table.
+message GetPartitionStatesRequest {
+  // Required (INVALID_ARGUMENT when empty): a safe-part entry is about 4.9 KB,
+  // so the read is scoped to one table.
+  string table_id = 1;
+  // Empty selects every partition of table_id that the FSM holds state for:
+  // a promotion base, a safe-part inventory or a promoted unsafe part.
+  string partition_id = 2;
+}
+
+// PartitionStateEntry is one partition's committed promotion state.
+message PartitionStateEntry {
+  string table_id = 1;
+  string partition_id = 2;
+  // The base the partition's next PromoteSafePartition must name (arbiter
+  // fsm.PartitionState). base_partition_root is "0x" + hex of the raw
+  // 2048-byte LtHash accumulator, empty for the all-zero base of a partition
+  // that was never promoted.
+  string base_safe_snapshot_id = 3;
+  string base_partition_root = 4;
+  // promotion_seq of the applied acknowledgement that last advanced the
+  // base, 0 when none. The owner audit's reference inventory is the newer,
+  // by this number, of safe_parts and the SNode's own last acknowledged
+  // inventory.
+  uint64 publish_seq = 5;
+  // The acknowledged hg_safe inventory: every active part the last applied
+  // acknowledgement listed, in FSM order (the order manifests list them in).
+  repeated PartManifestEntry safe_parts = 6;
+  // part_row_lthash of every promoted candidate part whose hg_unsafe copy no
+  // cleanup acknowledgement has removed yet, ascending.
+  repeated string promoted_unsafe_part_row_lthashes = 7;
+  // The newest unacknowledged promotion of this partition, 0 when none; a
+  // partition no applied acknowledgement has reached is not listed at all.
+  uint64 unacked_promotion_seq = 8;
+  // The newest acknowledged promotion, applied or not, 0 when none.
+  uint64 last_acked_promotion_seq = 9;
+  // Diagnostic only (fsm.PartitionState.InventoryUnrefreshed): the physical
+  // names of parts committed before the last acknowledgement were never
+  // re-confirmed by a complete post-REPLACE inventory.
+  bool inventory_unrefreshed = 10;
+}
+
+// PartitionStates answers SafeState.GetPartitionStates.
+message PartitionStates {
+  // The FSM's PromotionSeq at the read: the last issued promotion.
+  uint64 promotion_seq = 1;
+  // The published safe watermark at the read.
+  SafeWatermark safe_watermark = 2;
+  // Ascending by partition_id. Empty when the FSM holds no state for the
+  // selection; an unknown table_id is not a refusal.
+  repeated PartitionStateEntry partitions = 3;
+}
+
+// GetPromotionOutcomesRequest pages through issued promotions in ascending
+// promotion_seq.
+message GetPromotionOutcomesRequest {
+  // Empty selects every table. partition_id needs table_id
+  // (INVALID_ARGUMENT otherwise).
+  string table_id = 1;
+  string partition_id = 2;
+  // Exclusive cursor: only promotions with a greater promotion_seq are
+  // returned; 0 starts at the first.
+  uint64 after_promotion_seq = 3;
+  // Page size: 0 means 256; a value above 1024 is INVALID_ARGUMENT.
+  uint32 limit = 4;
+}
+
+// PromotionOutcome is one issued promotion and what became of it (arbiter
+// fsm.PendingPromotion, which the FSM keeps after its acknowledgement).
+message PromotionOutcome {
+  uint64 promotion_seq = 1;
+  // The command as issued.
+  PromoteSafePartition promote = 2;
+  // The statements whose candidate parts it promotes, ascending.
+  repeated uint64 statement_seqs = 3;
+  // The highest L3 block of statement_seqs: the block the promotion belongs
+  // to.
+  uint64 block_seq = 4;
+  // That block's track; absent for a block sealed before the tracks
+  // activation.
+  L3BlockTrack track = 5;
+  // The SNode whose acknowledgement settles the promotion (the statements'
+  // shared source); empty when the FSM cannot resolve one.
+  string source_node = 6;
+  // The authority JWS the promotion is dispatched with and the consensus
+  // epoch it was issued in, to which that JWS is bound.
+  string authority_jws = 7;
+  uint64 authority_epoch = 8;
+  // True once an acknowledgement settled the promotion, applied or not.
+  bool acked = 9;
+  // The settling acknowledgement as the FSM recorded it (Plan S2-A amendment
+  // A35), applied or not: present only when it was recorded after the tracks
+  // activation. Its source_jws is empty; the signature is ack_jws.
+  PromotionAck ack = 10;
+  // The SNode signature over ack (RecordPromotionAckCmd.source_jws) and the
+  // consensus epoch the acknowledgement applied in; empty and 0 with ack.
+  string ack_jws = 11;
+  uint64 ack_epoch = 12;
+  // A cleanup of this promotion's promoted hg_unsafe parts is scheduled and
+  // not acknowledged yet.
+  bool cleanup_pending = 13;
+}
+
+// PromotionOutcomes answers SafeState.GetPromotionOutcomes.
+message PromotionOutcomes {
+  // The FSM's PromotionSeq at the read: the last issued promotion.
+  uint64 promotion_seq = 1;
+  // At most limit outcomes, ascending by promotion_seq.
+  repeated PromotionOutcome outcomes = 2;
+  // The after_promotion_seq of the next page, 0 when this page is the last.
+  uint64 next_after_promotion_seq = 3;
+}
+
+// StatementCandidates is one statement of a block with its bound result
+// claim (arbiter fsm.StatementState and its RCRecord).
+message StatementCandidates {
+  uint64 statement_seq = 1;
+  // Flat statement id (StatementID's string form).
+  string statement_id = 2;
+  // FSM status string (fsm.Status.String(), as in StatementStatus):
+  // "Sequenced".."Safe", "ChallengeReplay" or "Rejected".
+  string status = 3;
+  // The source the statement is bound to, and whether its result claim is
+  // bound.
+  string source_node = 4;
+  bool rc_bound = 5;
+  // The bound claim's post-state root, candidate parts and per-partition
+  // new-part sums (RCRecord fields 4, 3 and 5); empty until rc_bound.
+  string source_claim_root = 6;
+  repeated CandidatePart candidate_parts = 7;
+  repeated PartitionLtHashSum partition_new_part_sums = 8;
+  // part_row_lthash of every candidate part that no applied promotion has
+  // promoted yet, ascending.
+  repeated string unpromoted_part_row_lthashes = 9;
+}
+
+// VerifierEvidence is one selected verifier's recorded evidence for a block
+// and, once the verdict is evaluated, its three-check outcome (arbiter
+// fsm.ReplicaVerdict).
+message VerifierEvidence {
+  string replica_id = 1;
+  // Absent until the verifier's replay attestation, respectively its
+  // byte-side scan, is recorded.
+  ReplayAttestation attestation = 2;
+  ByteSideScanMsg byte_side_scan = 3;
+  // True once the block's verdict holds an outcome for this verifier; the
+  // four checks below are meaningful only then.
+  bool evaluated = 4;
+  bool check1_root_match = 5;
+  bool check2_partition_match = 6;
+  bool check3_byte_side_match = 7;
+  bool pass = 8;
+}
+
+// BlockVerification answers SafeState.GetBlockVerification: what the leader
+// dispatches for one sealed block and every piece of evidence the FSM
+// recorded for it, so a shadow verifier can replay the block, scan its
+// candidate parts and compare its outcome with the recorded one.
+message BlockVerification {
+  // The sealed header and its ChainHash, as GetL3Block returns them.
+  L3BlockHeader header = 1;
+  string chain_hash = 2;
+  // The replay job exactly as the leader dispatches it to the verifiers.
+  ReplayJob replay_job = 3;
+  // The block's statements, in statement_seq order.
+  repeated StatementCandidates statements = 4;
+  // The parts of the block's byte-side scan request
+  // (ByteSideScanRequest.parts), as the leader dispatches them.
+  repeated PartRef scan_parts = 5;
+  // The block's sources and its selected verifier set, as recorded.
+  repeated string source_nodes = 6;
+  repeated string verifier_set = 7;
+  // One entry per verifier_set member, in verifier_set order.
+  repeated VerifierEvidence evidence = 8;
+  // True once the FSM evaluated the three-way verdict; quorum is meaningful
+  // only then.
+  bool verdict_evaluated = 9;
+  bool quorum = 10;
+  // The block's L2 anchor and its finality as RecordAnchorFinalityCmd
+  // recorded them; absent and false until then.
+  AnchorRef anchor = 11;
+  bool finality = 12;
+  bool last_mergeable = 13;
+}
+
 // SafeState serves read-only safe-state queries to HouseGate and clients.
 service SafeState {
   rpc GetSafeWatermark (GetSafeWatermarkRequest) returns (SafeWatermark) {}
@@ -672,6 +869,10 @@ service SafeState {
   // Local read of the serving voter's applied accumulator state for one
   // subject (operators and recovery tooling); no leader barrier.
   rpc GetClientSeqState (GetClientSeqStateRequest) returns (ClientSeqState) {}
+  // Leader-barriered reads for stage 3 (housegate spec 2026-10-14 §14 owner audit, §8 installs, P2 shadow verification).
+  rpc GetPartitionStates (GetPartitionStatesRequest) returns (PartitionStates) {}
+  rpc GetPromotionOutcomes (GetPromotionOutcomesRequest) returns (PromotionOutcomes) {}
+  rpc GetBlockVerification (L3BlockRef) returns (BlockVerification) {}
 }
 
 // Membership is called by SNodes / Verifiers.

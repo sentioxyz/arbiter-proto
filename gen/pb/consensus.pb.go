@@ -26,6 +26,67 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// ConsensusHoldMode selects what a consensus hold freezes (housegate spec
+// 2026-10-14 §10.1-§10.2). A hold is leader-local and never replicated: it
+// lives on the leader that granted it, in the Raft term it was granted in,
+// and ends when the update that names it commits or is refused, when it is
+// released, when it times out, or when that leader loses leadership.
+type ConsensusHoldMode int32
+
+const (
+	ConsensusHoldMode_CONSENSUS_HOLD_MODE_UNSPECIFIED ConsensusHoldMode = 0
+	// The issuance hold (§10.1): the leader proposes no RecordPromotionIssued
+	// on any track, so promotion_seq stays frozen, while acknowledgements,
+	// publication and cleanups continue.
+	ConsensusHoldMode_CONSENSUS_HOLD_MODE_ISSUANCE ConsensusHoldMode = 1
+	// Leader drain mode (§10.2): the leader records each non-quarantined
+	// track's promotion frontier block (before the tracks activation, the
+	// global one), keeps issuing and re-issuing promotions for blocks at or
+	// below it, and refuses only the first promotion of a later block.
+	ConsensusHoldMode_CONSENSUS_HOLD_MODE_DRAIN ConsensusHoldMode = 2
+)
+
+// Enum value maps for ConsensusHoldMode.
+var (
+	ConsensusHoldMode_name = map[int32]string{
+		0: "CONSENSUS_HOLD_MODE_UNSPECIFIED",
+		1: "CONSENSUS_HOLD_MODE_ISSUANCE",
+		2: "CONSENSUS_HOLD_MODE_DRAIN",
+	}
+	ConsensusHoldMode_value = map[string]int32{
+		"CONSENSUS_HOLD_MODE_UNSPECIFIED": 0,
+		"CONSENSUS_HOLD_MODE_ISSUANCE":    1,
+		"CONSENSUS_HOLD_MODE_DRAIN":       2,
+	}
+)
+
+func (x ConsensusHoldMode) Enum() *ConsensusHoldMode {
+	p := new(ConsensusHoldMode)
+	*p = x
+	return p
+}
+
+func (x ConsensusHoldMode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ConsensusHoldMode) Descriptor() protoreflect.EnumDescriptor {
+	return file_consensus_proto_enumTypes[0].Descriptor()
+}
+
+func (ConsensusHoldMode) Type() protoreflect.EnumType {
+	return &file_consensus_proto_enumTypes[0]
+}
+
+func (x ConsensusHoldMode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ConsensusHoldMode.Descriptor instead.
+func (ConsensusHoldMode) EnumDescriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{0}
+}
+
 // ConsensusMutableParams is a complete authority set and writer limit, not
 // a patch. Bootstrap values remain the original trust root on every restart;
 // current values change only through committed, signed transitions.
@@ -1357,6 +1418,358 @@ func (x *TrackStateView) GetIndexers() []*IndexerTrackView {
 	return nil
 }
 
+// PrepareConsensusUpdateRequest asks the leader for a hold before an update
+// is signed against the promotion_seq the hold reports.
+type PrepareConsensusUpdateRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Required: UNSPECIFIED is INVALID_ARGUMENT.
+	Mode ConsensusHoldMode `protobuf:"varint,1,opt,name=mode,proto3,enum=arbiter.ConsensusHoldMode" json:"mode,omitempty"`
+	// Required: an authority-signed update that authorizes the hold, signed
+	// against the current epoch, params digest and promotion_seq. The leader
+	// checks it exactly as UpdateConsensusParams does (token shape, current
+	// authority set, max token age, preconditions, update validator) and never
+	// proposes it. In ISSUANCE mode it is the update to submit under the hold;
+	// in DRAIN mode the update to submit is signed against the promotion_seq
+	// the ready hold reports.
+	Draft *UpdateConsensusParamsCmd `protobuf:"bytes,2,opt,name=draft,proto3" json:"draft,omitempty"`
+	// The hold's lifetime in milliseconds: 0 selects the leader's maximum for
+	// the mode (consensus_admin.max_issuance_hold or
+	// consensus_admin.max_drain_mode), and a larger value is capped to it.
+	TimeoutMs     uint64 `protobuf:"varint,3,opt,name=timeout_ms,json=timeoutMs,proto3" json:"timeout_ms,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PrepareConsensusUpdateRequest) Reset() {
+	*x = PrepareConsensusUpdateRequest{}
+	mi := &file_consensus_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PrepareConsensusUpdateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PrepareConsensusUpdateRequest) ProtoMessage() {}
+
+func (x *PrepareConsensusUpdateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_consensus_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PrepareConsensusUpdateRequest.ProtoReflect.Descriptor instead.
+func (*PrepareConsensusUpdateRequest) Descriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *PrepareConsensusUpdateRequest) GetMode() ConsensusHoldMode {
+	if x != nil {
+		return x.Mode
+	}
+	return ConsensusHoldMode_CONSENSUS_HOLD_MODE_UNSPECIFIED
+}
+
+func (x *PrepareConsensusUpdateRequest) GetDraft() *UpdateConsensusParamsCmd {
+	if x != nil {
+		return x.Draft
+	}
+	return nil
+}
+
+func (x *PrepareConsensusUpdateRequest) GetTimeoutMs() uint64 {
+	if x != nil {
+		return x.TimeoutMs
+	}
+	return 0
+}
+
+// ConsensusHoldRef names one hold. hold_id is 128 random bits as 32 lowercase
+// hex characters, returned only to the caller that took the hold; knowing it
+// is the capability to read or release the hold. UpdateConsensusParams names
+// the hold it settles in the gRPC metadata key "arbiter-consensus-hold",
+// never inside the Raft command.
+type ConsensusHoldRef struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	HoldId        string                 `protobuf:"bytes,1,opt,name=hold_id,json=holdId,proto3" json:"hold_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConsensusHoldRef) Reset() {
+	*x = ConsensusHoldRef{}
+	mi := &file_consensus_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConsensusHoldRef) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConsensusHoldRef) ProtoMessage() {}
+
+func (x *ConsensusHoldRef) ProtoReflect() protoreflect.Message {
+	mi := &file_consensus_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConsensusHoldRef.ProtoReflect.Descriptor instead.
+func (*ConsensusHoldRef) Descriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ConsensusHoldRef) GetHoldId() string {
+	if x != nil {
+		return x.HoldId
+	}
+	return ""
+}
+
+// TrackDrain is one track's progress under a DRAIN hold.
+type TrackDrain struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	IndexerId uint64                 `protobuf:"varint,1,opt,name=indexer_id,json=indexerId,proto3" json:"indexer_id,omitempty"`
+	// A quarantined track does not hold the drain.
+	Quarantined bool `protobuf:"varint,2,opt,name=quarantined,proto3" json:"quarantined,omitempty"`
+	// The track's current safe prefix.
+	PrefixBlockSeq uint64 `protobuf:"varint,3,opt,name=prefix_block_seq,json=prefixBlockSeq,proto3" json:"prefix_block_seq,omitempty"`
+	// The track's promotion frontier block recorded when the hold started, 0
+	// for a track that was quarantined then. The leader issues no first
+	// promotion of a later block of this track while the hold lasts.
+	FrontierBlockSeq uint64 `protobuf:"varint,4,opt,name=frontier_block_seq,json=frontierBlockSeq,proto3" json:"frontier_block_seq,omitempty"`
+	// The track's blocks that still hold the drain, ascending: blocks above
+	// the prefix up to the frontier that have not passed, and the blocks of
+	// its promotions that are unacknowledged, wait for a cleanup
+	// acknowledgement or still have promoted hg_unsafe parts.
+	InFlightBlocks []uint64 `protobuf:"varint,5,rep,packed,name=in_flight_blocks,json=inFlightBlocks,proto3" json:"in_flight_blocks,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *TrackDrain) Reset() {
+	*x = TrackDrain{}
+	mi := &file_consensus_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TrackDrain) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TrackDrain) ProtoMessage() {}
+
+func (x *TrackDrain) ProtoReflect() protoreflect.Message {
+	mi := &file_consensus_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TrackDrain.ProtoReflect.Descriptor instead.
+func (*TrackDrain) Descriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *TrackDrain) GetIndexerId() uint64 {
+	if x != nil {
+		return x.IndexerId
+	}
+	return 0
+}
+
+func (x *TrackDrain) GetQuarantined() bool {
+	if x != nil {
+		return x.Quarantined
+	}
+	return false
+}
+
+func (x *TrackDrain) GetPrefixBlockSeq() uint64 {
+	if x != nil {
+		return x.PrefixBlockSeq
+	}
+	return 0
+}
+
+func (x *TrackDrain) GetFrontierBlockSeq() uint64 {
+	if x != nil {
+		return x.FrontierBlockSeq
+	}
+	return 0
+}
+
+func (x *TrackDrain) GetInFlightBlocks() []uint64 {
+	if x != nil {
+		return x.InFlightBlocks
+	}
+	return nil
+}
+
+// ConsensusHold is a granted hold as the leader holding it sees it now.
+type ConsensusHold struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	HoldId string                 `protobuf:"bytes,1,opt,name=hold_id,json=holdId,proto3" json:"hold_id,omitempty"`
+	Mode   ConsensusHoldMode      `protobuf:"varint,2,opt,name=mode,proto3,enum=arbiter.ConsensusHoldMode" json:"mode,omitempty"`
+	// The Raft term the hold was granted in; it is void in any other term.
+	RaftTerm uint64 `protobuf:"varint,3,opt,name=raft_term,json=raftTerm,proto3" json:"raft_term,omitempty"`
+	// The FSM's PromotionSeq now. ISSUANCE: frozen while the hold lasts and
+	// equal to the draft's expected_promotion_seq. DRAIN: once ready is true it
+	// no longer moves; sign the update's expected_promotion_seq with it.
+	PromotionSeq uint64 `protobuf:"varint,4,opt,name=promotion_seq,json=promotionSeq,proto3" json:"promotion_seq,omitempty"`
+	// When the hold expires on the leader's clock, Unix milliseconds.
+	ExpiresUnixMs uint64 `protobuf:"varint,5,opt,name=expires_unix_ms,json=expiresUnixMs,proto3" json:"expires_unix_ms,omitempty"`
+	// ISSUANCE: true once the stage-2 drain gate passes (no promotion is
+	// issued meanwhile, so acknowledgements and cleanups can finish). DRAIN:
+	// true once the stage-2 drain gate passes and every non-quarantined
+	// track's prefix has reached its recorded frontier (before the tracks
+	// activation, the global prefix the global frontier).
+	Ready bool `protobuf:"varint,6,opt,name=ready,proto3" json:"ready,omitempty"`
+	// The stage-2 drain gate's refusal at the read, verbatim; empty once it
+	// passes. A hold of either mode is ready only when it is empty, because
+	// UpdateConsensusParams is refused while it is set.
+	DrainRefusal string `protobuf:"bytes,7,opt,name=drain_refusal,json=drainRefusal,proto3" json:"drain_refusal,omitempty"`
+	// A DRAIN hold before the tracks activation: the global safe prefix, the
+	// global promotion frontier block recorded when the hold started, and the
+	// blocks still in flight, ascending (the TrackDrain rules over every
+	// block). Zero and empty otherwise.
+	GlobalPrefixBlockSeq   uint64   `protobuf:"varint,8,opt,name=global_prefix_block_seq,json=globalPrefixBlockSeq,proto3" json:"global_prefix_block_seq,omitempty"`
+	GlobalFrontierBlockSeq uint64   `protobuf:"varint,9,opt,name=global_frontier_block_seq,json=globalFrontierBlockSeq,proto3" json:"global_frontier_block_seq,omitempty"`
+	InFlightBlocks         []uint64 `protobuf:"varint,10,rep,packed,name=in_flight_blocks,json=inFlightBlocks,proto3" json:"in_flight_blocks,omitempty"`
+	// A DRAIN hold after the tracks activation: one entry per enrolled
+	// indexer, ascending by indexer_id. Empty otherwise.
+	Tracks        []*TrackDrain `protobuf:"bytes,11,rep,name=tracks,proto3" json:"tracks,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConsensusHold) Reset() {
+	*x = ConsensusHold{}
+	mi := &file_consensus_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConsensusHold) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConsensusHold) ProtoMessage() {}
+
+func (x *ConsensusHold) ProtoReflect() protoreflect.Message {
+	mi := &file_consensus_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConsensusHold.ProtoReflect.Descriptor instead.
+func (*ConsensusHold) Descriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ConsensusHold) GetHoldId() string {
+	if x != nil {
+		return x.HoldId
+	}
+	return ""
+}
+
+func (x *ConsensusHold) GetMode() ConsensusHoldMode {
+	if x != nil {
+		return x.Mode
+	}
+	return ConsensusHoldMode_CONSENSUS_HOLD_MODE_UNSPECIFIED
+}
+
+func (x *ConsensusHold) GetRaftTerm() uint64 {
+	if x != nil {
+		return x.RaftTerm
+	}
+	return 0
+}
+
+func (x *ConsensusHold) GetPromotionSeq() uint64 {
+	if x != nil {
+		return x.PromotionSeq
+	}
+	return 0
+}
+
+func (x *ConsensusHold) GetExpiresUnixMs() uint64 {
+	if x != nil {
+		return x.ExpiresUnixMs
+	}
+	return 0
+}
+
+func (x *ConsensusHold) GetReady() bool {
+	if x != nil {
+		return x.Ready
+	}
+	return false
+}
+
+func (x *ConsensusHold) GetDrainRefusal() string {
+	if x != nil {
+		return x.DrainRefusal
+	}
+	return ""
+}
+
+func (x *ConsensusHold) GetGlobalPrefixBlockSeq() uint64 {
+	if x != nil {
+		return x.GlobalPrefixBlockSeq
+	}
+	return 0
+}
+
+func (x *ConsensusHold) GetGlobalFrontierBlockSeq() uint64 {
+	if x != nil {
+		return x.GlobalFrontierBlockSeq
+	}
+	return 0
+}
+
+func (x *ConsensusHold) GetInFlightBlocks() []uint64 {
+	if x != nil {
+		return x.InFlightBlocks
+	}
+	return nil
+}
+
+func (x *ConsensusHold) GetTracks() []*TrackDrain {
+	if x != nil {
+		return x.Tracks
+	}
+	return nil
+}
+
 var File_consensus_proto protoreflect.FileDescriptor
 
 const file_consensus_proto_rawDesc = "" +
@@ -1467,7 +1880,39 @@ const file_consensus_proto_rawDesc = "" +
 	"\x15cutover_promotion_seq\x18\x03 \x01(\x04R\x13cutoverPromotionSeq\x121\n" +
 	"\x15global_safe_block_seq\x18\x04 \x01(\x04R\x12globalSafeBlockSeq\x127\n" +
 	"\x18published_safe_block_seq\x18\x05 \x01(\x04R\x15publishedSafeBlockSeq\x125\n" +
-	"\bindexers\x18\x06 \x03(\v2\x19.arbiter.IndexerTrackViewR\bindexers2\xd0\x06\n" +
+	"\bindexers\x18\x06 \x03(\v2\x19.arbiter.IndexerTrackViewR\bindexers\"\xa7\x01\n" +
+	"\x1dPrepareConsensusUpdateRequest\x12.\n" +
+	"\x04mode\x18\x01 \x01(\x0e2\x1a.arbiter.ConsensusHoldModeR\x04mode\x127\n" +
+	"\x05draft\x18\x02 \x01(\v2!.arbiter.UpdateConsensusParamsCmdR\x05draft\x12\x1d\n" +
+	"\n" +
+	"timeout_ms\x18\x03 \x01(\x04R\ttimeoutMs\"+\n" +
+	"\x10ConsensusHoldRef\x12\x17\n" +
+	"\ahold_id\x18\x01 \x01(\tR\x06holdId\"\xcf\x01\n" +
+	"\n" +
+	"TrackDrain\x12\x1d\n" +
+	"\n" +
+	"indexer_id\x18\x01 \x01(\x04R\tindexerId\x12 \n" +
+	"\vquarantined\x18\x02 \x01(\bR\vquarantined\x12(\n" +
+	"\x10prefix_block_seq\x18\x03 \x01(\x04R\x0eprefixBlockSeq\x12,\n" +
+	"\x12frontier_block_seq\x18\x04 \x01(\x04R\x10frontierBlockSeq\x12(\n" +
+	"\x10in_flight_blocks\x18\x05 \x03(\x04R\x0einFlightBlocks\"\xc6\x03\n" +
+	"\rConsensusHold\x12\x17\n" +
+	"\ahold_id\x18\x01 \x01(\tR\x06holdId\x12.\n" +
+	"\x04mode\x18\x02 \x01(\x0e2\x1a.arbiter.ConsensusHoldModeR\x04mode\x12\x1b\n" +
+	"\traft_term\x18\x03 \x01(\x04R\braftTerm\x12#\n" +
+	"\rpromotion_seq\x18\x04 \x01(\x04R\fpromotionSeq\x12&\n" +
+	"\x0fexpires_unix_ms\x18\x05 \x01(\x04R\rexpiresUnixMs\x12\x14\n" +
+	"\x05ready\x18\x06 \x01(\bR\x05ready\x12#\n" +
+	"\rdrain_refusal\x18\a \x01(\tR\fdrainRefusal\x125\n" +
+	"\x17global_prefix_block_seq\x18\b \x01(\x04R\x14globalPrefixBlockSeq\x129\n" +
+	"\x19global_frontier_block_seq\x18\t \x01(\x04R\x16globalFrontierBlockSeq\x12(\n" +
+	"\x10in_flight_blocks\x18\n" +
+	" \x03(\x04R\x0einFlightBlocks\x12+\n" +
+	"\x06tracks\x18\v \x03(\v2\x13.arbiter.TrackDrainR\x06tracks*y\n" +
+	"\x11ConsensusHoldMode\x12#\n" +
+	"\x1fCONSENSUS_HOLD_MODE_UNSPECIFIED\x10\x00\x12 \n" +
+	"\x1cCONSENSUS_HOLD_MODE_ISSUANCE\x10\x01\x12\x1d\n" +
+	"\x19CONSENSUS_HOLD_MODE_DRAIN\x10\x022\xb8\b\n" +
 	"\x0eConsensusAdmin\x12B\n" +
 	"\x0fGetProtocolInfo\x12\x16.google.protobuf.Empty\x1a\x15.arbiter.ProtocolInfo\"\x00\x12M\n" +
 	"\x12GetConsensusParams\x12\x16.google.protobuf.Empty\x1a\x1d.arbiter.ConsensusParamsState\"\x00\x12J\n" +
@@ -1479,7 +1924,10 @@ const file_consensus_proto_rawDesc = "" +
 	"\tEvictNode\x12\x19.arbiter.EvictNodeRequest\x1a\f.arbiter.Ack\"\x00\x12B\n" +
 	"\x11QuarantineIndexer\x12\x1d.arbiter.QuarantineIndexerCmd\x1a\f.arbiter.Ack\"\x00\x12<\n" +
 	"\x0eReleaseIndexer\x12\x1a.arbiter.ReleaseIndexerCmd\x1a\f.arbiter.Ack\"\x00\x12B\n" +
-	"\rGetTrackState\x12\x16.google.protobuf.Empty\x1a\x17.arbiter.TrackStateView\"\x00B.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
+	"\rGetTrackState\x12\x16.google.protobuf.Empty\x1a\x17.arbiter.TrackStateView\"\x00\x12Z\n" +
+	"\x16PrepareConsensusUpdate\x12&.arbiter.PrepareConsensusUpdateRequest\x1a\x16.arbiter.ConsensusHold\"\x00\x12G\n" +
+	"\x10GetConsensusHold\x12\x19.arbiter.ConsensusHoldRef\x1a\x16.arbiter.ConsensusHold\"\x00\x12A\n" +
+	"\x14ReleaseConsensusHold\x12\x19.arbiter.ConsensusHoldRef\x1a\f.arbiter.Ack\"\x00B.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
 
 var (
 	file_consensus_proto_rawDescOnce sync.Once
@@ -1493,79 +1941,95 @@ func file_consensus_proto_rawDescGZIP() []byte {
 	return file_consensus_proto_rawDescData
 }
 
-var file_consensus_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_consensus_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_consensus_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_consensus_proto_goTypes = []any{
-	(*ConsensusMutableParams)(nil),                // 0: arbiter.ConsensusMutableParams
-	(*ConsensusParamsUpdate)(nil),                 // 1: arbiter.ConsensusParamsUpdate
-	(*UpdateConsensusParamsCmd)(nil),              // 2: arbiter.UpdateConsensusParamsCmd
-	(*GetSnapshotQueryAbortCandidateRequest)(nil), // 3: arbiter.GetSnapshotQueryAbortCandidateRequest
-	(*AbortSnapshotQueryRequest)(nil),             // 4: arbiter.AbortSnapshotQueryRequest
-	(*ActivateQueryProfileRequest)(nil),           // 5: arbiter.ActivateQueryProfileRequest
-	(*ProtocolInfo)(nil),                          // 6: arbiter.ProtocolInfo
-	(*ConsensusParamsState)(nil),                  // 7: arbiter.ConsensusParamsState
-	(*NodeFeatureEntry)(nil),                      // 8: arbiter.NodeFeatureEntry
-	(*NodeFeatures)(nil),                          // 9: arbiter.NodeFeatures
-	(*VerifierEntry)(nil),                         // 10: arbiter.VerifierEntry
-	(*EvictNodeRequest)(nil),                      // 11: arbiter.EvictNodeRequest
-	(*QuarantineIndexerCmd)(nil),                  // 12: arbiter.QuarantineIndexerCmd
-	(*ReleaseIndexerCmd)(nil),                     // 13: arbiter.ReleaseIndexerCmd
-	(*IndexerTrackView)(nil),                      // 14: arbiter.IndexerTrackView
-	(*TrackStateView)(nil),                        // 15: arbiter.TrackStateView
-	(*TableRegistryParams)(nil),                   // 16: arbiter.TableRegistryParams
-	(*ClientLaneParams)(nil),                      // 17: arbiter.ClientLaneParams
-	(*SIIndexerEntry)(nil),                        // 18: arbiter.SIIndexerEntry
-	(*SnapshotQueryAbortRecord)(nil),              // 19: arbiter.SnapshotQueryAbortRecord
-	(*ActiveQueryPolicy)(nil),                     // 20: arbiter.ActiveQueryPolicy
-	(*TrackFrontier)(nil),                         // 21: arbiter.TrackFrontier
-	(*emptypb.Empty)(nil),                         // 22: google.protobuf.Empty
-	(*Ack)(nil),                                   // 23: arbiter.Ack
-	(*SnapshotQueryStatus)(nil),                   // 24: arbiter.SnapshotQueryStatus
+	(ConsensusHoldMode)(0),                        // 0: arbiter.ConsensusHoldMode
+	(*ConsensusMutableParams)(nil),                // 1: arbiter.ConsensusMutableParams
+	(*ConsensusParamsUpdate)(nil),                 // 2: arbiter.ConsensusParamsUpdate
+	(*UpdateConsensusParamsCmd)(nil),              // 3: arbiter.UpdateConsensusParamsCmd
+	(*GetSnapshotQueryAbortCandidateRequest)(nil), // 4: arbiter.GetSnapshotQueryAbortCandidateRequest
+	(*AbortSnapshotQueryRequest)(nil),             // 5: arbiter.AbortSnapshotQueryRequest
+	(*ActivateQueryProfileRequest)(nil),           // 6: arbiter.ActivateQueryProfileRequest
+	(*ProtocolInfo)(nil),                          // 7: arbiter.ProtocolInfo
+	(*ConsensusParamsState)(nil),                  // 8: arbiter.ConsensusParamsState
+	(*NodeFeatureEntry)(nil),                      // 9: arbiter.NodeFeatureEntry
+	(*NodeFeatures)(nil),                          // 10: arbiter.NodeFeatures
+	(*VerifierEntry)(nil),                         // 11: arbiter.VerifierEntry
+	(*EvictNodeRequest)(nil),                      // 12: arbiter.EvictNodeRequest
+	(*QuarantineIndexerCmd)(nil),                  // 13: arbiter.QuarantineIndexerCmd
+	(*ReleaseIndexerCmd)(nil),                     // 14: arbiter.ReleaseIndexerCmd
+	(*IndexerTrackView)(nil),                      // 15: arbiter.IndexerTrackView
+	(*TrackStateView)(nil),                        // 16: arbiter.TrackStateView
+	(*PrepareConsensusUpdateRequest)(nil),         // 17: arbiter.PrepareConsensusUpdateRequest
+	(*ConsensusHoldRef)(nil),                      // 18: arbiter.ConsensusHoldRef
+	(*TrackDrain)(nil),                            // 19: arbiter.TrackDrain
+	(*ConsensusHold)(nil),                         // 20: arbiter.ConsensusHold
+	(*TableRegistryParams)(nil),                   // 21: arbiter.TableRegistryParams
+	(*ClientLaneParams)(nil),                      // 22: arbiter.ClientLaneParams
+	(*SIIndexerEntry)(nil),                        // 23: arbiter.SIIndexerEntry
+	(*SnapshotQueryAbortRecord)(nil),              // 24: arbiter.SnapshotQueryAbortRecord
+	(*ActiveQueryPolicy)(nil),                     // 25: arbiter.ActiveQueryPolicy
+	(*TrackFrontier)(nil),                         // 26: arbiter.TrackFrontier
+	(*emptypb.Empty)(nil),                         // 27: google.protobuf.Empty
+	(*Ack)(nil),                                   // 28: arbiter.Ack
+	(*SnapshotQueryStatus)(nil),                   // 29: arbiter.SnapshotQueryStatus
 }
 var file_consensus_proto_depIdxs = []int32{
-	16, // 0: arbiter.ConsensusMutableParams.table_registry:type_name -> arbiter.TableRegistryParams
-	17, // 1: arbiter.ConsensusMutableParams.client_lanes:type_name -> arbiter.ClientLaneParams
-	18, // 2: arbiter.ConsensusMutableParams.si_indexers:type_name -> arbiter.SIIndexerEntry
-	10, // 3: arbiter.ConsensusMutableParams.verifiers:type_name -> arbiter.VerifierEntry
-	16, // 4: arbiter.ConsensusParamsUpdate.table_registry:type_name -> arbiter.TableRegistryParams
-	17, // 5: arbiter.ConsensusParamsUpdate.client_lanes:type_name -> arbiter.ClientLaneParams
-	18, // 6: arbiter.ConsensusParamsUpdate.si_indexers:type_name -> arbiter.SIIndexerEntry
-	10, // 7: arbiter.ConsensusParamsUpdate.verifiers:type_name -> arbiter.VerifierEntry
-	1,  // 8: arbiter.UpdateConsensusParamsCmd.update:type_name -> arbiter.ConsensusParamsUpdate
-	19, // 9: arbiter.AbortSnapshotQueryRequest.record:type_name -> arbiter.SnapshotQueryAbortRecord
-	20, // 10: arbiter.ActivateQueryProfileRequest.activation:type_name -> arbiter.ActiveQueryPolicy
-	0,  // 11: arbiter.ConsensusParamsState.bootstrap:type_name -> arbiter.ConsensusMutableParams
-	0,  // 12: arbiter.ConsensusParamsState.current:type_name -> arbiter.ConsensusMutableParams
-	8,  // 13: arbiter.NodeFeatures.entries:type_name -> arbiter.NodeFeatureEntry
-	21, // 14: arbiter.IndexerTrackView.initial:type_name -> arbiter.TrackFrontier
-	21, // 15: arbiter.IndexerTrackView.published:type_name -> arbiter.TrackFrontier
-	14, // 16: arbiter.TrackStateView.indexers:type_name -> arbiter.IndexerTrackView
-	22, // 17: arbiter.ConsensusAdmin.GetProtocolInfo:input_type -> google.protobuf.Empty
-	22, // 18: arbiter.ConsensusAdmin.GetConsensusParams:input_type -> google.protobuf.Empty
-	2,  // 19: arbiter.ConsensusAdmin.UpdateConsensusParams:input_type -> arbiter.UpdateConsensusParamsCmd
-	3,  // 20: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:input_type -> arbiter.GetSnapshotQueryAbortCandidateRequest
-	4,  // 21: arbiter.ConsensusAdmin.AbortSnapshotQuery:input_type -> arbiter.AbortSnapshotQueryRequest
-	5,  // 22: arbiter.ConsensusAdmin.ActivateQueryProfile:input_type -> arbiter.ActivateQueryProfileRequest
-	22, // 23: arbiter.ConsensusAdmin.GetNodeFeatures:input_type -> google.protobuf.Empty
-	11, // 24: arbiter.ConsensusAdmin.EvictNode:input_type -> arbiter.EvictNodeRequest
-	12, // 25: arbiter.ConsensusAdmin.QuarantineIndexer:input_type -> arbiter.QuarantineIndexerCmd
-	13, // 26: arbiter.ConsensusAdmin.ReleaseIndexer:input_type -> arbiter.ReleaseIndexerCmd
-	22, // 27: arbiter.ConsensusAdmin.GetTrackState:input_type -> google.protobuf.Empty
-	6,  // 28: arbiter.ConsensusAdmin.GetProtocolInfo:output_type -> arbiter.ProtocolInfo
-	7,  // 29: arbiter.ConsensusAdmin.GetConsensusParams:output_type -> arbiter.ConsensusParamsState
-	23, // 30: arbiter.ConsensusAdmin.UpdateConsensusParams:output_type -> arbiter.Ack
-	19, // 31: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:output_type -> arbiter.SnapshotQueryAbortRecord
-	24, // 32: arbiter.ConsensusAdmin.AbortSnapshotQuery:output_type -> arbiter.SnapshotQueryStatus
-	23, // 33: arbiter.ConsensusAdmin.ActivateQueryProfile:output_type -> arbiter.Ack
-	9,  // 34: arbiter.ConsensusAdmin.GetNodeFeatures:output_type -> arbiter.NodeFeatures
-	23, // 35: arbiter.ConsensusAdmin.EvictNode:output_type -> arbiter.Ack
-	23, // 36: arbiter.ConsensusAdmin.QuarantineIndexer:output_type -> arbiter.Ack
-	23, // 37: arbiter.ConsensusAdmin.ReleaseIndexer:output_type -> arbiter.Ack
-	15, // 38: arbiter.ConsensusAdmin.GetTrackState:output_type -> arbiter.TrackStateView
-	28, // [28:39] is the sub-list for method output_type
-	17, // [17:28] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	21, // 0: arbiter.ConsensusMutableParams.table_registry:type_name -> arbiter.TableRegistryParams
+	22, // 1: arbiter.ConsensusMutableParams.client_lanes:type_name -> arbiter.ClientLaneParams
+	23, // 2: arbiter.ConsensusMutableParams.si_indexers:type_name -> arbiter.SIIndexerEntry
+	11, // 3: arbiter.ConsensusMutableParams.verifiers:type_name -> arbiter.VerifierEntry
+	21, // 4: arbiter.ConsensusParamsUpdate.table_registry:type_name -> arbiter.TableRegistryParams
+	22, // 5: arbiter.ConsensusParamsUpdate.client_lanes:type_name -> arbiter.ClientLaneParams
+	23, // 6: arbiter.ConsensusParamsUpdate.si_indexers:type_name -> arbiter.SIIndexerEntry
+	11, // 7: arbiter.ConsensusParamsUpdate.verifiers:type_name -> arbiter.VerifierEntry
+	2,  // 8: arbiter.UpdateConsensusParamsCmd.update:type_name -> arbiter.ConsensusParamsUpdate
+	24, // 9: arbiter.AbortSnapshotQueryRequest.record:type_name -> arbiter.SnapshotQueryAbortRecord
+	25, // 10: arbiter.ActivateQueryProfileRequest.activation:type_name -> arbiter.ActiveQueryPolicy
+	1,  // 11: arbiter.ConsensusParamsState.bootstrap:type_name -> arbiter.ConsensusMutableParams
+	1,  // 12: arbiter.ConsensusParamsState.current:type_name -> arbiter.ConsensusMutableParams
+	9,  // 13: arbiter.NodeFeatures.entries:type_name -> arbiter.NodeFeatureEntry
+	26, // 14: arbiter.IndexerTrackView.initial:type_name -> arbiter.TrackFrontier
+	26, // 15: arbiter.IndexerTrackView.published:type_name -> arbiter.TrackFrontier
+	15, // 16: arbiter.TrackStateView.indexers:type_name -> arbiter.IndexerTrackView
+	0,  // 17: arbiter.PrepareConsensusUpdateRequest.mode:type_name -> arbiter.ConsensusHoldMode
+	3,  // 18: arbiter.PrepareConsensusUpdateRequest.draft:type_name -> arbiter.UpdateConsensusParamsCmd
+	0,  // 19: arbiter.ConsensusHold.mode:type_name -> arbiter.ConsensusHoldMode
+	19, // 20: arbiter.ConsensusHold.tracks:type_name -> arbiter.TrackDrain
+	27, // 21: arbiter.ConsensusAdmin.GetProtocolInfo:input_type -> google.protobuf.Empty
+	27, // 22: arbiter.ConsensusAdmin.GetConsensusParams:input_type -> google.protobuf.Empty
+	3,  // 23: arbiter.ConsensusAdmin.UpdateConsensusParams:input_type -> arbiter.UpdateConsensusParamsCmd
+	4,  // 24: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:input_type -> arbiter.GetSnapshotQueryAbortCandidateRequest
+	5,  // 25: arbiter.ConsensusAdmin.AbortSnapshotQuery:input_type -> arbiter.AbortSnapshotQueryRequest
+	6,  // 26: arbiter.ConsensusAdmin.ActivateQueryProfile:input_type -> arbiter.ActivateQueryProfileRequest
+	27, // 27: arbiter.ConsensusAdmin.GetNodeFeatures:input_type -> google.protobuf.Empty
+	12, // 28: arbiter.ConsensusAdmin.EvictNode:input_type -> arbiter.EvictNodeRequest
+	13, // 29: arbiter.ConsensusAdmin.QuarantineIndexer:input_type -> arbiter.QuarantineIndexerCmd
+	14, // 30: arbiter.ConsensusAdmin.ReleaseIndexer:input_type -> arbiter.ReleaseIndexerCmd
+	27, // 31: arbiter.ConsensusAdmin.GetTrackState:input_type -> google.protobuf.Empty
+	17, // 32: arbiter.ConsensusAdmin.PrepareConsensusUpdate:input_type -> arbiter.PrepareConsensusUpdateRequest
+	18, // 33: arbiter.ConsensusAdmin.GetConsensusHold:input_type -> arbiter.ConsensusHoldRef
+	18, // 34: arbiter.ConsensusAdmin.ReleaseConsensusHold:input_type -> arbiter.ConsensusHoldRef
+	7,  // 35: arbiter.ConsensusAdmin.GetProtocolInfo:output_type -> arbiter.ProtocolInfo
+	8,  // 36: arbiter.ConsensusAdmin.GetConsensusParams:output_type -> arbiter.ConsensusParamsState
+	28, // 37: arbiter.ConsensusAdmin.UpdateConsensusParams:output_type -> arbiter.Ack
+	24, // 38: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:output_type -> arbiter.SnapshotQueryAbortRecord
+	29, // 39: arbiter.ConsensusAdmin.AbortSnapshotQuery:output_type -> arbiter.SnapshotQueryStatus
+	28, // 40: arbiter.ConsensusAdmin.ActivateQueryProfile:output_type -> arbiter.Ack
+	10, // 41: arbiter.ConsensusAdmin.GetNodeFeatures:output_type -> arbiter.NodeFeatures
+	28, // 42: arbiter.ConsensusAdmin.EvictNode:output_type -> arbiter.Ack
+	28, // 43: arbiter.ConsensusAdmin.QuarantineIndexer:output_type -> arbiter.Ack
+	28, // 44: arbiter.ConsensusAdmin.ReleaseIndexer:output_type -> arbiter.Ack
+	16, // 45: arbiter.ConsensusAdmin.GetTrackState:output_type -> arbiter.TrackStateView
+	20, // 46: arbiter.ConsensusAdmin.PrepareConsensusUpdate:output_type -> arbiter.ConsensusHold
+	20, // 47: arbiter.ConsensusAdmin.GetConsensusHold:output_type -> arbiter.ConsensusHold
+	28, // 48: arbiter.ConsensusAdmin.ReleaseConsensusHold:output_type -> arbiter.Ack
+	35, // [35:49] is the sub-list for method output_type
+	21, // [21:35] is the sub-list for method input_type
+	21, // [21:21] is the sub-list for extension type_name
+	21, // [21:21] is the sub-list for extension extendee
+	0,  // [0:21] is the sub-list for field type_name
 }
 
 func init() { file_consensus_proto_init() }
@@ -1581,13 +2045,14 @@ func file_consensus_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_consensus_proto_rawDesc), len(file_consensus_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   16,
+			NumEnums:      1,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_consensus_proto_goTypes,
 		DependencyIndexes: file_consensus_proto_depIdxs,
+		EnumInfos:         file_consensus_proto_enumTypes,
 		MessageInfos:      file_consensus_proto_msgTypes,
 	}.Build()
 	File_consensus_proto = out.File

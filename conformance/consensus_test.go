@@ -88,7 +88,7 @@ func TestConsensusUpdateAppendsRaftSlot18(t *testing.T) {
 
 func TestConsensusAdminRPCSignatures(t *testing.T) {
 	service := pb.File_consensus_proto.Services().ByName("ConsensusAdmin")
-	if service == nil || service.Methods().Len() != 11 {
+	if service == nil || service.Methods().Len() != 14 {
 		t.Fatalf("ConsensusAdmin service = %v", service)
 	}
 	for _, tt := range []struct {
@@ -106,6 +106,9 @@ func TestConsensusAdminRPCSignatures(t *testing.T) {
 		{"QuarantineIndexer", "arbiter.QuarantineIndexerCmd", "arbiter.Ack"},
 		{"ReleaseIndexer", "arbiter.ReleaseIndexerCmd", "arbiter.Ack"},
 		{"GetTrackState", "google.protobuf.Empty", "arbiter.TrackStateView"},
+		{"PrepareConsensusUpdate", "arbiter.PrepareConsensusUpdateRequest", "arbiter.ConsensusHold"},
+		{"GetConsensusHold", "arbiter.ConsensusHoldRef", "arbiter.ConsensusHold"},
+		{"ReleaseConsensusHold", "arbiter.ConsensusHoldRef", "arbiter.Ack"},
 	} {
 		method := service.Methods().ByName(tt.name)
 		if method == nil || method.Input().FullName() != tt.input || method.Output().FullName() != tt.output || method.IsStreamingClient() || method.IsStreamingServer() {
