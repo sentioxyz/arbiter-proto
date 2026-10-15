@@ -35,6 +35,9 @@ const (
 	ConsensusAdmin_QuarantineIndexer_FullMethodName              = "/arbiter.ConsensusAdmin/QuarantineIndexer"
 	ConsensusAdmin_ReleaseIndexer_FullMethodName                 = "/arbiter.ConsensusAdmin/ReleaseIndexer"
 	ConsensusAdmin_GetTrackState_FullMethodName                  = "/arbiter.ConsensusAdmin/GetTrackState"
+	ConsensusAdmin_PrepareConsensusUpdate_FullMethodName         = "/arbiter.ConsensusAdmin/PrepareConsensusUpdate"
+	ConsensusAdmin_GetConsensusHold_FullMethodName               = "/arbiter.ConsensusAdmin/GetConsensusHold"
+	ConsensusAdmin_ReleaseConsensusHold_FullMethodName           = "/arbiter.ConsensusAdmin/ReleaseConsensusHold"
 )
 
 // ConsensusAdminClient is the client API for ConsensusAdmin service.
@@ -80,6 +83,19 @@ type ConsensusAdminClient interface {
 	// Before the tracks activation it answers tracks_enabled false and no
 	// indexers.
 	GetTrackState(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*TrackStateView, error)
+	// Leader-only, explicitly enabled (consensus_updates_enabled), authorized
+	// by the request's draft (housegate spec 2026-10-14 §10.1-§10.2): grants
+	// one leader-local hold and returns it. Every refusal comes before any log
+	// write; a second hold while one is active is FAILED_PRECONDITION. Nothing
+	// is proposed: the hold is not replicated, and followers return NotLeader
+	// details.
+	PrepareConsensusUpdate(ctx context.Context, in *PrepareConsensusUpdateRequest, opts ...grpc.CallOption) (*ConsensusHold, error)
+	// Leader-only read with a barrier. NOT_FOUND for a hold_id this leader does
+	// not hold, including a hold that has ended ("unknown consensus hold").
+	GetConsensusHold(ctx context.Context, in *ConsensusHoldRef, opts ...grpc.CallOption) (*ConsensusHold, error)
+	// Leader-only: ends the hold. Idempotent: a hold_id this leader does not
+	// hold answers Ack.
+	ReleaseConsensusHold(ctx context.Context, in *ConsensusHoldRef, opts ...grpc.CallOption) (*Ack, error)
 }
 
 type consensusAdminClient struct {
@@ -200,6 +216,36 @@ func (c *consensusAdminClient) GetTrackState(ctx context.Context, in *emptypb.Em
 	return out, nil
 }
 
+func (c *consensusAdminClient) PrepareConsensusUpdate(ctx context.Context, in *PrepareConsensusUpdateRequest, opts ...grpc.CallOption) (*ConsensusHold, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConsensusHold)
+	err := c.cc.Invoke(ctx, ConsensusAdmin_PrepareConsensusUpdate_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consensusAdminClient) GetConsensusHold(ctx context.Context, in *ConsensusHoldRef, opts ...grpc.CallOption) (*ConsensusHold, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConsensusHold)
+	err := c.cc.Invoke(ctx, ConsensusAdmin_GetConsensusHold_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consensusAdminClient) ReleaseConsensusHold(ctx context.Context, in *ConsensusHoldRef, opts ...grpc.CallOption) (*Ack, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Ack)
+	err := c.cc.Invoke(ctx, ConsensusAdmin_ReleaseConsensusHold_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsensusAdminServer is the server API for ConsensusAdmin service.
 // All implementations must embed UnimplementedConsensusAdminServer
 // for forward compatibility.
@@ -243,6 +289,19 @@ type ConsensusAdminServer interface {
 	// Before the tracks activation it answers tracks_enabled false and no
 	// indexers.
 	GetTrackState(context.Context, *emptypb.Empty) (*TrackStateView, error)
+	// Leader-only, explicitly enabled (consensus_updates_enabled), authorized
+	// by the request's draft (housegate spec 2026-10-14 §10.1-§10.2): grants
+	// one leader-local hold and returns it. Every refusal comes before any log
+	// write; a second hold while one is active is FAILED_PRECONDITION. Nothing
+	// is proposed: the hold is not replicated, and followers return NotLeader
+	// details.
+	PrepareConsensusUpdate(context.Context, *PrepareConsensusUpdateRequest) (*ConsensusHold, error)
+	// Leader-only read with a barrier. NOT_FOUND for a hold_id this leader does
+	// not hold, including a hold that has ended ("unknown consensus hold").
+	GetConsensusHold(context.Context, *ConsensusHoldRef) (*ConsensusHold, error)
+	// Leader-only: ends the hold. Idempotent: a hold_id this leader does not
+	// hold answers Ack.
+	ReleaseConsensusHold(context.Context, *ConsensusHoldRef) (*Ack, error)
 	mustEmbedUnimplementedConsensusAdminServer()
 }
 
@@ -285,6 +344,15 @@ func (UnimplementedConsensusAdminServer) ReleaseIndexer(context.Context, *Releas
 }
 func (UnimplementedConsensusAdminServer) GetTrackState(context.Context, *emptypb.Empty) (*TrackStateView, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTrackState not implemented")
+}
+func (UnimplementedConsensusAdminServer) PrepareConsensusUpdate(context.Context, *PrepareConsensusUpdateRequest) (*ConsensusHold, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PrepareConsensusUpdate not implemented")
+}
+func (UnimplementedConsensusAdminServer) GetConsensusHold(context.Context, *ConsensusHoldRef) (*ConsensusHold, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetConsensusHold not implemented")
+}
+func (UnimplementedConsensusAdminServer) ReleaseConsensusHold(context.Context, *ConsensusHoldRef) (*Ack, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReleaseConsensusHold not implemented")
 }
 func (UnimplementedConsensusAdminServer) mustEmbedUnimplementedConsensusAdminServer() {}
 func (UnimplementedConsensusAdminServer) testEmbeddedByValue()                        {}
@@ -505,6 +573,60 @@ func _ConsensusAdmin_GetTrackState_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConsensusAdmin_PrepareConsensusUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PrepareConsensusUpdateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusAdminServer).PrepareConsensusUpdate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusAdmin_PrepareConsensusUpdate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusAdminServer).PrepareConsensusUpdate(ctx, req.(*PrepareConsensusUpdateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConsensusAdmin_GetConsensusHold_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConsensusHoldRef)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusAdminServer).GetConsensusHold(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusAdmin_GetConsensusHold_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusAdminServer).GetConsensusHold(ctx, req.(*ConsensusHoldRef))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConsensusAdmin_ReleaseConsensusHold_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConsensusHoldRef)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusAdminServer).ReleaseConsensusHold(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusAdmin_ReleaseConsensusHold_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusAdminServer).ReleaseConsensusHold(ctx, req.(*ConsensusHoldRef))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConsensusAdmin_ServiceDesc is the grpc.ServiceDesc for ConsensusAdmin service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -555,6 +677,18 @@ var ConsensusAdmin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetTrackState",
 			Handler:    _ConsensusAdmin_GetTrackState_Handler,
+		},
+		{
+			MethodName: "PrepareConsensusUpdate",
+			Handler:    _ConsensusAdmin_PrepareConsensusUpdate_Handler,
+		},
+		{
+			MethodName: "GetConsensusHold",
+			Handler:    _ConsensusAdmin_GetConsensusHold_Handler,
+		},
+		{
+			MethodName: "ReleaseConsensusHold",
+			Handler:    _ConsensusAdmin_ReleaseConsensusHold_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

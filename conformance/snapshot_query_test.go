@@ -635,7 +635,8 @@ func TestSnapshotQueryLedgerCoversEveryNewMessage(t *testing.T) {
 		for i := 0; i < messages.Len(); i++ {
 			name := string(messages.Get(i).Name())
 			if !oldNames[name] {
-				if _, ok := snapshotQueryFields[name]; !ok {
+				_, covered := snapshotQueryFields[name]
+				if _, stage3 := stage3Fields[name]; !covered && !stage3 {
 					t.Errorf("new message %s lacks every-field wire coverage", name)
 				}
 			}

@@ -1058,6 +1058,9 @@ const (
 	SafeState_GetPublishedSnapshot_FullMethodName = "/arbiter.SafeState/GetPublishedSnapshot"
 	SafeState_GetQueryPolicy_FullMethodName       = "/arbiter.SafeState/GetQueryPolicy"
 	SafeState_GetClientSeqState_FullMethodName    = "/arbiter.SafeState/GetClientSeqState"
+	SafeState_GetPartitionStates_FullMethodName   = "/arbiter.SafeState/GetPartitionStates"
+	SafeState_GetPromotionOutcomes_FullMethodName = "/arbiter.SafeState/GetPromotionOutcomes"
+	SafeState_GetBlockVerification_FullMethodName = "/arbiter.SafeState/GetBlockVerification"
 )
 
 // SafeStateClient is the client API for SafeState service.
@@ -1078,6 +1081,10 @@ type SafeStateClient interface {
 	// Local read of the serving voter's applied accumulator state for one
 	// subject (operators and recovery tooling); no leader barrier.
 	GetClientSeqState(ctx context.Context, in *GetClientSeqStateRequest, opts ...grpc.CallOption) (*ClientSeqState, error)
+	// Leader-barriered reads for stage 3 (housegate spec 2026-10-14 §14 owner audit, §8 installs, P2 shadow verification).
+	GetPartitionStates(ctx context.Context, in *GetPartitionStatesRequest, opts ...grpc.CallOption) (*PartitionStates, error)
+	GetPromotionOutcomes(ctx context.Context, in *GetPromotionOutcomesRequest, opts ...grpc.CallOption) (*PromotionOutcomes, error)
+	GetBlockVerification(ctx context.Context, in *L3BlockRef, opts ...grpc.CallOption) (*BlockVerification, error)
 }
 
 type safeStateClient struct {
@@ -1158,6 +1165,36 @@ func (c *safeStateClient) GetClientSeqState(ctx context.Context, in *GetClientSe
 	return out, nil
 }
 
+func (c *safeStateClient) GetPartitionStates(ctx context.Context, in *GetPartitionStatesRequest, opts ...grpc.CallOption) (*PartitionStates, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PartitionStates)
+	err := c.cc.Invoke(ctx, SafeState_GetPartitionStates_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *safeStateClient) GetPromotionOutcomes(ctx context.Context, in *GetPromotionOutcomesRequest, opts ...grpc.CallOption) (*PromotionOutcomes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PromotionOutcomes)
+	err := c.cc.Invoke(ctx, SafeState_GetPromotionOutcomes_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *safeStateClient) GetBlockVerification(ctx context.Context, in *L3BlockRef, opts ...grpc.CallOption) (*BlockVerification, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BlockVerification)
+	err := c.cc.Invoke(ctx, SafeState_GetBlockVerification_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SafeStateServer is the server API for SafeState service.
 // All implementations must embed UnimplementedSafeStateServer
 // for forward compatibility.
@@ -1176,6 +1213,10 @@ type SafeStateServer interface {
 	// Local read of the serving voter's applied accumulator state for one
 	// subject (operators and recovery tooling); no leader barrier.
 	GetClientSeqState(context.Context, *GetClientSeqStateRequest) (*ClientSeqState, error)
+	// Leader-barriered reads for stage 3 (housegate spec 2026-10-14 §14 owner audit, §8 installs, P2 shadow verification).
+	GetPartitionStates(context.Context, *GetPartitionStatesRequest) (*PartitionStates, error)
+	GetPromotionOutcomes(context.Context, *GetPromotionOutcomesRequest) (*PromotionOutcomes, error)
+	GetBlockVerification(context.Context, *L3BlockRef) (*BlockVerification, error)
 	mustEmbedUnimplementedSafeStateServer()
 }
 
@@ -1206,6 +1247,15 @@ func (UnimplementedSafeStateServer) GetQueryPolicy(context.Context, *GetQueryPol
 }
 func (UnimplementedSafeStateServer) GetClientSeqState(context.Context, *GetClientSeqStateRequest) (*ClientSeqState, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetClientSeqState not implemented")
+}
+func (UnimplementedSafeStateServer) GetPartitionStates(context.Context, *GetPartitionStatesRequest) (*PartitionStates, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPartitionStates not implemented")
+}
+func (UnimplementedSafeStateServer) GetPromotionOutcomes(context.Context, *GetPromotionOutcomesRequest) (*PromotionOutcomes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPromotionOutcomes not implemented")
+}
+func (UnimplementedSafeStateServer) GetBlockVerification(context.Context, *L3BlockRef) (*BlockVerification, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlockVerification not implemented")
 }
 func (UnimplementedSafeStateServer) mustEmbedUnimplementedSafeStateServer() {}
 func (UnimplementedSafeStateServer) testEmbeddedByValue()                   {}
@@ -1354,6 +1404,60 @@ func _SafeState_GetClientSeqState_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SafeState_GetPartitionStates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPartitionStatesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SafeStateServer).GetPartitionStates(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SafeState_GetPartitionStates_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SafeStateServer).GetPartitionStates(ctx, req.(*GetPartitionStatesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SafeState_GetPromotionOutcomes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPromotionOutcomesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SafeStateServer).GetPromotionOutcomes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SafeState_GetPromotionOutcomes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SafeStateServer).GetPromotionOutcomes(ctx, req.(*GetPromotionOutcomesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SafeState_GetBlockVerification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(L3BlockRef)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SafeStateServer).GetBlockVerification(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SafeState_GetBlockVerification_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SafeStateServer).GetBlockVerification(ctx, req.(*L3BlockRef))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SafeState_ServiceDesc is the grpc.ServiceDesc for SafeState service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1388,6 +1492,18 @@ var SafeState_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetClientSeqState",
 			Handler:    _SafeState_GetClientSeqState_Handler,
+		},
+		{
+			MethodName: "GetPartitionStates",
+			Handler:    _SafeState_GetPartitionStates_Handler,
+		},
+		{
+			MethodName: "GetPromotionOutcomes",
+			Handler:    _SafeState_GetPromotionOutcomes_Handler,
+		},
+		{
+			MethodName: "GetBlockVerification",
+			Handler:    _SafeState_GetBlockVerification_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
