@@ -228,7 +228,7 @@ func TestStage3RPCSignatures(t *testing.T) {
 		want    int
 	}{
 		{pb.File_arbiter_proto, "SafeState", 10},
-		{pb.File_consensus_proto, "ConsensusAdmin", 14},
+		{pb.File_consensus_proto, "ConsensusAdmin", 16},
 	} {
 		if n := tc.file.Services().ByName(tc.service).Methods().Len(); n != tc.want {
 			t.Fatalf("%s has %d methods, want %d", tc.service, n, tc.want)

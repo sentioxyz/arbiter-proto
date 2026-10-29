@@ -1452,8 +1452,13 @@ type PromotionCommand struct {
 	//
 	//	*PromotionCommand_Promote
 	//	*PromotionCommand_Cleanup
-	Cmd           isPromotionCommand_Cmd `protobuf_oneof:"cmd"`
-	AuthorityJws  string                 `protobuf:"bytes,15,opt,name=authority_jws,json=authorityJws,proto3" json:"authority_jws,omitempty"`
+	Cmd isPromotionCommand_Cmd `protobuf_oneof:"cmd"`
+	// Set only by a leader in settle mode (housegate spec 2026-10-14 §14, P4),
+	// only on a promotion of a quarantined track that is issued and not yet
+	// acknowledged, and only towards an SNode whose SNodeHello carried settle.
+	// Such an SNode answers it from its journal and never applies it.
+	Settle        bool   `protobuf:"varint,3,opt,name=settle,proto3" json:"settle,omitempty"`
+	AuthorityJws  string `protobuf:"bytes,15,opt,name=authority_jws,json=authorityJws,proto3" json:"authority_jws,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1513,6 +1518,13 @@ func (x *PromotionCommand) GetCleanup() *UnsafeCleanup {
 	return nil
 }
 
+func (x *PromotionCommand) GetSettle() bool {
+	if x != nil {
+		return x.Settle
+	}
+	return false
+}
+
 func (x *PromotionCommand) GetAuthorityJws() string {
 	if x != nil {
 		return x.AuthorityJws
@@ -1537,8 +1549,10 @@ func (*PromotionCommand_Promote) isPromotionCommand_Cmd() {}
 func (*PromotionCommand_Cleanup) isPromotionCommand_Cmd() {}
 
 type SNodeHello struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	NodeId string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	// The SNode answers PromotionCommand.settle from its journal only.
+	Settle        bool `protobuf:"varint,2,opt,name=settle,proto3" json:"settle,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1578,6 +1592,13 @@ func (x *SNodeHello) GetNodeId() string {
 		return x.NodeId
 	}
 	return ""
+}
+
+func (x *SNodeHello) GetSettle() bool {
+	if x != nil {
+		return x.Settle
+	}
+	return false
 }
 
 // SafePartMapping records where a promoted part landed in hg_safe — part
@@ -5250,15 +5271,17 @@ const file_arbiter_proto_rawDesc = "" +
 	"\fpartition_id\x18\x02 \x01(\tR\vpartitionId\x12#\n" +
 	"\rpromotion_seq\x18\x03 \x01(\x04R\fpromotionSeq\x12&\n" +
 	"\x05parts\x18\x04 \x03(\v2\x10.arbiter.PartRefR\x05parts\x12,\n" +
-	"\x12rejected_block_seq\x18\x05 \x01(\x04R\x10rejectedBlockSeq\"\xad\x01\n" +
+	"\x12rejected_block_seq\x18\x05 \x01(\x04R\x10rejectedBlockSeq\"\xc5\x01\n" +
 	"\x10PromotionCommand\x129\n" +
 	"\apromote\x18\x01 \x01(\v2\x1d.arbiter.PromoteSafePartitionH\x00R\apromote\x122\n" +
-	"\acleanup\x18\x02 \x01(\v2\x16.arbiter.UnsafeCleanupH\x00R\acleanup\x12#\n" +
+	"\acleanup\x18\x02 \x01(\v2\x16.arbiter.UnsafeCleanupH\x00R\acleanup\x12\x16\n" +
+	"\x06settle\x18\x03 \x01(\bR\x06settle\x12#\n" +
 	"\rauthority_jws\x18\x0f \x01(\tR\fauthorityJwsB\x05\n" +
-	"\x03cmd\"%\n" +
+	"\x03cmd\"=\n" +
 	"\n" +
 	"SNodeHello\x12\x17\n" +
-	"\anode_id\x18\x01 \x01(\tR\x06nodeId\"\x85\x01\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x16\n" +
+	"\x06settle\x18\x02 \x01(\bR\x06settle\"\x85\x01\n" +
 	"\x0fSafePartMapping\x12&\n" +
 	"\x0fpart_row_lthash\x18\x01 \x01(\tR\rpartRowLthash\x12$\n" +
 	"\x0esafe_part_name\x18\x02 \x01(\tR\fsafePartName\x12$\n" +

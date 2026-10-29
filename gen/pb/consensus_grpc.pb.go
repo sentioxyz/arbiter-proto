@@ -38,6 +38,8 @@ const (
 	ConsensusAdmin_PrepareConsensusUpdate_FullMethodName         = "/arbiter.ConsensusAdmin/PrepareConsensusUpdate"
 	ConsensusAdmin_GetConsensusHold_FullMethodName               = "/arbiter.ConsensusAdmin/GetConsensusHold"
 	ConsensusAdmin_ReleaseConsensusHold_FullMethodName           = "/arbiter.ConsensusAdmin/ReleaseConsensusHold"
+	ConsensusAdmin_SettleTrack_FullMethodName                    = "/arbiter.ConsensusAdmin/SettleTrack"
+	ConsensusAdmin_GetTrackSettle_FullMethodName                 = "/arbiter.ConsensusAdmin/GetTrackSettle"
 )
 
 // ConsensusAdminClient is the client API for ConsensusAdmin service.
@@ -96,6 +98,15 @@ type ConsensusAdminClient interface {
 	// Leader-only: ends the hold. Idempotent: a hold_id this leader does not
 	// hold answers Ack.
 	ReleaseConsensusHold(ctx context.Context, in *ConsensusHoldRef, opts ...grpc.CallOption) (*Ack, error)
+	// Leader-only, authority-authenticated and leader-local (never proposed):
+	// streams the listed issued, unacknowledged promotions of a quarantined
+	// track to its settle-capable SNode with settle set, until each is
+	// acknowledged. FAILED_PRECONDITION before the tracks activation.
+	SettleTrack(ctx context.Context, in *SettleTrackRequest, opts ...grpc.CallOption) (*TrackSettle, error)
+	// Leader-only read with a barrier: the indexer's current or last settle on
+	// this leader, or (state UNSPECIFIED) its quarantine and withheld promotions,
+	// the preview arbiter-admin signs.
+	GetTrackSettle(ctx context.Context, in *TrackSettleRef, opts ...grpc.CallOption) (*TrackSettle, error)
 }
 
 type consensusAdminClient struct {
@@ -246,6 +257,26 @@ func (c *consensusAdminClient) ReleaseConsensusHold(ctx context.Context, in *Con
 	return out, nil
 }
 
+func (c *consensusAdminClient) SettleTrack(ctx context.Context, in *SettleTrackRequest, opts ...grpc.CallOption) (*TrackSettle, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TrackSettle)
+	err := c.cc.Invoke(ctx, ConsensusAdmin_SettleTrack_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consensusAdminClient) GetTrackSettle(ctx context.Context, in *TrackSettleRef, opts ...grpc.CallOption) (*TrackSettle, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TrackSettle)
+	err := c.cc.Invoke(ctx, ConsensusAdmin_GetTrackSettle_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsensusAdminServer is the server API for ConsensusAdmin service.
 // All implementations must embed UnimplementedConsensusAdminServer
 // for forward compatibility.
@@ -302,6 +333,15 @@ type ConsensusAdminServer interface {
 	// Leader-only: ends the hold. Idempotent: a hold_id this leader does not
 	// hold answers Ack.
 	ReleaseConsensusHold(context.Context, *ConsensusHoldRef) (*Ack, error)
+	// Leader-only, authority-authenticated and leader-local (never proposed):
+	// streams the listed issued, unacknowledged promotions of a quarantined
+	// track to its settle-capable SNode with settle set, until each is
+	// acknowledged. FAILED_PRECONDITION before the tracks activation.
+	SettleTrack(context.Context, *SettleTrackRequest) (*TrackSettle, error)
+	// Leader-only read with a barrier: the indexer's current or last settle on
+	// this leader, or (state UNSPECIFIED) its quarantine and withheld promotions,
+	// the preview arbiter-admin signs.
+	GetTrackSettle(context.Context, *TrackSettleRef) (*TrackSettle, error)
 	mustEmbedUnimplementedConsensusAdminServer()
 }
 
@@ -353,6 +393,12 @@ func (UnimplementedConsensusAdminServer) GetConsensusHold(context.Context, *Cons
 }
 func (UnimplementedConsensusAdminServer) ReleaseConsensusHold(context.Context, *ConsensusHoldRef) (*Ack, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReleaseConsensusHold not implemented")
+}
+func (UnimplementedConsensusAdminServer) SettleTrack(context.Context, *SettleTrackRequest) (*TrackSettle, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SettleTrack not implemented")
+}
+func (UnimplementedConsensusAdminServer) GetTrackSettle(context.Context, *TrackSettleRef) (*TrackSettle, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTrackSettle not implemented")
 }
 func (UnimplementedConsensusAdminServer) mustEmbedUnimplementedConsensusAdminServer() {}
 func (UnimplementedConsensusAdminServer) testEmbeddedByValue()                        {}
@@ -627,6 +673,42 @@ func _ConsensusAdmin_ReleaseConsensusHold_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConsensusAdmin_SettleTrack_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SettleTrackRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusAdminServer).SettleTrack(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusAdmin_SettleTrack_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusAdminServer).SettleTrack(ctx, req.(*SettleTrackRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConsensusAdmin_GetTrackSettle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TrackSettleRef)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusAdminServer).GetTrackSettle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusAdmin_GetTrackSettle_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusAdminServer).GetTrackSettle(ctx, req.(*TrackSettleRef))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConsensusAdmin_ServiceDesc is the grpc.ServiceDesc for ConsensusAdmin service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -689,6 +771,14 @@ var ConsensusAdmin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReleaseConsensusHold",
 			Handler:    _ConsensusAdmin_ReleaseConsensusHold_Handler,
+		},
+		{
+			MethodName: "SettleTrack",
+			Handler:    _ConsensusAdmin_SettleTrack_Handler,
+		},
+		{
+			MethodName: "GetTrackSettle",
+			Handler:    _ConsensusAdmin_GetTrackSettle_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

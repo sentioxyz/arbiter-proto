@@ -373,6 +373,43 @@ message ConsensusHold {
   repeated TrackDrain tracks = 11;
 }
 
+// Multi-source SI stage 3 P4 (housegate spec 2026-10-14 §14, §16 P4): a
+// leader-local settle of a quarantined track. Never a Raft command and never
+// reachable from RaftCommand. authority_jws is an ES256K JWS by a current
+// authority address with purpose "arbiter-settle-track-v1" over the canonical
+// digest of {indexer_id, expected_generation, promotion_seqs}, bound to the
+// network id, genesis snapshot id and authority epoch; promotion_seqs is
+// strictly ascending and equals the track's issued, unacknowledged promotions.
+message SettleTrackRequest {
+  uint64 indexer_id = 1;
+  uint64 expected_generation = 2;
+  repeated uint64 promotion_seqs = 3;
+  string authority_jws = 4;
+  uint64 timeout_ms = 5;
+}
+message TrackSettleRef { uint64 indexer_id = 1; }
+enum TrackSettleState {
+  TRACK_SETTLE_STATE_UNSPECIFIED = 0;
+  TRACK_SETTLE_STATE_ACTIVE = 1;
+  TRACK_SETTLE_STATE_SETTLED = 2;
+  TRACK_SETTLE_STATE_RELEASED = 3;
+  TRACK_SETTLE_STATE_EXPIRED = 4;
+  TRACK_SETTLE_STATE_LEADERSHIP_LOST = 5;
+}
+message TrackSettle {
+  uint64 indexer_id = 1;
+  bool quarantined = 2;
+  uint64 quarantine_generation = 3;
+  repeated uint64 unacked_promotion_seqs = 4;
+  TrackSettleState state = 5;
+  repeated uint64 promotion_seqs = 6;
+  uint64 raft_term = 7;
+  uint64 expires_unix_ms = 8;
+  string snode_node_id = 9;
+  bool snode_settle_capable = 10;
+  uint64 sends = 11;
+}
+
 service ConsensusAdmin {
   // Local static capability probe: no leader redirection or Raft barrier.
   rpc GetProtocolInfo (google.protobuf.Empty) returns (ProtocolInfo) {}
@@ -426,4 +463,13 @@ service ConsensusAdmin {
   // Leader-only: ends the hold. Idempotent: a hold_id this leader does not
   // hold answers Ack.
   rpc ReleaseConsensusHold (ConsensusHoldRef) returns (Ack) {}
+  // Leader-only, authority-authenticated and leader-local (never proposed):
+  // streams the listed issued, unacknowledged promotions of a quarantined
+  // track to its settle-capable SNode with settle set, until each is
+  // acknowledged. FAILED_PRECONDITION before the tracks activation.
+  rpc SettleTrack (SettleTrackRequest) returns (TrackSettle) {}
+  // Leader-only read with a barrier: the indexer's current or last settle on
+  // this leader, or (state UNSPECIFIED) its quarantine and withheld promotions,
+  // the preview arbiter-admin signs.
+  rpc GetTrackSettle (TrackSettleRef) returns (TrackSettle) {}
 }
