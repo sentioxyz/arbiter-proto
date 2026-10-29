@@ -396,6 +396,20 @@ func tracksMessage(name, jsonName string, number int32, typeName string) *descri
 	return f
 }
 
+// settleStreamFields pins the one field the multi-source SI stage-3 P4 track
+// settle (housegate spec 2026-10-14 §14, §16 P4; Plan S3-D contract §33.2)
+// added to each of the two promotion-stream messages that exist in the
+// baselines: PromotionCommand.settle = 3, declared after the cmd oneof and
+// before authority_jws = 15, so it is not the message's last field, and
+// SNodeHello.settle = 2. Neither message is Raft-reachable
+// (TestSettleMessagesAreNotRaftReachable). The exemption removes exactly that
+// field, found by its number, and every other field keeps its baseline order;
+// every existing baseline predates it, so it applies unconditionally.
+var settleStreamFields = map[string]*descriptorpb.FieldDescriptorProto{
+	"PromotionCommand": signedClaimsField("settle", "settle", 3, descriptorpb.FieldDescriptorProto_TYPE_BOOL),
+	"SNodeHello":       signedClaimsField("settle", "settle", 2, descriptorpb.FieldDescriptorProto_TYPE_BOOL),
+}
+
 func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.FileDescriptorSet, allowPromotionInventory bool) {
 	t.Helper()
 	for _, old := range baseline.File {
@@ -509,6 +523,20 @@ func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.File
 					t.Fatalf("%s addition must be exactly uint32 artifact_disposition_capability = %d: %v", m.GetName(), num, got)
 				}
 				got.Field = got.Field[:len(m.Field)]
+			}
+			if want, ok := settleStreamFields[m.GetName()]; ok {
+				kept := make([]*descriptorpb.FieldDescriptorProto, 0, len(got.Field))
+				for _, f := range got.Field {
+					if f.GetNumber() != want.GetNumber() {
+						kept = append(kept, f)
+					} else if !proto.Equal(f, want) {
+						t.Fatalf("%s settle addition must be exactly bool settle = %d: %v", m.GetName(), want.GetNumber(), got)
+					}
+				}
+				if len(kept) != len(got.Field)-1 || len(got.Field) != len(m.Field)+1 {
+					t.Fatalf("%s settle addition must be exactly bool settle = %d: %v", m.GetName(), want.GetNumber(), got)
+				}
+				got.Field = kept
 			}
 			if !proto.Equal(m, got) {
 				t.Errorf("old descriptor changed: %s", m.GetName())

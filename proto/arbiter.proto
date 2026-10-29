@@ -303,11 +303,18 @@ message PromotionCommand {
     PromoteSafePartition promote = 1;
     UnsafeCleanup cleanup = 2;
   }
+  // Set only by a leader in settle mode (housegate spec 2026-10-14 §14, P4),
+  // only on a promotion of a quarantined track that is issued and not yet
+  // acknowledged, and only towards an SNode whose SNodeHello carried settle.
+  // Such an SNode answers it from its journal and never applies it.
+  bool settle = 3;
   string authority_jws = 15;
 }
 
 message SNodeHello {
   string node_id = 1;
+  // The SNode answers PromotionCommand.settle from its journal only.
+  bool settle = 2;
 }
 
 // SafePartMapping records where a promoted part landed in hg_safe — part
