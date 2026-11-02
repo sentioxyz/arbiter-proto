@@ -34,6 +34,9 @@ message ConsensusMutableParams {
   // authority-signed update after the signed-claims activation sets it, then
   // carried by every update and never lowered.
   bool tracks_enabled = 8;
+  // The stage-3 parameter (housegate spec 2026-10-14 §6.1, §10.4): absent until
+  // the v21 activation; then carried complete by every update.
+  Stage3Params stage3 = 9;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -92,6 +95,14 @@ message ConsensusParamsUpdate {
   // "track_manifests_v1" first. It joins the params digest only once set, so
   // earlier digests are unchanged.
   bool tracks_enabled = 13;
+  // The stage-3 parameter (housegate spec 2026-10-14 §6.1, §10.3-§10.4).
+  // Absent keeps stage 3 inactive. The update that first sets it is the
+  // irreversible v21 activation: it needs tracks_enabled, sets every switch
+  // false, and is refused unless every voter and every registered, non-evicted
+  // data-plane node not on a quarantined track advertises "stage3_v1"; snapshots
+  // are written as v21 from its commit on. Afterwards every update carries it.
+  // It joins the params digest only once set, so earlier digests are unchanged.
+  Stage3Params stage3 = 14;
 }
 
 // UpdateConsensusParamsCmd is both the administration request and the
@@ -153,6 +164,9 @@ message ConsensusParamsState {
   // fields; this is not only a digest of ConsensusMutableParams.
   string params_digest = 7;
   uint64 promotion_seq = 8;
+  // The v21 activation and switch cutovers (plan S3-E1 K64); absent before the
+  // activation.
+  Stage3StateView stage3_state = 9;
 }
 
 // NodeFeatureEntry joins one non-evicted verifier or SNode registration with
@@ -177,9 +191,29 @@ message NodeFeatures {
 // NodeRegistration.ed25519_pubkey and signs its evidence with; after the
 // signed-claims activation it also signs the node's registration, activation
 // and purge reports.
+// Stage 3 (housegate spec 2026-10-14 §6.1): an entry without host_indexer_id
+// is a network-pool verifier: fields 4-11 must then be unset, so its bytes and
+// digest are those of arbiter-proto v0.11.0. An entry with host_indexer_id is
+// a member: every field is explicit (plan S3-E1 K58), weight is 1-64,
+// failure_domain equals stage3.indexer_failure_domains[host_indexer_id],
+// consent_jws is the ES256K JWS of si_indexers[host_indexer_id].signer with
+// purpose "arbiter-group-member-v1" over {network_id, genesis_snapshot_id,
+// host_indexer_id, node_id, ed25519_pubkey, replica_signer}, and
+// shared_rmt=false with verify=true is refused.
 message VerifierEntry {
   string node_id = 1;
   bytes ed25519_pubkey = 2;
+  // optional because indexer 0 is a valid host.
+  optional uint64 host_indexer_id = 3;
+  // Lowercase 0x + 40 hex: signs this member's checkpoints.
+  string replica_signer = 4;
+  string consent_jws = 5;
+  uint32 weight = 6;
+  string failure_domain = 7;
+  bool verify = 8;
+  bool replicate = 9;
+  bool counts = 10;
+  bool shared_rmt = 11;
 }
 
 // EvictNodeRequest is the authority-signed eviction of one data-plane node
@@ -410,6 +444,69 @@ message TrackSettle {
   uint64 sends = 11;
 }
 
+// RebalanceGroupCmd (Raft tag 38) is both the ConsensusAdmin.RebalanceGroup
+// request and the Raft command (spec §6.4). authority_jws is an ES256K JWS by
+// a current authority address with purpose "arbiter-rebalance-group-v1" over
+// {owner_indexer_id, database_id, expected_generation, add, remove,
+// network_fill}, bound to the network id, genesis snapshot id and authority
+// epoch. add and remove are sorted, unique and disjoint; network_fill is the
+// group's fill after the command.
+message RebalanceGroupCmd {
+  uint64 owner_indexer_id = 1;
+  string database_id = 2;
+  uint64 expected_generation = 3;
+  repeated string add = 4;
+  repeated string remove = 5;
+  bool network_fill = 6;
+  string authority_jws = 7;
+}
+
+// ReselectVerifiersCmd (Raft tag 39) replaces verifiers of one block's set
+// (spec §7.4); expected_set is the block's current set, three sorted unique
+// ids. Signed by the orchestrator's authority signer, purpose
+// "arbiter-reselect-verifiers-v1", context-bound like RebalanceGroupCmd. The
+// leader proposes it; there is no RPC. Apply refuses it before the
+// reselection switch with "re-selection is refused until the reselection
+// switch is on" (plan S3-E1 K67).
+message ReselectVerifiersCmd {
+  uint64 l3_block_seq = 1;
+  repeated string expected_set = 2;
+  string authority_jws = 3;
+}
+
+// MarkMemberLaggingCmd (Raft tag 42) is both the ConsensusAdmin
+// MarkMemberLagging request and the Raft command (spec §9.2); Apply re-checks
+// it against committed state. Purpose "arbiter-mark-member-lagging-v1",
+// context-bound; observed_entry.indexer_id equals owner_indexer_id.
+message MarkMemberLaggingCmd {
+  string node_id = 1;
+  uint64 owner_indexer_id = 2;
+  string database_id = 3;
+  TrackFrontier observed_entry = 4;
+  string authority_jws = 5;
+}
+
+// Stage3SwitchCutover records one stage-3 switch's turn-on: switch_name is the
+// Stage3Params field name; epoch is the update's epoch; cutover_block_seq and
+// cutover_promotion_seq are the sealed tip (after the update's own seal, for
+// placement) and the promotion sequence when it applied.
+message Stage3SwitchCutover {
+  string switch_name = 1;
+  uint64 epoch = 2;
+  uint64 cutover_block_seq = 3;
+  uint64 cutover_promotion_seq = 4;
+}
+
+// Stage3StateView answers ConsensusParamsState.stage3_state: the v21
+// activation's epoch, sealed tip and promotion sequence, and every switch
+// turned on since, in turn-on order.
+message Stage3StateView {
+  uint64 activation_epoch = 1;
+  uint64 activation_block_seq = 2;
+  uint64 activation_promotion_seq = 3;
+  repeated Stage3SwitchCutover switches = 4;
+}
+
 service ConsensusAdmin {
   // Local static capability probe: no leader redirection or Raft barrier.
   rpc GetProtocolInfo (google.protobuf.Empty) returns (ProtocolInfo) {}
@@ -472,4 +569,12 @@ service ConsensusAdmin {
   // this leader, or (state UNSPECIFIED) its quarantine and withheld promotions,
   // the preview arbiter-admin signs.
   rpc GetTrackSettle (TrackSettleRef) returns (TrackSettle) {}
+  // Leader-only, authority-authenticated (spec §6.4): proposes Raft tag 38.
+  // FAILED_PRECONDITION "group rebalancing is refused until the placement
+  // switch is on" before it (plan S3-E1 K67). Ack means committed success.
+  rpc RebalanceGroup (RebalanceGroupCmd) returns (Ack) {}
+  // Leader-only, authority-authenticated (spec §9.2, §16 playbook): proposes
+  // Raft tag 42. FAILED_PRECONDITION "marking a member lagging is refused until
+  // the checkpoints switch is on" before it. Ack means committed success.
+  rpc MarkMemberLagging (MarkMemberLaggingCmd) returns (Ack) {}
 }

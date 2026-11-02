@@ -227,6 +227,15 @@ message RaftCommand {
     // command.
     QuarantineIndexerCmd quarantine_indexer = 36;
     ReleaseIndexerCmd release_indexer = 37;
+    // Multi-source SI stage 3 (housegate spec 2026-10-14 §6.4, §7.4, §9.1-§9.2;
+    // tag 29 stays unused): proposed only after the v21 activation and the
+    // command's switch (placement: 38, 40; reselection: 39; checkpoints: 41, 42),
+    // because a voter whose decoder lacks these tags refuses the command.
+    RebalanceGroupCmd rebalance_group = 38;
+    ReselectVerifiersCmd reselect_verifiers = 39;
+    MemberReadyCmd member_ready = 40;
+    MemberCheckpointCmd member_checkpoint = 41;
+    MarkMemberLaggingCmd mark_member_lagging = 42;
   }
 }
 

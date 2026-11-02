@@ -127,6 +127,17 @@ enum AdmissionCode {
   // authority-signed ReleaseIndexerCmd releases the indexer; HouseGate
   // answers a non-retryable, session-preserving refusal (ClickHouse 392).
   ADMISSION_CODE_INDEXER_QUARANTINED = 11;
+  // The eligible ring of the statement's group, computed with MarkReplaying's
+  // filter, has fewer than three verifiers (housegate spec 2026-10-14 §7.3).
+  // Checked immediately after the source check; returned only with
+  // stage3.owner_aware_selection on. Nothing changed: the coordinate is unspent;
+  // HouseGate answers a retryable, session-preserving refusal (ClickHouse 733).
+  ADMISSION_CODE_VERIFIERS_UNAVAILABLE = 12;
+  // Strict mode (stage3.strict_copies) holds the table's cleanup at the copy
+  // floor while it is above max_uncleaned_parts_per_table or _per_partition
+  // (spec §9.3; plan S3-E1 K59). Nothing changed: the coordinate is unspent;
+  // HouseGate answers session-preserving back-pressure (ClickHouse 252).
+  ADMISSION_CODE_COPIES_BACKPRESSURE = 13;
 }
 
 message SequencedAck {
@@ -465,6 +476,11 @@ message TableSetTransition {
 // distinct from absent.
 message L3BlockTrack {
   uint64 indexer_id = 1;
+  // The block's GroupKey (housegate spec 2026-10-14 §7.1): set on every block
+  // sealed after the placement switch's cutover block, transition blocks
+  // included, and absent on every earlier block; part of the ChainHash
+  // preimage (fsm json tag "group_key") only when set.
+  string group_key = 2;
 }
 
 message L3BlockRef {
@@ -619,6 +635,15 @@ service VerifierGateway {
   rpc SubmitSnapshotQueryAttestation (SnapshotQueryAttestation) returns (Ack) {}
   // Idempotency key: (replica_id, block_seq).
   rpc SubmitByteSideScan (ByteSideScanMsg) returns (Ack) {}
+  // A member reports its replicas of one group (Raft tag 40). Leader-only; the
+  // request is the Raft command. FAILED_PRECONDITION "member readiness is
+  // refused until the placement switch is on" before it (plan S3-E1 K67).
+  // Idempotent for a repeat at the same generation. Ack means committed.
+  rpc SubmitMemberReady (MemberReadyCmd) returns (Ack) {}
+  // A member submits a signed checkpoint (Raft tag 41). Leader-only; the
+  // request is the Raft command. FAILED_PRECONDITION "member checkpoints are
+  // refused until the checkpoints switch is on" before it. Ack means committed.
+  rpc SubmitMemberCheckpoint (MemberCheckpointCmd) returns (Ack) {}
 }
 
 // PromotionGateway is called by SNodes (data plane dials in).
@@ -860,6 +885,41 @@ message BlockVerification {
   AnchorRef anchor = 11;
   bool finality = 12;
   bool last_mergeable = 13;
+  // Stage-3 selection record (housegate spec 2026-10-14 §7.1, §7.3, §7.4),
+  // absent on every block marked before the owner_aware_selection switch:
+  // the eligible ring MarkReplaying drew from (sorted), the last ring
+  // position used, and the committed registry cursor block at the marking.
+  repeated string eligible_ring = 14;
+  uint32 ring_position = 15;
+  uint64 marked_cursor_block = 16;
+  // The group key, its sorted ready verify members and fill recorded at seal,
+  // and every (database, group_generation) whose group carried that key (plan
+  // S3-E1 K62); absent before the placement cutover.
+  string group_key = 17;
+  repeated string group_members = 18;
+  bool group_fill = 19;
+  repeated BlockGroupRef group_databases = 20;
+  // Every applied ReselectVerifiers in order, and the number of re-selections
+  // the block had when its quorum latched (spec §7.4).
+  repeated BlockReselection reselections = 21;
+  uint32 reselections_at_latch = 22;
+}
+
+message BlockGroupRef {
+  string database_id = 1;
+  uint64 group_generation = 2;
+}
+
+// BlockReselection is one applied ReselectVerifiers: the replaced ids (sorted)
+// and corresponding replacements (in stored-ring walk order), the ring position
+// after it, the registry cursor block it recorded, and its authority proof.
+message BlockReselection {
+  repeated string replaced = 1;
+  repeated string replacements = 2;
+  uint32 ring_position = 3;
+  uint64 cursor_block = 4;
+  string authority_jws = 5;
+  uint64 authority_epoch = 6;
 }
 
 // SafeState serves read-only safe-state queries to HouseGate and clients.

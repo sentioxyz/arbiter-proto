@@ -77,10 +77,10 @@ func TestTracksFieldNumbers(t *testing.T) {
 		})
 	}
 	for msg, want := range map[proto.Message]int{
-		&pb.TrackFrontier{}: 3, &pb.SafeSnapshotManifest{}: 11, &pb.L3BlockTrack{}: 1, &pb.L3BlockHeader{}: 14,
-		&pb.UnsafeCleanup{}: 5, &pb.CleanupAck{}: 6, &pb.ConsensusParamsUpdate{}: 13, &pb.ConsensusMutableParams{}: 8,
+		&pb.TrackFrontier{}: 3, &pb.SafeSnapshotManifest{}: 11, &pb.L3BlockTrack{}: 2, &pb.L3BlockHeader{}: 14,
+		&pb.UnsafeCleanup{}: 5, &pb.CleanupAck{}: 6, &pb.ConsensusParamsUpdate{}: 14, &pb.ConsensusMutableParams{}: 9,
 		&pb.QuarantineIndexerCmd{}: 4, &pb.ReleaseIndexerCmd{}: 4, &pb.IndexerTrackView{}: 9, &pb.TrackStateView{}: 6,
-		&pb.TableRegistrySnapshot{}: 9,
+		&pb.TableRegistrySnapshot{}: 12,
 	} {
 		if got := msg.ProtoReflect().Descriptor().Fields().Len(); got != want {
 			t.Fatalf("%s field count = %d, want %d", msg.ProtoReflect().Descriptor().Name(), got, want)
@@ -120,8 +120,8 @@ func TestIndexerQuarantinedAdmissionCodeIsEleven(t *testing.T) {
 	if got := int32(pb.AdmissionCode_ADMISSION_CODE_SOURCE_UNAVAILABLE); got != 10 {
 		t.Fatalf("ADMISSION_CODE_SOURCE_UNAVAILABLE moved to %d", got)
 	}
-	if n := pb.AdmissionCode(0).Descriptor().Values().Len(); n != 12 {
-		t.Fatalf("AdmissionCode has %d values, want 12", n)
+	if n := pb.AdmissionCode(0).Descriptor().Values().Len(); n != 14 {
+		t.Fatalf("AdmissionCode has %d values, want 14", n)
 	}
 }
 
@@ -224,7 +224,7 @@ func TestTracksFieldsAbsentLeaveTheWireUnchanged(t *testing.T) {
 			fields := m.Descriptor().Fields()
 			fd := fields.ByNumber(tc.number)
 			for i := 0; i < fields.Len(); i++ {
-				if f := fields.Get(i); f.Number() != tc.number {
+				if f := fields.Get(i); f.Number() < tc.number {
 					populateSnapshotField(m, f, uint64(i+1))
 				}
 			}

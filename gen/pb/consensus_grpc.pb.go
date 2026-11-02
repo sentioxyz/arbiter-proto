@@ -40,6 +40,8 @@ const (
 	ConsensusAdmin_ReleaseConsensusHold_FullMethodName           = "/arbiter.ConsensusAdmin/ReleaseConsensusHold"
 	ConsensusAdmin_SettleTrack_FullMethodName                    = "/arbiter.ConsensusAdmin/SettleTrack"
 	ConsensusAdmin_GetTrackSettle_FullMethodName                 = "/arbiter.ConsensusAdmin/GetTrackSettle"
+	ConsensusAdmin_RebalanceGroup_FullMethodName                 = "/arbiter.ConsensusAdmin/RebalanceGroup"
+	ConsensusAdmin_MarkMemberLagging_FullMethodName              = "/arbiter.ConsensusAdmin/MarkMemberLagging"
 )
 
 // ConsensusAdminClient is the client API for ConsensusAdmin service.
@@ -107,6 +109,14 @@ type ConsensusAdminClient interface {
 	// this leader, or (state UNSPECIFIED) its quarantine and withheld promotions,
 	// the preview arbiter-admin signs.
 	GetTrackSettle(ctx context.Context, in *TrackSettleRef, opts ...grpc.CallOption) (*TrackSettle, error)
+	// Leader-only, authority-authenticated (spec §6.4): proposes Raft tag 38.
+	// FAILED_PRECONDITION "group rebalancing is refused until the placement
+	// switch is on" before it (plan S3-E1 K67). Ack means committed success.
+	RebalanceGroup(ctx context.Context, in *RebalanceGroupCmd, opts ...grpc.CallOption) (*Ack, error)
+	// Leader-only, authority-authenticated (spec §9.2, §16 playbook): proposes
+	// Raft tag 42. FAILED_PRECONDITION "marking a member lagging is refused until
+	// the checkpoints switch is on" before it. Ack means committed success.
+	MarkMemberLagging(ctx context.Context, in *MarkMemberLaggingCmd, opts ...grpc.CallOption) (*Ack, error)
 }
 
 type consensusAdminClient struct {
@@ -277,6 +287,26 @@ func (c *consensusAdminClient) GetTrackSettle(ctx context.Context, in *TrackSett
 	return out, nil
 }
 
+func (c *consensusAdminClient) RebalanceGroup(ctx context.Context, in *RebalanceGroupCmd, opts ...grpc.CallOption) (*Ack, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Ack)
+	err := c.cc.Invoke(ctx, ConsensusAdmin_RebalanceGroup_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consensusAdminClient) MarkMemberLagging(ctx context.Context, in *MarkMemberLaggingCmd, opts ...grpc.CallOption) (*Ack, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Ack)
+	err := c.cc.Invoke(ctx, ConsensusAdmin_MarkMemberLagging_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsensusAdminServer is the server API for ConsensusAdmin service.
 // All implementations must embed UnimplementedConsensusAdminServer
 // for forward compatibility.
@@ -342,6 +372,14 @@ type ConsensusAdminServer interface {
 	// this leader, or (state UNSPECIFIED) its quarantine and withheld promotions,
 	// the preview arbiter-admin signs.
 	GetTrackSettle(context.Context, *TrackSettleRef) (*TrackSettle, error)
+	// Leader-only, authority-authenticated (spec §6.4): proposes Raft tag 38.
+	// FAILED_PRECONDITION "group rebalancing is refused until the placement
+	// switch is on" before it (plan S3-E1 K67). Ack means committed success.
+	RebalanceGroup(context.Context, *RebalanceGroupCmd) (*Ack, error)
+	// Leader-only, authority-authenticated (spec §9.2, §16 playbook): proposes
+	// Raft tag 42. FAILED_PRECONDITION "marking a member lagging is refused until
+	// the checkpoints switch is on" before it. Ack means committed success.
+	MarkMemberLagging(context.Context, *MarkMemberLaggingCmd) (*Ack, error)
 	mustEmbedUnimplementedConsensusAdminServer()
 }
 
@@ -399,6 +437,12 @@ func (UnimplementedConsensusAdminServer) SettleTrack(context.Context, *SettleTra
 }
 func (UnimplementedConsensusAdminServer) GetTrackSettle(context.Context, *TrackSettleRef) (*TrackSettle, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTrackSettle not implemented")
+}
+func (UnimplementedConsensusAdminServer) RebalanceGroup(context.Context, *RebalanceGroupCmd) (*Ack, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RebalanceGroup not implemented")
+}
+func (UnimplementedConsensusAdminServer) MarkMemberLagging(context.Context, *MarkMemberLaggingCmd) (*Ack, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MarkMemberLagging not implemented")
 }
 func (UnimplementedConsensusAdminServer) mustEmbedUnimplementedConsensusAdminServer() {}
 func (UnimplementedConsensusAdminServer) testEmbeddedByValue()                        {}
@@ -709,6 +753,42 @@ func _ConsensusAdmin_GetTrackSettle_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConsensusAdmin_RebalanceGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RebalanceGroupCmd)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusAdminServer).RebalanceGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusAdmin_RebalanceGroup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusAdminServer).RebalanceGroup(ctx, req.(*RebalanceGroupCmd))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConsensusAdmin_MarkMemberLagging_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkMemberLaggingCmd)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusAdminServer).MarkMemberLagging(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusAdmin_MarkMemberLagging_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusAdminServer).MarkMemberLagging(ctx, req.(*MarkMemberLaggingCmd))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConsensusAdmin_ServiceDesc is the grpc.ServiceDesc for ConsensusAdmin service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -779,6 +859,14 @@ var ConsensusAdmin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetTrackSettle",
 			Handler:    _ConsensusAdmin_GetTrackSettle_Handler,
+		},
+		{
+			MethodName: "RebalanceGroup",
+			Handler:    _ConsensusAdmin_RebalanceGroup_Handler,
+		},
+		{
+			MethodName: "MarkMemberLagging",
+			Handler:    _ConsensusAdmin_MarkMemberLagging_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -76,6 +76,69 @@ func (TableRetireReason) EnumDescriptor() ([]byte, []int) {
 	return file_table_registry_proto_rawDescGZIP(), []int{0}
 }
 
+// CheckpointExclusionReason is why a checkpoint excludes a table (plan S3-E1
+// K63): a closed set; UNSPECIFIED and unknown values are refused.
+type CheckpointExclusionReason int32
+
+const (
+	CheckpointExclusionReason_CHECKPOINT_EXCLUSION_REASON_UNSPECIFIED    CheckpointExclusionReason = 0
+	CheckpointExclusionReason_CHECKPOINT_EXCLUSION_REASON_NOT_INSTALLED  CheckpointExclusionReason = 1
+	CheckpointExclusionReason_CHECKPOINT_EXCLUSION_REASON_DIVERGED       CheckpointExclusionReason = 2
+	CheckpointExclusionReason_CHECKPOINT_EXCLUSION_REASON_FOREIGN        CheckpointExclusionReason = 3
+	CheckpointExclusionReason_CHECKPOINT_EXCLUSION_REASON_DISK_THRESHOLD CheckpointExclusionReason = 4
+	CheckpointExclusionReason_CHECKPOINT_EXCLUSION_REASON_AUDIT_PENDING  CheckpointExclusionReason = 5
+	CheckpointExclusionReason_CHECKPOINT_EXCLUSION_REASON_RETIRING       CheckpointExclusionReason = 6
+)
+
+// Enum value maps for CheckpointExclusionReason.
+var (
+	CheckpointExclusionReason_name = map[int32]string{
+		0: "CHECKPOINT_EXCLUSION_REASON_UNSPECIFIED",
+		1: "CHECKPOINT_EXCLUSION_REASON_NOT_INSTALLED",
+		2: "CHECKPOINT_EXCLUSION_REASON_DIVERGED",
+		3: "CHECKPOINT_EXCLUSION_REASON_FOREIGN",
+		4: "CHECKPOINT_EXCLUSION_REASON_DISK_THRESHOLD",
+		5: "CHECKPOINT_EXCLUSION_REASON_AUDIT_PENDING",
+		6: "CHECKPOINT_EXCLUSION_REASON_RETIRING",
+	}
+	CheckpointExclusionReason_value = map[string]int32{
+		"CHECKPOINT_EXCLUSION_REASON_UNSPECIFIED":    0,
+		"CHECKPOINT_EXCLUSION_REASON_NOT_INSTALLED":  1,
+		"CHECKPOINT_EXCLUSION_REASON_DIVERGED":       2,
+		"CHECKPOINT_EXCLUSION_REASON_FOREIGN":        3,
+		"CHECKPOINT_EXCLUSION_REASON_DISK_THRESHOLD": 4,
+		"CHECKPOINT_EXCLUSION_REASON_AUDIT_PENDING":  5,
+		"CHECKPOINT_EXCLUSION_REASON_RETIRING":       6,
+	}
+)
+
+func (x CheckpointExclusionReason) Enum() *CheckpointExclusionReason {
+	p := new(CheckpointExclusionReason)
+	*p = x
+	return p
+}
+
+func (x CheckpointExclusionReason) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (CheckpointExclusionReason) Descriptor() protoreflect.EnumDescriptor {
+	return file_table_registry_proto_enumTypes[1].Descriptor()
+}
+
+func (CheckpointExclusionReason) Type() protoreflect.EnumType {
+	return &file_table_registry_proto_enumTypes[1]
+}
+
+func (x CheckpointExclusionReason) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use CheckpointExclusionReason.Descriptor instead.
+func (CheckpointExclusionReason) EnumDescriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{1}
+}
+
 type TableIncarnationStatus int32
 
 const (
@@ -124,11 +187,11 @@ func (x TableIncarnationStatus) String() string {
 }
 
 func (TableIncarnationStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_table_registry_proto_enumTypes[1].Descriptor()
+	return file_table_registry_proto_enumTypes[2].Descriptor()
 }
 
 func (TableIncarnationStatus) Type() protoreflect.EnumType {
-	return &file_table_registry_proto_enumTypes[1]
+	return &file_table_registry_proto_enumTypes[2]
 }
 
 func (x TableIncarnationStatus) Number() protoreflect.EnumNumber {
@@ -137,7 +200,7 @@ func (x TableIncarnationStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use TableIncarnationStatus.Descriptor instead.
 func (TableIncarnationStatus) EnumDescriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{1}
+	return file_table_registry_proto_rawDescGZIP(), []int{2}
 }
 
 type TableIncarnationOrigin int32
@@ -176,11 +239,11 @@ func (x TableIncarnationOrigin) String() string {
 }
 
 func (TableIncarnationOrigin) Descriptor() protoreflect.EnumDescriptor {
-	return file_table_registry_proto_enumTypes[2].Descriptor()
+	return file_table_registry_proto_enumTypes[3].Descriptor()
 }
 
 func (TableIncarnationOrigin) Type() protoreflect.EnumType {
-	return &file_table_registry_proto_enumTypes[2]
+	return &file_table_registry_proto_enumTypes[3]
 }
 
 func (x TableIncarnationOrigin) Number() protoreflect.EnumNumber {
@@ -189,7 +252,64 @@ func (x TableIncarnationOrigin) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use TableIncarnationOrigin.Descriptor instead.
 func (TableIncarnationOrigin) EnumDescriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{2}
+	return file_table_registry_proto_rawDescGZIP(), []int{3}
+}
+
+// MemberClass is a member's class in one group (spec §9.2). A Leaving member
+// is not in DatabaseGroup.members; its record is in DatabaseGroup.leaving.
+type MemberClass int32
+
+const (
+	MemberClass_MEMBER_CLASS_UNSPECIFIED   MemberClass = 0
+	MemberClass_MEMBER_CLASS_BOOTSTRAPPING MemberClass = 1
+	MemberClass_MEMBER_CLASS_CAUGHT_UP     MemberClass = 2
+	MemberClass_MEMBER_CLASS_BEHIND        MemberClass = 3
+	MemberClass_MEMBER_CLASS_LAGGING       MemberClass = 4
+)
+
+// Enum value maps for MemberClass.
+var (
+	MemberClass_name = map[int32]string{
+		0: "MEMBER_CLASS_UNSPECIFIED",
+		1: "MEMBER_CLASS_BOOTSTRAPPING",
+		2: "MEMBER_CLASS_CAUGHT_UP",
+		3: "MEMBER_CLASS_BEHIND",
+		4: "MEMBER_CLASS_LAGGING",
+	}
+	MemberClass_value = map[string]int32{
+		"MEMBER_CLASS_UNSPECIFIED":   0,
+		"MEMBER_CLASS_BOOTSTRAPPING": 1,
+		"MEMBER_CLASS_CAUGHT_UP":     2,
+		"MEMBER_CLASS_BEHIND":        3,
+		"MEMBER_CLASS_LAGGING":       4,
+	}
+)
+
+func (x MemberClass) Enum() *MemberClass {
+	p := new(MemberClass)
+	*p = x
+	return p
+}
+
+func (x MemberClass) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (MemberClass) Descriptor() protoreflect.EnumDescriptor {
+	return file_table_registry_proto_enumTypes[4].Descriptor()
+}
+
+func (MemberClass) Type() protoreflect.EnumType {
+	return &file_table_registry_proto_enumTypes[4]
+}
+
+func (x MemberClass) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use MemberClass.Descriptor instead.
+func (MemberClass) EnumDescriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{4}
 }
 
 // TableRegistryParams is set once through a signed consensus update and never
@@ -417,6 +537,248 @@ func (x *SIIndexerEntry) GetEnrollmentJws() string {
 	return ""
 }
 
+// IndexerFailureDomain names one enrolled SI indexer's failure domain
+// (housegate spec 2026-10-14 §6.1, §9.3); equal strings are one domain.
+type IndexerFailureDomain struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	IndexerId     uint64                 `protobuf:"varint,1,opt,name=indexer_id,json=indexerId,proto3" json:"indexer_id,omitempty"`
+	FailureDomain string                 `protobuf:"bytes,2,opt,name=failure_domain,json=failureDomain,proto3" json:"failure_domain,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IndexerFailureDomain) Reset() {
+	*x = IndexerFailureDomain{}
+	mi := &file_table_registry_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IndexerFailureDomain) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IndexerFailureDomain) ProtoMessage() {}
+
+func (x *IndexerFailureDomain) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IndexerFailureDomain.ProtoReflect.Descriptor instead.
+func (*IndexerFailureDomain) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *IndexerFailureDomain) GetIndexerId() uint64 {
+	if x != nil {
+		return x.IndexerId
+	}
+	return 0
+}
+
+func (x *IndexerFailureDomain) GetFailureDomain() string {
+	if x != nil {
+		return x.FailureDomain
+	}
+	return ""
+}
+
+// Stage3Params is the stage-3 parameter (spec §6.1, §10.4). It is absent until
+// the v21 activation, which sets it with every switch false; afterwards every
+// consensus update carries it. Every field is explicit: there is no
+// absent-means-default (plan S3-E1 K58). The switches and strict_copies are
+// one-way; min_safe_copies and group_size never decrease; each switch requires
+// every earlier switch in field order (purge, eviction_voiding,
+// owner_aware_selection, placement, reselection, checkpoints, narrowed_drain).
+// indexer_failure_domains is sorted by indexer_id without duplicates.
+type Stage3Params struct {
+	state                         protoimpl.MessageState  `protogen:"open.v1"`
+	GroupSize                     uint32                  `protobuf:"varint,1,opt,name=group_size,json=groupSize,proto3" json:"group_size,omitempty"`
+	NetworkFillDefault            bool                    `protobuf:"varint,2,opt,name=network_fill_default,json=networkFillDefault,proto3" json:"network_fill_default,omitempty"`
+	MinSafeCopies                 uint32                  `protobuf:"varint,3,opt,name=min_safe_copies,json=minSafeCopies,proto3" json:"min_safe_copies,omitempty"`
+	StrictCopies                  bool                    `protobuf:"varint,4,opt,name=strict_copies,json=strictCopies,proto3" json:"strict_copies,omitempty"`
+	IndexerFailureDomains         []*IndexerFailureDomain `protobuf:"bytes,5,rep,name=indexer_failure_domains,json=indexerFailureDomains,proto3" json:"indexer_failure_domains,omitempty"`
+	MaxLagPublications            uint32                  `protobuf:"varint,6,opt,name=max_lag_publications,json=maxLagPublications,proto3" json:"max_lag_publications,omitempty"`
+	LagLow                        uint32                  `protobuf:"varint,7,opt,name=lag_low,json=lagLow,proto3" json:"lag_low,omitempty"`
+	EvidenceTimeoutL2Blocks       uint64                  `protobuf:"varint,8,opt,name=evidence_timeout_l2_blocks,json=evidenceTimeoutL2Blocks,proto3" json:"evidence_timeout_l2_blocks,omitempty"`
+	MaxUncleanedPartsPerPartition uint32                  `protobuf:"varint,9,opt,name=max_uncleaned_parts_per_partition,json=maxUncleanedPartsPerPartition,proto3" json:"max_uncleaned_parts_per_partition,omitempty"`
+	MaxUncleanedPartsPerTable     uint32                  `protobuf:"varint,10,opt,name=max_uncleaned_parts_per_table,json=maxUncleanedPartsPerTable,proto3" json:"max_uncleaned_parts_per_table,omitempty"`
+	ExcludeQuarantinedHosts       bool                    `protobuf:"varint,11,opt,name=exclude_quarantined_hosts,json=excludeQuarantinedHosts,proto3" json:"exclude_quarantined_hosts,omitempty"`
+	Purge                         bool                    `protobuf:"varint,12,opt,name=purge,proto3" json:"purge,omitempty"`
+	EvictionVoiding               bool                    `protobuf:"varint,13,opt,name=eviction_voiding,json=evictionVoiding,proto3" json:"eviction_voiding,omitempty"`
+	OwnerAwareSelection           bool                    `protobuf:"varint,14,opt,name=owner_aware_selection,json=ownerAwareSelection,proto3" json:"owner_aware_selection,omitempty"`
+	Placement                     bool                    `protobuf:"varint,15,opt,name=placement,proto3" json:"placement,omitempty"`
+	Reselection                   bool                    `protobuf:"varint,16,opt,name=reselection,proto3" json:"reselection,omitempty"`
+	Checkpoints                   bool                    `protobuf:"varint,17,opt,name=checkpoints,proto3" json:"checkpoints,omitempty"`
+	NarrowedDrain                 bool                    `protobuf:"varint,18,opt,name=narrowed_drain,json=narrowedDrain,proto3" json:"narrowed_drain,omitempty"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
+}
+
+func (x *Stage3Params) Reset() {
+	*x = Stage3Params{}
+	mi := &file_table_registry_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Stage3Params) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Stage3Params) ProtoMessage() {}
+
+func (x *Stage3Params) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Stage3Params.ProtoReflect.Descriptor instead.
+func (*Stage3Params) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *Stage3Params) GetGroupSize() uint32 {
+	if x != nil {
+		return x.GroupSize
+	}
+	return 0
+}
+
+func (x *Stage3Params) GetNetworkFillDefault() bool {
+	if x != nil {
+		return x.NetworkFillDefault
+	}
+	return false
+}
+
+func (x *Stage3Params) GetMinSafeCopies() uint32 {
+	if x != nil {
+		return x.MinSafeCopies
+	}
+	return 0
+}
+
+func (x *Stage3Params) GetStrictCopies() bool {
+	if x != nil {
+		return x.StrictCopies
+	}
+	return false
+}
+
+func (x *Stage3Params) GetIndexerFailureDomains() []*IndexerFailureDomain {
+	if x != nil {
+		return x.IndexerFailureDomains
+	}
+	return nil
+}
+
+func (x *Stage3Params) GetMaxLagPublications() uint32 {
+	if x != nil {
+		return x.MaxLagPublications
+	}
+	return 0
+}
+
+func (x *Stage3Params) GetLagLow() uint32 {
+	if x != nil {
+		return x.LagLow
+	}
+	return 0
+}
+
+func (x *Stage3Params) GetEvidenceTimeoutL2Blocks() uint64 {
+	if x != nil {
+		return x.EvidenceTimeoutL2Blocks
+	}
+	return 0
+}
+
+func (x *Stage3Params) GetMaxUncleanedPartsPerPartition() uint32 {
+	if x != nil {
+		return x.MaxUncleanedPartsPerPartition
+	}
+	return 0
+}
+
+func (x *Stage3Params) GetMaxUncleanedPartsPerTable() uint32 {
+	if x != nil {
+		return x.MaxUncleanedPartsPerTable
+	}
+	return 0
+}
+
+func (x *Stage3Params) GetExcludeQuarantinedHosts() bool {
+	if x != nil {
+		return x.ExcludeQuarantinedHosts
+	}
+	return false
+}
+
+func (x *Stage3Params) GetPurge() bool {
+	if x != nil {
+		return x.Purge
+	}
+	return false
+}
+
+func (x *Stage3Params) GetEvictionVoiding() bool {
+	if x != nil {
+		return x.EvictionVoiding
+	}
+	return false
+}
+
+func (x *Stage3Params) GetOwnerAwareSelection() bool {
+	if x != nil {
+		return x.OwnerAwareSelection
+	}
+	return false
+}
+
+func (x *Stage3Params) GetPlacement() bool {
+	if x != nil {
+		return x.Placement
+	}
+	return false
+}
+
+func (x *Stage3Params) GetReselection() bool {
+	if x != nil {
+		return x.Reselection
+	}
+	return false
+}
+
+func (x *Stage3Params) GetCheckpoints() bool {
+	if x != nil {
+		return x.Checkpoints
+	}
+	return false
+}
+
+func (x *Stage3Params) GetNarrowedDrain() bool {
+	if x != nil {
+		return x.NarrowedDrain
+	}
+	return false
+}
+
 type L2BlockRef struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Number        uint64                 `protobuf:"varint,1,opt,name=number,proto3" json:"number,omitempty"`
@@ -427,7 +789,7 @@ type L2BlockRef struct {
 
 func (x *L2BlockRef) Reset() {
 	*x = L2BlockRef{}
-	mi := &file_table_registry_proto_msgTypes[3]
+	mi := &file_table_registry_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -439,7 +801,7 @@ func (x *L2BlockRef) String() string {
 func (*L2BlockRef) ProtoMessage() {}
 
 func (x *L2BlockRef) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[3]
+	mi := &file_table_registry_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -452,7 +814,7 @@ func (x *L2BlockRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use L2BlockRef.ProtoReflect.Descriptor instead.
 func (*L2BlockRef) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{3}
+	return file_table_registry_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *L2BlockRef) GetNumber() uint64 {
@@ -482,7 +844,7 @@ type L2EventRef struct {
 
 func (x *L2EventRef) Reset() {
 	*x = L2EventRef{}
-	mi := &file_table_registry_proto_msgTypes[4]
+	mi := &file_table_registry_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -494,7 +856,7 @@ func (x *L2EventRef) String() string {
 func (*L2EventRef) ProtoMessage() {}
 
 func (x *L2EventRef) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[4]
+	mi := &file_table_registry_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -507,7 +869,7 @@ func (x *L2EventRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use L2EventRef.ProtoReflect.Descriptor instead.
 func (*L2EventRef) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{4}
+	return file_table_registry_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *L2EventRef) GetBlockNumber() uint64 {
@@ -549,7 +911,7 @@ type LegacyTable struct {
 
 func (x *LegacyTable) Reset() {
 	*x = LegacyTable{}
-	mi := &file_table_registry_proto_msgTypes[5]
+	mi := &file_table_registry_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -561,7 +923,7 @@ func (x *LegacyTable) String() string {
 func (*LegacyTable) ProtoMessage() {}
 
 func (x *LegacyTable) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[5]
+	mi := &file_table_registry_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -574,7 +936,7 @@ func (x *LegacyTable) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LegacyTable.ProtoReflect.Descriptor instead.
 func (*LegacyTable) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{5}
+	return file_table_registry_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *LegacyTable) GetDatabaseId() string {
@@ -618,7 +980,7 @@ type SeedLegacyTablesCmd struct {
 
 func (x *SeedLegacyTablesCmd) Reset() {
 	*x = SeedLegacyTablesCmd{}
-	mi := &file_table_registry_proto_msgTypes[6]
+	mi := &file_table_registry_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -630,7 +992,7 @@ func (x *SeedLegacyTablesCmd) String() string {
 func (*SeedLegacyTablesCmd) ProtoMessage() {}
 
 func (x *SeedLegacyTablesCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[6]
+	mi := &file_table_registry_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -643,7 +1005,7 @@ func (x *SeedLegacyTablesCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SeedLegacyTablesCmd.ProtoReflect.Descriptor instead.
 func (*SeedLegacyTablesCmd) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{6}
+	return file_table_registry_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *SeedLegacyTablesCmd) GetAtBlock() *L2BlockRef {
@@ -690,7 +1052,7 @@ type AddTableCmd struct {
 
 func (x *AddTableCmd) Reset() {
 	*x = AddTableCmd{}
-	mi := &file_table_registry_proto_msgTypes[7]
+	mi := &file_table_registry_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -702,7 +1064,7 @@ func (x *AddTableCmd) String() string {
 func (*AddTableCmd) ProtoMessage() {}
 
 func (x *AddTableCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[7]
+	mi := &file_table_registry_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -715,7 +1077,7 @@ func (x *AddTableCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddTableCmd.ProtoReflect.Descriptor instead.
 func (*AddTableCmd) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{7}
+	return file_table_registry_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *AddTableCmd) GetDatabaseId() string {
@@ -788,7 +1150,7 @@ type RetireTablesCmd struct {
 
 func (x *RetireTablesCmd) Reset() {
 	*x = RetireTablesCmd{}
-	mi := &file_table_registry_proto_msgTypes[8]
+	mi := &file_table_registry_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -800,7 +1162,7 @@ func (x *RetireTablesCmd) String() string {
 func (*RetireTablesCmd) ProtoMessage() {}
 
 func (x *RetireTablesCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[8]
+	mi := &file_table_registry_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -813,7 +1175,7 @@ func (x *RetireTablesCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RetireTablesCmd.ProtoReflect.Descriptor instead.
 func (*RetireTablesCmd) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{8}
+	return file_table_registry_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *RetireTablesCmd) GetDatabaseId() string {
@@ -854,7 +1216,7 @@ type AdvanceL2CursorCmd struct {
 
 func (x *AdvanceL2CursorCmd) Reset() {
 	*x = AdvanceL2CursorCmd{}
-	mi := &file_table_registry_proto_msgTypes[9]
+	mi := &file_table_registry_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -866,7 +1228,7 @@ func (x *AdvanceL2CursorCmd) String() string {
 func (*AdvanceL2CursorCmd) ProtoMessage() {}
 
 func (x *AdvanceL2CursorCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[9]
+	mi := &file_table_registry_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -879,7 +1241,7 @@ func (x *AdvanceL2CursorCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AdvanceL2CursorCmd.ProtoReflect.Descriptor instead.
 func (*AdvanceL2CursorCmd) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{9}
+	return file_table_registry_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *AdvanceL2CursorCmd) GetTo() *L2BlockRef {
@@ -913,7 +1275,7 @@ type RecordTablePurgedCmd struct {
 
 func (x *RecordTablePurgedCmd) Reset() {
 	*x = RecordTablePurgedCmd{}
-	mi := &file_table_registry_proto_msgTypes[10]
+	mi := &file_table_registry_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -925,7 +1287,7 @@ func (x *RecordTablePurgedCmd) String() string {
 func (*RecordTablePurgedCmd) ProtoMessage() {}
 
 func (x *RecordTablePurgedCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[10]
+	mi := &file_table_registry_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -938,7 +1300,7 @@ func (x *RecordTablePurgedCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecordTablePurgedCmd.ProtoReflect.Descriptor instead.
 func (*RecordTablePurgedCmd) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{10}
+	return file_table_registry_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *RecordTablePurgedCmd) GetNodeId() string {
@@ -969,6 +1331,346 @@ func (x *RecordTablePurgedCmd) GetEd25519Signature() string {
 	return ""
 }
 
+type ExcludedTable struct {
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	TableId       string                    `protobuf:"bytes,1,opt,name=table_id,json=tableId,proto3" json:"table_id,omitempty"`
+	Reason        CheckpointExclusionReason `protobuf:"varint,2,opt,name=reason,proto3,enum=arbiter.CheckpointExclusionReason" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExcludedTable) Reset() {
+	*x = ExcludedTable{}
+	mi := &file_table_registry_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExcludedTable) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExcludedTable) ProtoMessage() {}
+
+func (x *ExcludedTable) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExcludedTable.ProtoReflect.Descriptor instead.
+func (*ExcludedTable) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ExcludedTable) GetTableId() string {
+	if x != nil {
+		return x.TableId
+	}
+	return ""
+}
+
+func (x *ExcludedTable) GetReason() CheckpointExclusionReason {
+	if x != nil {
+		return x.Reason
+	}
+	return CheckpointExclusionReason_CHECKPOINT_EXCLUSION_REASON_UNSPECIFIED
+}
+
+// CheckpointGroup is one group a checkpoint speaks for; excluded is sorted by
+// table_id without duplicates.
+type CheckpointGroup struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	DatabaseId      string                 `protobuf:"bytes,1,opt,name=database_id,json=databaseId,proto3" json:"database_id,omitempty"`
+	GroupGeneration uint64                 `protobuf:"varint,2,opt,name=group_generation,json=groupGeneration,proto3" json:"group_generation,omitempty"`
+	Excluded        []*ExcludedTable       `protobuf:"bytes,3,rep,name=excluded,proto3" json:"excluded,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *CheckpointGroup) Reset() {
+	*x = CheckpointGroup{}
+	mi := &file_table_registry_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckpointGroup) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckpointGroup) ProtoMessage() {}
+
+func (x *CheckpointGroup) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckpointGroup.ProtoReflect.Descriptor instead.
+func (*CheckpointGroup) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *CheckpointGroup) GetDatabaseId() string {
+	if x != nil {
+		return x.DatabaseId
+	}
+	return ""
+}
+
+func (x *CheckpointGroup) GetGroupGeneration() uint64 {
+	if x != nil {
+		return x.GroupGeneration
+	}
+	return 0
+}
+
+func (x *CheckpointGroup) GetExcluded() []*ExcludedTable {
+	if x != nil {
+		return x.Excluded
+	}
+	return nil
+}
+
+// MemberCheckpoint is a replicate member's statement that its copies of the
+// listed groups' tables equal the manifest snapshot_id at entry =
+// track_frontiers[owner] (spec §9.1). checkpoint_seq strictly increases per
+// (member, owner); groups is sorted by database_id without duplicates.
+type MemberCheckpoint struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	NodeId         string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	OwnerIndexerId uint64                 `protobuf:"varint,2,opt,name=owner_indexer_id,json=ownerIndexerId,proto3" json:"owner_indexer_id,omitempty"`
+	CheckpointSeq  uint64                 `protobuf:"varint,3,opt,name=checkpoint_seq,json=checkpointSeq,proto3" json:"checkpoint_seq,omitempty"`
+	Groups         []*CheckpointGroup     `protobuf:"bytes,4,rep,name=groups,proto3" json:"groups,omitempty"`
+	SnapshotId     string                 `protobuf:"bytes,5,opt,name=snapshot_id,json=snapshotId,proto3" json:"snapshot_id,omitempty"`
+	Entry          *TrackFrontier         `protobuf:"bytes,6,opt,name=entry,proto3" json:"entry,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *MemberCheckpoint) Reset() {
+	*x = MemberCheckpoint{}
+	mi := &file_table_registry_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MemberCheckpoint) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MemberCheckpoint) ProtoMessage() {}
+
+func (x *MemberCheckpoint) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MemberCheckpoint.ProtoReflect.Descriptor instead.
+func (*MemberCheckpoint) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *MemberCheckpoint) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *MemberCheckpoint) GetOwnerIndexerId() uint64 {
+	if x != nil {
+		return x.OwnerIndexerId
+	}
+	return 0
+}
+
+func (x *MemberCheckpoint) GetCheckpointSeq() uint64 {
+	if x != nil {
+		return x.CheckpointSeq
+	}
+	return 0
+}
+
+func (x *MemberCheckpoint) GetGroups() []*CheckpointGroup {
+	if x != nil {
+		return x.Groups
+	}
+	return nil
+}
+
+func (x *MemberCheckpoint) GetSnapshotId() string {
+	if x != nil {
+		return x.SnapshotId
+	}
+	return ""
+}
+
+func (x *MemberCheckpoint) GetEntry() *TrackFrontier {
+	if x != nil {
+		return x.Entry
+	}
+	return nil
+}
+
+// MemberCheckpointCmd (Raft tag 41): replica_jws is the ES256K compact JWS of
+// the member's verifiers-entry replica_signer, purpose
+// "arbiter-member-checkpoint-v1", over the checkpoint bound to the network id
+// and genesis snapshot id. Proposed only after the checkpoints switch.
+type MemberCheckpointCmd struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Checkpoint    *MemberCheckpoint      `protobuf:"bytes,1,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
+	ReplicaJws    string                 `protobuf:"bytes,2,opt,name=replica_jws,json=replicaJws,proto3" json:"replica_jws,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MemberCheckpointCmd) Reset() {
+	*x = MemberCheckpointCmd{}
+	mi := &file_table_registry_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MemberCheckpointCmd) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MemberCheckpointCmd) ProtoMessage() {}
+
+func (x *MemberCheckpointCmd) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MemberCheckpointCmd.ProtoReflect.Descriptor instead.
+func (*MemberCheckpointCmd) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *MemberCheckpointCmd) GetCheckpoint() *MemberCheckpoint {
+	if x != nil {
+		return x.Checkpoint
+	}
+	return nil
+}
+
+func (x *MemberCheckpointCmd) GetReplicaJws() string {
+	if x != nil {
+		return x.ReplicaJws
+	}
+	return ""
+}
+
+// MemberReadyCmd (Raft tag 40): a member reports its hg_member_unsafe
+// replicas of group (owner_indexer_id, database_id) at generation (spec
+// §6.4). ed25519_signature is hex, by the node's verifiers-entry ed25519 key,
+// over the "arbiter-member-ready-v1" hash of {node_id, owner_indexer_id,
+// database_id, generation} and the network context. Proposed only after the
+// placement switch.
+type MemberReadyCmd struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	NodeId           string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	OwnerIndexerId   uint64                 `protobuf:"varint,2,opt,name=owner_indexer_id,json=ownerIndexerId,proto3" json:"owner_indexer_id,omitempty"`
+	DatabaseId       string                 `protobuf:"bytes,3,opt,name=database_id,json=databaseId,proto3" json:"database_id,omitempty"`
+	Generation       uint64                 `protobuf:"varint,4,opt,name=generation,proto3" json:"generation,omitempty"`
+	Ed25519Signature string                 `protobuf:"bytes,5,opt,name=ed25519_signature,json=ed25519Signature,proto3" json:"ed25519_signature,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *MemberReadyCmd) Reset() {
+	*x = MemberReadyCmd{}
+	mi := &file_table_registry_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MemberReadyCmd) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MemberReadyCmd) ProtoMessage() {}
+
+func (x *MemberReadyCmd) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MemberReadyCmd.ProtoReflect.Descriptor instead.
+func (*MemberReadyCmd) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *MemberReadyCmd) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *MemberReadyCmd) GetOwnerIndexerId() uint64 {
+	if x != nil {
+		return x.OwnerIndexerId
+	}
+	return 0
+}
+
+func (x *MemberReadyCmd) GetDatabaseId() string {
+	if x != nil {
+		return x.DatabaseId
+	}
+	return ""
+}
+
+func (x *MemberReadyCmd) GetGeneration() uint64 {
+	if x != nil {
+		return x.Generation
+	}
+	return 0
+}
+
+func (x *MemberReadyCmd) GetEd25519Signature() string {
+	if x != nil {
+		return x.Ed25519Signature
+	}
+	return ""
+}
+
 // TableRegistryCursor is the registry's L2 position: the last consumed log,
 // or the whole block when block_complete.
 type TableRegistryCursor struct {
@@ -983,7 +1685,7 @@ type TableRegistryCursor struct {
 
 func (x *TableRegistryCursor) Reset() {
 	*x = TableRegistryCursor{}
-	mi := &file_table_registry_proto_msgTypes[11]
+	mi := &file_table_registry_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -995,7 +1697,7 @@ func (x *TableRegistryCursor) String() string {
 func (*TableRegistryCursor) ProtoMessage() {}
 
 func (x *TableRegistryCursor) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[11]
+	mi := &file_table_registry_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1008,7 +1710,7 @@ func (x *TableRegistryCursor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TableRegistryCursor.ProtoReflect.Descriptor instead.
 func (*TableRegistryCursor) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{11}
+	return file_table_registry_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *TableRegistryCursor) GetBlockNumber() uint64 {
@@ -1072,13 +1774,22 @@ type TableIncarnation struct {
 	// existing incarnation and every later one is recorded with it. optional
 	// because indexer 0 is a valid owner.
 	OwnerIndexerId *uint64 `protobuf:"varint,18,opt,name=owner_indexer_id,json=ownerIndexerId,proto3,oneof" json:"owner_indexer_id,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Set by Apply on every chain incarnation recorded after the stage-3 purge
+	// switch (spec §8.8): its hg_unsafe and hg_member_unsafe replicas use
+	// /sentio/<shard>/unsafe_inc/<db__table>/<seq> instead of
+	// /sentio/<shard>/unsafe/<db__table>. Never set on an earlier incarnation.
+	ScopedKeeperPath bool `protobuf:"varint,19,opt,name=scoped_keeper_path,json=scopedKeeperPath,proto3" json:"scoped_keeper_path,omitempty"`
+	// The members of the incarnation's group at any generation since it was
+	// recorded (plan S3-E1 K60), sorted ascending without duplicates. Each must
+	// report the incarnation's purge; a node leaves only through EvictNode.
+	PurgeMembers  []string `protobuf:"bytes,20,rep,name=purge_members,json=purgeMembers,proto3" json:"purge_members,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *TableIncarnation) Reset() {
 	*x = TableIncarnation{}
-	mi := &file_table_registry_proto_msgTypes[12]
+	mi := &file_table_registry_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1090,7 +1801,7 @@ func (x *TableIncarnation) String() string {
 func (*TableIncarnation) ProtoMessage() {}
 
 func (x *TableIncarnation) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[12]
+	mi := &file_table_registry_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1103,7 +1814,7 @@ func (x *TableIncarnation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TableIncarnation.ProtoReflect.Descriptor instead.
 func (*TableIncarnation) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{12}
+	return file_table_registry_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *TableIncarnation) GetSeq() uint64 {
@@ -1232,6 +1943,20 @@ func (x *TableIncarnation) GetOwnerIndexerId() uint64 {
 	return 0
 }
 
+func (x *TableIncarnation) GetScopedKeeperPath() bool {
+	if x != nil {
+		return x.ScopedKeeperPath
+	}
+	return false
+}
+
+func (x *TableIncarnation) GetPurgeMembers() []string {
+	if x != nil {
+		return x.PurgeMembers
+	}
+	return nil
+}
+
 // TableRegistrySnapshot is the whole committed registry at one version.
 // incarnations are in seq order (seq = index + 1).
 type TableRegistrySnapshot struct {
@@ -1267,13 +1992,24 @@ type TableRegistrySnapshot struct {
 	// version, and so does the acknowledgement of an indexer's last uncleaned
 	// rejected part.
 	QuarantinedIndexers []uint64 `protobuf:"varint,9,rep,packed,name=quarantined_indexers,json=quarantinedIndexers,proto3" json:"quarantined_indexers,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	// The database groups (spec §6.2), sorted by (owner_indexer_id,
+	// database_id); empty before the placement switch. Every committed change
+	// bumps version.
+	Groups []*DatabaseGroup `protobuf:"bytes,10,rep,name=groups,proto3" json:"groups,omitempty"`
+	// The highest accepted checkpoint_seq per (member, owner) (spec §9.1),
+	// sorted by (node_id, owner_indexer_id); kept through group removal.
+	MemberCheckpointSeqs []*MemberCheckpointSeq `protobuf:"bytes,11,rep,name=member_checkpoint_seqs,json=memberCheckpointSeqs,proto3" json:"member_checkpoint_seqs,omitempty"`
+	// The committed stage-3 parameter, so data-plane nodes learn the switches
+	// through the registry follower (plan S3-E1 K64); absent before the v21
+	// activation. Every committed change bumps version.
+	Stage3        *Stage3Params `protobuf:"bytes,12,opt,name=stage3,proto3" json:"stage3,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *TableRegistrySnapshot) Reset() {
 	*x = TableRegistrySnapshot{}
-	mi := &file_table_registry_proto_msgTypes[13]
+	mi := &file_table_registry_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1285,7 +2021,7 @@ func (x *TableRegistrySnapshot) String() string {
 func (*TableRegistrySnapshot) ProtoMessage() {}
 
 func (x *TableRegistrySnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[13]
+	mi := &file_table_registry_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1298,7 +2034,7 @@ func (x *TableRegistrySnapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TableRegistrySnapshot.ProtoReflect.Descriptor instead.
 func (*TableRegistrySnapshot) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{13}
+	return file_table_registry_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *TableRegistrySnapshot) GetParams() *TableRegistryParams {
@@ -1364,6 +2100,27 @@ func (x *TableRegistrySnapshot) GetQuarantinedIndexers() []uint64 {
 	return nil
 }
 
+func (x *TableRegistrySnapshot) GetGroups() []*DatabaseGroup {
+	if x != nil {
+		return x.Groups
+	}
+	return nil
+}
+
+func (x *TableRegistrySnapshot) GetMemberCheckpointSeqs() []*MemberCheckpointSeq {
+	if x != nil {
+		return x.MemberCheckpointSeqs
+	}
+	return nil
+}
+
+func (x *TableRegistrySnapshot) GetStage3() *Stage3Params {
+	if x != nil {
+		return x.Stage3
+	}
+	return nil
+}
+
 // PurgeNodeSet is the committed set of data-plane nodes whose
 // SubmitTablePurged completes a purge: every registered, non-evicted SNode and
 // verifier, sorted ascending. After the signed-claims activation one
@@ -1379,7 +2136,7 @@ type PurgeNodeSet struct {
 
 func (x *PurgeNodeSet) Reset() {
 	*x = PurgeNodeSet{}
-	mi := &file_table_registry_proto_msgTypes[14]
+	mi := &file_table_registry_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1391,7 +2148,7 @@ func (x *PurgeNodeSet) String() string {
 func (*PurgeNodeSet) ProtoMessage() {}
 
 func (x *PurgeNodeSet) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[14]
+	mi := &file_table_registry_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1404,7 +2161,7 @@ func (x *PurgeNodeSet) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PurgeNodeSet.ProtoReflect.Descriptor instead.
 func (*PurgeNodeSet) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{14}
+	return file_table_registry_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *PurgeNodeSet) GetNodeIds() []string {
@@ -1412,6 +2169,453 @@ func (x *PurgeNodeSet) GetNodeIds() []string {
 		return x.NodeIds
 	}
 	return nil
+}
+
+// MemberCheckpointRecord is a stored checkpoint with its signature and the
+// consensus epoch whose replica_signer verified it.
+type MemberCheckpointRecord struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Checkpoint    *MemberCheckpoint      `protobuf:"bytes,1,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
+	ReplicaJws    string                 `protobuf:"bytes,2,opt,name=replica_jws,json=replicaJws,proto3" json:"replica_jws,omitempty"`
+	Epoch         uint64                 `protobuf:"varint,3,opt,name=epoch,proto3" json:"epoch,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MemberCheckpointRecord) Reset() {
+	*x = MemberCheckpointRecord{}
+	mi := &file_table_registry_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MemberCheckpointRecord) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MemberCheckpointRecord) ProtoMessage() {}
+
+func (x *MemberCheckpointRecord) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MemberCheckpointRecord.ProtoReflect.Descriptor instead.
+func (*MemberCheckpointRecord) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *MemberCheckpointRecord) GetCheckpoint() *MemberCheckpoint {
+	if x != nil {
+		return x.Checkpoint
+	}
+	return nil
+}
+
+func (x *MemberCheckpointRecord) GetReplicaJws() string {
+	if x != nil {
+		return x.ReplicaJws
+	}
+	return ""
+}
+
+func (x *MemberCheckpointRecord) GetEpoch() uint64 {
+	if x != nil {
+		return x.Epoch
+	}
+	return 0
+}
+
+// GroupMember is one current member of a group. ready_generation is 0 until
+// a MemberReady is recorded; the member is ready once ready_generation >=
+// joined_generation. checkpoint is the stored checkpoint for this group, absent
+// before the first; observed_entry is set only while member_class is LAGGING;
+// lag_advances counts the owner's published advances after the checkpoint
+// entry, saturating at stage3.max_lag_publications + 1, and is 0 without a
+// checkpoint (plan S3-E3 K76). host_indexer_id is the host_indexer_id of the
+// member's entry in the committed verifiers parameter, filled by the server
+// when it serves the view (never stored in FSM state; fixed for the entry's
+// life, plan S3-E2 K68); it is absent while the node has no host-bound
+// verifiers entry (a delisted member stays in members, plan S3-E3 K73), and a
+// consensus update that lists or delists a member changes the view, so it
+// bumps version. optional because indexer 0 is a valid host.
+type GroupMember struct {
+	state            protoimpl.MessageState  `protogen:"open.v1"`
+	NodeId           string                  `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	JoinedGeneration uint64                  `protobuf:"varint,2,opt,name=joined_generation,json=joinedGeneration,proto3" json:"joined_generation,omitempty"`
+	ReadyGeneration  uint64                  `protobuf:"varint,3,opt,name=ready_generation,json=readyGeneration,proto3" json:"ready_generation,omitempty"`
+	MemberClass      MemberClass             `protobuf:"varint,4,opt,name=member_class,json=memberClass,proto3,enum=arbiter.MemberClass" json:"member_class,omitempty"`
+	Checkpoint       *MemberCheckpointRecord `protobuf:"bytes,5,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
+	ObservedEntry    *TrackFrontier          `protobuf:"bytes,6,opt,name=observed_entry,json=observedEntry,proto3" json:"observed_entry,omitempty"`
+	LagAdvances      uint64                  `protobuf:"varint,7,opt,name=lag_advances,json=lagAdvances,proto3" json:"lag_advances,omitempty"`
+	HostIndexerId    *uint64                 `protobuf:"varint,8,opt,name=host_indexer_id,json=hostIndexerId,proto3,oneof" json:"host_indexer_id,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *GroupMember) Reset() {
+	*x = GroupMember{}
+	mi := &file_table_registry_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GroupMember) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GroupMember) ProtoMessage() {}
+
+func (x *GroupMember) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GroupMember.ProtoReflect.Descriptor instead.
+func (*GroupMember) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *GroupMember) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *GroupMember) GetJoinedGeneration() uint64 {
+	if x != nil {
+		return x.JoinedGeneration
+	}
+	return 0
+}
+
+func (x *GroupMember) GetReadyGeneration() uint64 {
+	if x != nil {
+		return x.ReadyGeneration
+	}
+	return 0
+}
+
+func (x *GroupMember) GetMemberClass() MemberClass {
+	if x != nil {
+		return x.MemberClass
+	}
+	return MemberClass_MEMBER_CLASS_UNSPECIFIED
+}
+
+func (x *GroupMember) GetCheckpoint() *MemberCheckpointRecord {
+	if x != nil {
+		return x.Checkpoint
+	}
+	return nil
+}
+
+func (x *GroupMember) GetObservedEntry() *TrackFrontier {
+	if x != nil {
+		return x.ObservedEntry
+	}
+	return nil
+}
+
+func (x *GroupMember) GetLagAdvances() uint64 {
+	if x != nil {
+		return x.LagAdvances
+	}
+	return 0
+}
+
+func (x *GroupMember) GetHostIndexerId() uint64 {
+	if x != nil && x.HostIndexerId != nil {
+		return *x.HostIndexerId
+	}
+	return 0
+}
+
+// LeavingMember is a member a RebalanceGroup removed (spec §6.4):
+// release_entry is the owner's latest published entry when it applied;
+// frozen_members and frozen_domains are E (node ids, sorted) and |E| as they
+// were then, for the release outside strict mode; released is set the first
+// time the release condition holds and never cleared.
+type LeavingMember struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	NodeId            string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	RemovedGeneration uint64                 `protobuf:"varint,2,opt,name=removed_generation,json=removedGeneration,proto3" json:"removed_generation,omitempty"`
+	ReleaseEntry      *TrackFrontier         `protobuf:"bytes,3,opt,name=release_entry,json=releaseEntry,proto3" json:"release_entry,omitempty"`
+	FrozenMembers     []string               `protobuf:"bytes,4,rep,name=frozen_members,json=frozenMembers,proto3" json:"frozen_members,omitempty"`
+	FrozenDomains     uint32                 `protobuf:"varint,5,opt,name=frozen_domains,json=frozenDomains,proto3" json:"frozen_domains,omitempty"`
+	Released          bool                   `protobuf:"varint,6,opt,name=released,proto3" json:"released,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *LeavingMember) Reset() {
+	*x = LeavingMember{}
+	mi := &file_table_registry_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LeavingMember) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LeavingMember) ProtoMessage() {}
+
+func (x *LeavingMember) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LeavingMember.ProtoReflect.Descriptor instead.
+func (*LeavingMember) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *LeavingMember) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *LeavingMember) GetRemovedGeneration() uint64 {
+	if x != nil {
+		return x.RemovedGeneration
+	}
+	return 0
+}
+
+func (x *LeavingMember) GetReleaseEntry() *TrackFrontier {
+	if x != nil {
+		return x.ReleaseEntry
+	}
+	return nil
+}
+
+func (x *LeavingMember) GetFrozenMembers() []string {
+	if x != nil {
+		return x.FrozenMembers
+	}
+	return nil
+}
+
+func (x *LeavingMember) GetFrozenDomains() uint32 {
+	if x != nil {
+		return x.FrozenDomains
+	}
+	return 0
+}
+
+func (x *LeavingMember) GetReleased() bool {
+	if x != nil {
+		return x.Released
+	}
+	return false
+}
+
+// DatabaseGroup is G(owner, database) (spec §6.2). members is sorted by
+// node_id; past_members is sorted without duplicates; leaving is sorted by
+// node_id; group_key is the current GroupKey (spec §7.1); placement_salt is
+// the salt the placement used (plan S3-E1 K61).
+type DatabaseGroup struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	OwnerIndexerId uint64                 `protobuf:"varint,1,opt,name=owner_indexer_id,json=ownerIndexerId,proto3" json:"owner_indexer_id,omitempty"`
+	DatabaseId     string                 `protobuf:"bytes,2,opt,name=database_id,json=databaseId,proto3" json:"database_id,omitempty"`
+	Members        []*GroupMember         `protobuf:"bytes,3,rep,name=members,proto3" json:"members,omitempty"`
+	NetworkFill    bool                   `protobuf:"varint,4,opt,name=network_fill,json=networkFill,proto3" json:"network_fill,omitempty"`
+	Generation     uint64                 `protobuf:"varint,5,opt,name=generation,proto3" json:"generation,omitempty"`
+	PastMembers    []string               `protobuf:"bytes,6,rep,name=past_members,json=pastMembers,proto3" json:"past_members,omitempty"`
+	Leaving        []*LeavingMember       `protobuf:"bytes,7,rep,name=leaving,proto3" json:"leaving,omitempty"`
+	GroupKey       string                 `protobuf:"bytes,8,opt,name=group_key,json=groupKey,proto3" json:"group_key,omitempty"`
+	PlacementSalt  string                 `protobuf:"bytes,9,opt,name=placement_salt,json=placementSalt,proto3" json:"placement_salt,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *DatabaseGroup) Reset() {
+	*x = DatabaseGroup{}
+	mi := &file_table_registry_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DatabaseGroup) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DatabaseGroup) ProtoMessage() {}
+
+func (x *DatabaseGroup) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DatabaseGroup.ProtoReflect.Descriptor instead.
+func (*DatabaseGroup) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *DatabaseGroup) GetOwnerIndexerId() uint64 {
+	if x != nil {
+		return x.OwnerIndexerId
+	}
+	return 0
+}
+
+func (x *DatabaseGroup) GetDatabaseId() string {
+	if x != nil {
+		return x.DatabaseId
+	}
+	return ""
+}
+
+func (x *DatabaseGroup) GetMembers() []*GroupMember {
+	if x != nil {
+		return x.Members
+	}
+	return nil
+}
+
+func (x *DatabaseGroup) GetNetworkFill() bool {
+	if x != nil {
+		return x.NetworkFill
+	}
+	return false
+}
+
+func (x *DatabaseGroup) GetGeneration() uint64 {
+	if x != nil {
+		return x.Generation
+	}
+	return 0
+}
+
+func (x *DatabaseGroup) GetPastMembers() []string {
+	if x != nil {
+		return x.PastMembers
+	}
+	return nil
+}
+
+func (x *DatabaseGroup) GetLeaving() []*LeavingMember {
+	if x != nil {
+		return x.Leaving
+	}
+	return nil
+}
+
+func (x *DatabaseGroup) GetGroupKey() string {
+	if x != nil {
+		return x.GroupKey
+	}
+	return ""
+}
+
+func (x *DatabaseGroup) GetPlacementSalt() string {
+	if x != nil {
+		return x.PlacementSalt
+	}
+	return ""
+}
+
+// MemberCheckpointSeq is the highest accepted checkpoint_seq of one member for
+// one owner under replica_signer (spec §9.1); a member signs its next
+// checkpoint above both its journal and this value.
+type MemberCheckpointSeq struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	NodeId         string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	OwnerIndexerId uint64                 `protobuf:"varint,2,opt,name=owner_indexer_id,json=ownerIndexerId,proto3" json:"owner_indexer_id,omitempty"`
+	CheckpointSeq  uint64                 `protobuf:"varint,3,opt,name=checkpoint_seq,json=checkpointSeq,proto3" json:"checkpoint_seq,omitempty"`
+	ReplicaSigner  string                 `protobuf:"bytes,4,opt,name=replica_signer,json=replicaSigner,proto3" json:"replica_signer,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *MemberCheckpointSeq) Reset() {
+	*x = MemberCheckpointSeq{}
+	mi := &file_table_registry_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MemberCheckpointSeq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MemberCheckpointSeq) ProtoMessage() {}
+
+func (x *MemberCheckpointSeq) ProtoReflect() protoreflect.Message {
+	mi := &file_table_registry_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MemberCheckpointSeq.ProtoReflect.Descriptor instead.
+func (*MemberCheckpointSeq) Descriptor() ([]byte, []int) {
+	return file_table_registry_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *MemberCheckpointSeq) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *MemberCheckpointSeq) GetOwnerIndexerId() uint64 {
+	if x != nil {
+		return x.OwnerIndexerId
+	}
+	return 0
+}
+
+func (x *MemberCheckpointSeq) GetCheckpointSeq() uint64 {
+	if x != nil {
+		return x.CheckpointSeq
+	}
+	return 0
+}
+
+func (x *MemberCheckpointSeq) GetReplicaSigner() string {
+	if x != nil {
+		return x.ReplicaSigner
+	}
+	return ""
 }
 
 type WatchTableRegistryRequest struct {
@@ -1425,7 +2629,7 @@ type WatchTableRegistryRequest struct {
 
 func (x *WatchTableRegistryRequest) Reset() {
 	*x = WatchTableRegistryRequest{}
-	mi := &file_table_registry_proto_msgTypes[15]
+	mi := &file_table_registry_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1437,7 +2641,7 @@ func (x *WatchTableRegistryRequest) String() string {
 func (*WatchTableRegistryRequest) ProtoMessage() {}
 
 func (x *WatchTableRegistryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_table_registry_proto_msgTypes[15]
+	mi := &file_table_registry_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1450,7 +2654,7 @@ func (x *WatchTableRegistryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchTableRegistryRequest.ProtoReflect.Descriptor instead.
 func (*WatchTableRegistryRequest) Descriptor() ([]byte, []int) {
-	return file_table_registry_proto_rawDescGZIP(), []int{15}
+	return file_table_registry_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *WatchTableRegistryRequest) GetSinceVersion() uint64 {
@@ -1464,7 +2668,7 @@ var File_table_registry_proto protoreflect.FileDescriptor
 
 const file_table_registry_proto_rawDesc = "" +
 	"\n" +
-	"\x14table_registry.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\"\xd2\x01\n" +
+	"\x14table_registry.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\freplay.proto\"\xd2\x01\n" +
 	"\x13TableRegistryParams\x12\x19\n" +
 	"\bchain_id\x18\x01 \x01(\x04R\achainId\x12-\n" +
 	"\x12databases_contract\x18\x02 \x01(\tR\x11databasesContract\x12\"\n" +
@@ -1479,7 +2683,32 @@ const file_table_registry_proto_rawDesc = "" +
 	"\x10activation_block\x18\x02 \x01(\x04R\x0factivationBlock\x12\x16\n" +
 	"\x06signer\x18\x03 \x01(\tR\x06signer\x12\"\n" +
 	"\rsnode_node_id\x18\x04 \x01(\tR\vsnodeNodeId\x12%\n" +
-	"\x0eenrollment_jws\x18\x05 \x01(\tR\renrollmentJws\"8\n" +
+	"\x0eenrollment_jws\x18\x05 \x01(\tR\renrollmentJws\"\\\n" +
+	"\x14IndexerFailureDomain\x12\x1d\n" +
+	"\n" +
+	"indexer_id\x18\x01 \x01(\x04R\tindexerId\x12%\n" +
+	"\x0efailure_domain\x18\x02 \x01(\tR\rfailureDomain\"\xd1\x06\n" +
+	"\fStage3Params\x12\x1d\n" +
+	"\n" +
+	"group_size\x18\x01 \x01(\rR\tgroupSize\x120\n" +
+	"\x14network_fill_default\x18\x02 \x01(\bR\x12networkFillDefault\x12&\n" +
+	"\x0fmin_safe_copies\x18\x03 \x01(\rR\rminSafeCopies\x12#\n" +
+	"\rstrict_copies\x18\x04 \x01(\bR\fstrictCopies\x12U\n" +
+	"\x17indexer_failure_domains\x18\x05 \x03(\v2\x1d.arbiter.IndexerFailureDomainR\x15indexerFailureDomains\x120\n" +
+	"\x14max_lag_publications\x18\x06 \x01(\rR\x12maxLagPublications\x12\x17\n" +
+	"\alag_low\x18\a \x01(\rR\x06lagLow\x12;\n" +
+	"\x1aevidence_timeout_l2_blocks\x18\b \x01(\x04R\x17evidenceTimeoutL2Blocks\x12H\n" +
+	"!max_uncleaned_parts_per_partition\x18\t \x01(\rR\x1dmaxUncleanedPartsPerPartition\x12@\n" +
+	"\x1dmax_uncleaned_parts_per_table\x18\n" +
+	" \x01(\rR\x19maxUncleanedPartsPerTable\x12:\n" +
+	"\x19exclude_quarantined_hosts\x18\v \x01(\bR\x17excludeQuarantinedHosts\x12\x14\n" +
+	"\x05purge\x18\f \x01(\bR\x05purge\x12)\n" +
+	"\x10eviction_voiding\x18\r \x01(\bR\x0fevictionVoiding\x122\n" +
+	"\x15owner_aware_selection\x18\x0e \x01(\bR\x13ownerAwareSelection\x12\x1c\n" +
+	"\tplacement\x18\x0f \x01(\bR\tplacement\x12 \n" +
+	"\vreselection\x18\x10 \x01(\bR\vreselection\x12 \n" +
+	"\vcheckpoints\x18\x11 \x01(\bR\vcheckpoints\x12%\n" +
+	"\x0enarrowed_drain\x18\x12 \x01(\bR\rnarrowedDrain\"8\n" +
 	"\n" +
 	"L2BlockRef\x12\x16\n" +
 	"\x06number\x18\x01 \x01(\x04R\x06number\x12\x12\n" +
@@ -1528,13 +2757,44 @@ const file_table_registry_proto_rawDesc = "" +
 	"\x0fincarnation_seq\x18\x02 \x01(\x04R\x0eincarnationSeq\x12\x1d\n" +
 	"\n" +
 	"signer_jws\x18\x03 \x01(\tR\tsignerJws\x12+\n" +
-	"\x11ed25519_signature\x18\x04 \x01(\tR\x10ed25519Signature\"\x9b\x01\n" +
+	"\x11ed25519_signature\x18\x04 \x01(\tR\x10ed25519Signature\"f\n" +
+	"\rExcludedTable\x12\x19\n" +
+	"\btable_id\x18\x01 \x01(\tR\atableId\x12:\n" +
+	"\x06reason\x18\x02 \x01(\x0e2\".arbiter.CheckpointExclusionReasonR\x06reason\"\x91\x01\n" +
+	"\x0fCheckpointGroup\x12\x1f\n" +
+	"\vdatabase_id\x18\x01 \x01(\tR\n" +
+	"databaseId\x12)\n" +
+	"\x10group_generation\x18\x02 \x01(\x04R\x0fgroupGeneration\x122\n" +
+	"\bexcluded\x18\x03 \x03(\v2\x16.arbiter.ExcludedTableR\bexcluded\"\xfd\x01\n" +
+	"\x10MemberCheckpoint\x12\x17\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12(\n" +
+	"\x10owner_indexer_id\x18\x02 \x01(\x04R\x0eownerIndexerId\x12%\n" +
+	"\x0echeckpoint_seq\x18\x03 \x01(\x04R\rcheckpointSeq\x120\n" +
+	"\x06groups\x18\x04 \x03(\v2\x18.arbiter.CheckpointGroupR\x06groups\x12\x1f\n" +
+	"\vsnapshot_id\x18\x05 \x01(\tR\n" +
+	"snapshotId\x12,\n" +
+	"\x05entry\x18\x06 \x01(\v2\x16.arbiter.TrackFrontierR\x05entry\"q\n" +
+	"\x13MemberCheckpointCmd\x129\n" +
+	"\n" +
+	"checkpoint\x18\x01 \x01(\v2\x19.arbiter.MemberCheckpointR\n" +
+	"checkpoint\x12\x1f\n" +
+	"\vreplica_jws\x18\x02 \x01(\tR\n" +
+	"replicaJws\"\xc1\x01\n" +
+	"\x0eMemberReadyCmd\x12\x17\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12(\n" +
+	"\x10owner_indexer_id\x18\x02 \x01(\x04R\x0eownerIndexerId\x12\x1f\n" +
+	"\vdatabase_id\x18\x03 \x01(\tR\n" +
+	"databaseId\x12\x1e\n" +
+	"\n" +
+	"generation\x18\x04 \x01(\x04R\n" +
+	"generation\x12+\n" +
+	"\x11ed25519_signature\x18\x05 \x01(\tR\x10ed25519Signature\"\x9b\x01\n" +
 	"\x13TableRegistryCursor\x12!\n" +
 	"\fblock_number\x18\x01 \x01(\x04R\vblockNumber\x12\x1d\n" +
 	"\n" +
 	"block_hash\x18\x02 \x01(\tR\tblockHash\x12\x1b\n" +
 	"\tlog_index\x18\x03 \x01(\x04R\blogIndex\x12%\n" +
-	"\x0eblock_complete\x18\x04 \x01(\bR\rblockComplete\"\x87\x06\n" +
+	"\x0eblock_complete\x18\x04 \x01(\bR\rblockComplete\"\xda\x06\n" +
 	"\x10TableIncarnation\x12\x10\n" +
 	"\x03seq\x18\x01 \x01(\x04R\x03seq\x12\x1f\n" +
 	"\vdatabase_id\x18\x02 \x01(\tR\n" +
@@ -1558,8 +2818,10 @@ const file_table_registry_proto_rawDesc = "" +
 	"\radd_block_seq\x18\x0f \x01(\x04R\vaddBlockSeq\x12(\n" +
 	"\x10retire_block_seq\x18\x10 \x01(\x04R\x0eretireBlockSeq\x12\x1b\n" +
 	"\tpurged_by\x18\x11 \x03(\tR\bpurgedBy\x12-\n" +
-	"\x10owner_indexer_id\x18\x12 \x01(\x04H\x00R\x0eownerIndexerId\x88\x01\x01B\x13\n" +
-	"\x11_owner_indexer_id\"\xc8\x03\n" +
+	"\x10owner_indexer_id\x18\x12 \x01(\x04H\x00R\x0eownerIndexerId\x88\x01\x01\x12,\n" +
+	"\x12scoped_keeper_path\x18\x13 \x01(\bR\x10scopedKeeperPath\x12#\n" +
+	"\rpurge_members\x18\x14 \x03(\tR\fpurgeMembersB\x13\n" +
+	"\x11_owner_indexer_id\"\xfb\x04\n" +
 	"\x15TableRegistrySnapshot\x124\n" +
 	"\x06params\x18\x01 \x01(\v2\x1c.arbiter.TableRegistryParamsR\x06params\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\x04R\aversion\x12\x16\n" +
@@ -1570,15 +2832,71 @@ const file_table_registry_proto_rawDesc = "" +
 	"\vsi_indexers\x18\a \x03(\v2\x17.arbiter.SIIndexerEntryR\n" +
 	"siIndexers\x12'\n" +
 	"\x0fseeded_indexers\x18\b \x03(\x04R\x0eseededIndexers\x121\n" +
-	"\x14quarantined_indexers\x18\t \x03(\x04R\x13quarantinedIndexers\")\n" +
+	"\x14quarantined_indexers\x18\t \x03(\x04R\x13quarantinedIndexers\x12.\n" +
+	"\x06groups\x18\n" +
+	" \x03(\v2\x16.arbiter.DatabaseGroupR\x06groups\x12R\n" +
+	"\x16member_checkpoint_seqs\x18\v \x03(\v2\x1c.arbiter.MemberCheckpointSeqR\x14memberCheckpointSeqs\x12-\n" +
+	"\x06stage3\x18\f \x01(\v2\x15.arbiter.Stage3ParamsR\x06stage3\")\n" +
 	"\fPurgeNodeSet\x12\x19\n" +
-	"\bnode_ids\x18\x01 \x03(\tR\anodeIds\"@\n" +
+	"\bnode_ids\x18\x01 \x03(\tR\anodeIds\"\x8a\x01\n" +
+	"\x16MemberCheckpointRecord\x129\n" +
+	"\n" +
+	"checkpoint\x18\x01 \x01(\v2\x19.arbiter.MemberCheckpointR\n" +
+	"checkpoint\x12\x1f\n" +
+	"\vreplica_jws\x18\x02 \x01(\tR\n" +
+	"replicaJws\x12\x14\n" +
+	"\x05epoch\x18\x03 \x01(\x04R\x05epoch\"\x9b\x03\n" +
+	"\vGroupMember\x12\x17\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12+\n" +
+	"\x11joined_generation\x18\x02 \x01(\x04R\x10joinedGeneration\x12)\n" +
+	"\x10ready_generation\x18\x03 \x01(\x04R\x0freadyGeneration\x127\n" +
+	"\fmember_class\x18\x04 \x01(\x0e2\x14.arbiter.MemberClassR\vmemberClass\x12?\n" +
+	"\n" +
+	"checkpoint\x18\x05 \x01(\v2\x1f.arbiter.MemberCheckpointRecordR\n" +
+	"checkpoint\x12=\n" +
+	"\x0eobserved_entry\x18\x06 \x01(\v2\x16.arbiter.TrackFrontierR\robservedEntry\x12!\n" +
+	"\flag_advances\x18\a \x01(\x04R\vlagAdvances\x12+\n" +
+	"\x0fhost_indexer_id\x18\b \x01(\x04H\x00R\rhostIndexerId\x88\x01\x01B\x12\n" +
+	"\x10_host_indexer_id\"\xfe\x01\n" +
+	"\rLeavingMember\x12\x17\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12-\n" +
+	"\x12removed_generation\x18\x02 \x01(\x04R\x11removedGeneration\x12;\n" +
+	"\rrelease_entry\x18\x03 \x01(\v2\x16.arbiter.TrackFrontierR\freleaseEntry\x12%\n" +
+	"\x0efrozen_members\x18\x04 \x03(\tR\rfrozenMembers\x12%\n" +
+	"\x0efrozen_domains\x18\x05 \x01(\rR\rfrozenDomains\x12\x1a\n" +
+	"\breleased\x18\x06 \x01(\bR\breleased\"\xe6\x02\n" +
+	"\rDatabaseGroup\x12(\n" +
+	"\x10owner_indexer_id\x18\x01 \x01(\x04R\x0eownerIndexerId\x12\x1f\n" +
+	"\vdatabase_id\x18\x02 \x01(\tR\n" +
+	"databaseId\x12.\n" +
+	"\amembers\x18\x03 \x03(\v2\x14.arbiter.GroupMemberR\amembers\x12!\n" +
+	"\fnetwork_fill\x18\x04 \x01(\bR\vnetworkFill\x12\x1e\n" +
+	"\n" +
+	"generation\x18\x05 \x01(\x04R\n" +
+	"generation\x12!\n" +
+	"\fpast_members\x18\x06 \x03(\tR\vpastMembers\x120\n" +
+	"\aleaving\x18\a \x03(\v2\x16.arbiter.LeavingMemberR\aleaving\x12\x1b\n" +
+	"\tgroup_key\x18\b \x01(\tR\bgroupKey\x12%\n" +
+	"\x0eplacement_salt\x18\t \x01(\tR\rplacementSalt\"\xa6\x01\n" +
+	"\x13MemberCheckpointSeq\x12\x17\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12(\n" +
+	"\x10owner_indexer_id\x18\x02 \x01(\x04R\x0eownerIndexerId\x12%\n" +
+	"\x0echeckpoint_seq\x18\x03 \x01(\x04R\rcheckpointSeq\x12%\n" +
+	"\x0ereplica_signer\x18\x04 \x01(\tR\rreplicaSigner\"@\n" +
 	"\x19WatchTableRegistryRequest\x12#\n" +
 	"\rsince_version\x18\x01 \x01(\x04R\fsinceVersion*\x89\x01\n" +
 	"\x11TableRetireReason\x12#\n" +
 	"\x1fTABLE_RETIRE_REASON_UNSPECIFIED\x10\x00\x12%\n" +
 	"!TABLE_RETIRE_REASON_TABLE_DELETED\x10\x01\x12(\n" +
-	"$TABLE_RETIRE_REASON_DATABASE_DELETED\x10\x02*\xca\x02\n" +
+	"$TABLE_RETIRE_REASON_DATABASE_DELETED\x10\x02*\xd3\x02\n" +
+	"\x19CheckpointExclusionReason\x12+\n" +
+	"'CHECKPOINT_EXCLUSION_REASON_UNSPECIFIED\x10\x00\x12-\n" +
+	")CHECKPOINT_EXCLUSION_REASON_NOT_INSTALLED\x10\x01\x12(\n" +
+	"$CHECKPOINT_EXCLUSION_REASON_DIVERGED\x10\x02\x12'\n" +
+	"#CHECKPOINT_EXCLUSION_REASON_FOREIGN\x10\x03\x12.\n" +
+	"*CHECKPOINT_EXCLUSION_REASON_DISK_THRESHOLD\x10\x04\x12-\n" +
+	")CHECKPOINT_EXCLUSION_REASON_AUDIT_PENDING\x10\x05\x12(\n" +
+	"$CHECKPOINT_EXCLUSION_REASON_RETIRING\x10\x06*\xca\x02\n" +
 	"\x16TableIncarnationStatus\x12(\n" +
 	"$TABLE_INCARNATION_STATUS_UNSPECIFIED\x10\x00\x12#\n" +
 	"\x1fTABLE_INCARNATION_STATUS_LEGACY\x10\x01\x12$\n" +
@@ -1592,7 +2910,13 @@ const file_table_registry_proto_rawDesc = "" +
 	"$TABLE_INCARNATION_ORIGIN_UNSPECIFIED\x10\x00\x12$\n" +
 	" TABLE_INCARNATION_ORIGIN_GENESIS\x10\x01\x12#\n" +
 	"\x1fTABLE_INCARNATION_ORIGIN_LEGACY\x10\x02\x12\"\n" +
-	"\x1eTABLE_INCARNATION_ORIGIN_CHAIN\x10\x032\xff\x01\n" +
+	"\x1eTABLE_INCARNATION_ORIGIN_CHAIN\x10\x03*\x9a\x01\n" +
+	"\vMemberClass\x12\x1c\n" +
+	"\x18MEMBER_CLASS_UNSPECIFIED\x10\x00\x12\x1e\n" +
+	"\x1aMEMBER_CLASS_BOOTSTRAPPING\x10\x01\x12\x1a\n" +
+	"\x16MEMBER_CLASS_CAUGHT_UP\x10\x02\x12\x17\n" +
+	"\x13MEMBER_CLASS_BEHIND\x10\x03\x12\x18\n" +
+	"\x14MEMBER_CLASS_LAGGING\x10\x042\xff\x01\n" +
 	"\rTableRegistry\x12L\n" +
 	"\x10GetTableRegistry\x12\x16.google.protobuf.Empty\x1a\x1e.arbiter.TableRegistrySnapshot\"\x00\x12\\\n" +
 	"\x12WatchTableRegistry\x12\".arbiter.WatchTableRegistryRequest\x1a\x1e.arbiter.TableRegistrySnapshot\"\x000\x01\x12B\n" +
@@ -1610,61 +2934,92 @@ func file_table_registry_proto_rawDescGZIP() []byte {
 	return file_table_registry_proto_rawDescData
 }
 
-var file_table_registry_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_table_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_table_registry_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
+var file_table_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_table_registry_proto_goTypes = []any{
 	(TableRetireReason)(0),            // 0: arbiter.TableRetireReason
-	(TableIncarnationStatus)(0),       // 1: arbiter.TableIncarnationStatus
-	(TableIncarnationOrigin)(0),       // 2: arbiter.TableIncarnationOrigin
-	(*TableRegistryParams)(nil),       // 3: arbiter.TableRegistryParams
-	(*ClientLaneParams)(nil),          // 4: arbiter.ClientLaneParams
-	(*SIIndexerEntry)(nil),            // 5: arbiter.SIIndexerEntry
-	(*L2BlockRef)(nil),                // 6: arbiter.L2BlockRef
-	(*L2EventRef)(nil),                // 7: arbiter.L2EventRef
-	(*LegacyTable)(nil),               // 8: arbiter.LegacyTable
-	(*SeedLegacyTablesCmd)(nil),       // 9: arbiter.SeedLegacyTablesCmd
-	(*AddTableCmd)(nil),               // 10: arbiter.AddTableCmd
-	(*RetireTablesCmd)(nil),           // 11: arbiter.RetireTablesCmd
-	(*AdvanceL2CursorCmd)(nil),        // 12: arbiter.AdvanceL2CursorCmd
-	(*RecordTablePurgedCmd)(nil),      // 13: arbiter.RecordTablePurgedCmd
-	(*TableRegistryCursor)(nil),       // 14: arbiter.TableRegistryCursor
-	(*TableIncarnation)(nil),          // 15: arbiter.TableIncarnation
-	(*TableRegistrySnapshot)(nil),     // 16: arbiter.TableRegistrySnapshot
-	(*PurgeNodeSet)(nil),              // 17: arbiter.PurgeNodeSet
-	(*WatchTableRegistryRequest)(nil), // 18: arbiter.WatchTableRegistryRequest
-	(*emptypb.Empty)(nil),             // 19: google.protobuf.Empty
+	(CheckpointExclusionReason)(0),    // 1: arbiter.CheckpointExclusionReason
+	(TableIncarnationStatus)(0),       // 2: arbiter.TableIncarnationStatus
+	(TableIncarnationOrigin)(0),       // 3: arbiter.TableIncarnationOrigin
+	(MemberClass)(0),                  // 4: arbiter.MemberClass
+	(*TableRegistryParams)(nil),       // 5: arbiter.TableRegistryParams
+	(*ClientLaneParams)(nil),          // 6: arbiter.ClientLaneParams
+	(*SIIndexerEntry)(nil),            // 7: arbiter.SIIndexerEntry
+	(*IndexerFailureDomain)(nil),      // 8: arbiter.IndexerFailureDomain
+	(*Stage3Params)(nil),              // 9: arbiter.Stage3Params
+	(*L2BlockRef)(nil),                // 10: arbiter.L2BlockRef
+	(*L2EventRef)(nil),                // 11: arbiter.L2EventRef
+	(*LegacyTable)(nil),               // 12: arbiter.LegacyTable
+	(*SeedLegacyTablesCmd)(nil),       // 13: arbiter.SeedLegacyTablesCmd
+	(*AddTableCmd)(nil),               // 14: arbiter.AddTableCmd
+	(*RetireTablesCmd)(nil),           // 15: arbiter.RetireTablesCmd
+	(*AdvanceL2CursorCmd)(nil),        // 16: arbiter.AdvanceL2CursorCmd
+	(*RecordTablePurgedCmd)(nil),      // 17: arbiter.RecordTablePurgedCmd
+	(*ExcludedTable)(nil),             // 18: arbiter.ExcludedTable
+	(*CheckpointGroup)(nil),           // 19: arbiter.CheckpointGroup
+	(*MemberCheckpoint)(nil),          // 20: arbiter.MemberCheckpoint
+	(*MemberCheckpointCmd)(nil),       // 21: arbiter.MemberCheckpointCmd
+	(*MemberReadyCmd)(nil),            // 22: arbiter.MemberReadyCmd
+	(*TableRegistryCursor)(nil),       // 23: arbiter.TableRegistryCursor
+	(*TableIncarnation)(nil),          // 24: arbiter.TableIncarnation
+	(*TableRegistrySnapshot)(nil),     // 25: arbiter.TableRegistrySnapshot
+	(*PurgeNodeSet)(nil),              // 26: arbiter.PurgeNodeSet
+	(*MemberCheckpointRecord)(nil),    // 27: arbiter.MemberCheckpointRecord
+	(*GroupMember)(nil),               // 28: arbiter.GroupMember
+	(*LeavingMember)(nil),             // 29: arbiter.LeavingMember
+	(*DatabaseGroup)(nil),             // 30: arbiter.DatabaseGroup
+	(*MemberCheckpointSeq)(nil),       // 31: arbiter.MemberCheckpointSeq
+	(*WatchTableRegistryRequest)(nil), // 32: arbiter.WatchTableRegistryRequest
+	(*TrackFrontier)(nil),             // 33: arbiter.TrackFrontier
+	(*emptypb.Empty)(nil),             // 34: google.protobuf.Empty
 }
 var file_table_registry_proto_depIdxs = []int32{
-	7,  // 0: arbiter.LegacyTable.created:type_name -> arbiter.L2EventRef
-	6,  // 1: arbiter.SeedLegacyTablesCmd.at_block:type_name -> arbiter.L2BlockRef
-	8,  // 2: arbiter.SeedLegacyTablesCmd.tables:type_name -> arbiter.LegacyTable
-	7,  // 3: arbiter.AddTableCmd.created:type_name -> arbiter.L2EventRef
-	7,  // 4: arbiter.AddTableCmd.schema:type_name -> arbiter.L2EventRef
-	7,  // 5: arbiter.RetireTablesCmd.deleted:type_name -> arbiter.L2EventRef
-	0,  // 6: arbiter.RetireTablesCmd.reason:type_name -> arbiter.TableRetireReason
-	6,  // 7: arbiter.AdvanceL2CursorCmd.to:type_name -> arbiter.L2BlockRef
-	2,  // 8: arbiter.TableIncarnation.origin:type_name -> arbiter.TableIncarnationOrigin
-	1,  // 9: arbiter.TableIncarnation.status:type_name -> arbiter.TableIncarnationStatus
-	7,  // 10: arbiter.TableIncarnation.created:type_name -> arbiter.L2EventRef
-	7,  // 11: arbiter.TableIncarnation.schema_ref:type_name -> arbiter.L2EventRef
-	7,  // 12: arbiter.TableIncarnation.deleted:type_name -> arbiter.L2EventRef
-	0,  // 13: arbiter.TableIncarnation.retire_reason:type_name -> arbiter.TableRetireReason
-	3,  // 14: arbiter.TableRegistrySnapshot.params:type_name -> arbiter.TableRegistryParams
-	14, // 15: arbiter.TableRegistrySnapshot.cursor:type_name -> arbiter.TableRegistryCursor
-	15, // 16: arbiter.TableRegistrySnapshot.incarnations:type_name -> arbiter.TableIncarnation
-	4,  // 17: arbiter.TableRegistrySnapshot.client_lanes:type_name -> arbiter.ClientLaneParams
-	5,  // 18: arbiter.TableRegistrySnapshot.si_indexers:type_name -> arbiter.SIIndexerEntry
-	19, // 19: arbiter.TableRegistry.GetTableRegistry:input_type -> google.protobuf.Empty
-	18, // 20: arbiter.TableRegistry.WatchTableRegistry:input_type -> arbiter.WatchTableRegistryRequest
-	19, // 21: arbiter.TableRegistry.GetPurgeNodeSet:input_type -> google.protobuf.Empty
-	16, // 22: arbiter.TableRegistry.GetTableRegistry:output_type -> arbiter.TableRegistrySnapshot
-	16, // 23: arbiter.TableRegistry.WatchTableRegistry:output_type -> arbiter.TableRegistrySnapshot
-	17, // 24: arbiter.TableRegistry.GetPurgeNodeSet:output_type -> arbiter.PurgeNodeSet
-	22, // [22:25] is the sub-list for method output_type
-	19, // [19:22] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	8,  // 0: arbiter.Stage3Params.indexer_failure_domains:type_name -> arbiter.IndexerFailureDomain
+	11, // 1: arbiter.LegacyTable.created:type_name -> arbiter.L2EventRef
+	10, // 2: arbiter.SeedLegacyTablesCmd.at_block:type_name -> arbiter.L2BlockRef
+	12, // 3: arbiter.SeedLegacyTablesCmd.tables:type_name -> arbiter.LegacyTable
+	11, // 4: arbiter.AddTableCmd.created:type_name -> arbiter.L2EventRef
+	11, // 5: arbiter.AddTableCmd.schema:type_name -> arbiter.L2EventRef
+	11, // 6: arbiter.RetireTablesCmd.deleted:type_name -> arbiter.L2EventRef
+	0,  // 7: arbiter.RetireTablesCmd.reason:type_name -> arbiter.TableRetireReason
+	10, // 8: arbiter.AdvanceL2CursorCmd.to:type_name -> arbiter.L2BlockRef
+	1,  // 9: arbiter.ExcludedTable.reason:type_name -> arbiter.CheckpointExclusionReason
+	18, // 10: arbiter.CheckpointGroup.excluded:type_name -> arbiter.ExcludedTable
+	19, // 11: arbiter.MemberCheckpoint.groups:type_name -> arbiter.CheckpointGroup
+	33, // 12: arbiter.MemberCheckpoint.entry:type_name -> arbiter.TrackFrontier
+	20, // 13: arbiter.MemberCheckpointCmd.checkpoint:type_name -> arbiter.MemberCheckpoint
+	3,  // 14: arbiter.TableIncarnation.origin:type_name -> arbiter.TableIncarnationOrigin
+	2,  // 15: arbiter.TableIncarnation.status:type_name -> arbiter.TableIncarnationStatus
+	11, // 16: arbiter.TableIncarnation.created:type_name -> arbiter.L2EventRef
+	11, // 17: arbiter.TableIncarnation.schema_ref:type_name -> arbiter.L2EventRef
+	11, // 18: arbiter.TableIncarnation.deleted:type_name -> arbiter.L2EventRef
+	0,  // 19: arbiter.TableIncarnation.retire_reason:type_name -> arbiter.TableRetireReason
+	5,  // 20: arbiter.TableRegistrySnapshot.params:type_name -> arbiter.TableRegistryParams
+	23, // 21: arbiter.TableRegistrySnapshot.cursor:type_name -> arbiter.TableRegistryCursor
+	24, // 22: arbiter.TableRegistrySnapshot.incarnations:type_name -> arbiter.TableIncarnation
+	6,  // 23: arbiter.TableRegistrySnapshot.client_lanes:type_name -> arbiter.ClientLaneParams
+	7,  // 24: arbiter.TableRegistrySnapshot.si_indexers:type_name -> arbiter.SIIndexerEntry
+	30, // 25: arbiter.TableRegistrySnapshot.groups:type_name -> arbiter.DatabaseGroup
+	31, // 26: arbiter.TableRegistrySnapshot.member_checkpoint_seqs:type_name -> arbiter.MemberCheckpointSeq
+	9,  // 27: arbiter.TableRegistrySnapshot.stage3:type_name -> arbiter.Stage3Params
+	20, // 28: arbiter.MemberCheckpointRecord.checkpoint:type_name -> arbiter.MemberCheckpoint
+	4,  // 29: arbiter.GroupMember.member_class:type_name -> arbiter.MemberClass
+	27, // 30: arbiter.GroupMember.checkpoint:type_name -> arbiter.MemberCheckpointRecord
+	33, // 31: arbiter.GroupMember.observed_entry:type_name -> arbiter.TrackFrontier
+	33, // 32: arbiter.LeavingMember.release_entry:type_name -> arbiter.TrackFrontier
+	28, // 33: arbiter.DatabaseGroup.members:type_name -> arbiter.GroupMember
+	29, // 34: arbiter.DatabaseGroup.leaving:type_name -> arbiter.LeavingMember
+	34, // 35: arbiter.TableRegistry.GetTableRegistry:input_type -> google.protobuf.Empty
+	32, // 36: arbiter.TableRegistry.WatchTableRegistry:input_type -> arbiter.WatchTableRegistryRequest
+	34, // 37: arbiter.TableRegistry.GetPurgeNodeSet:input_type -> google.protobuf.Empty
+	25, // 38: arbiter.TableRegistry.GetTableRegistry:output_type -> arbiter.TableRegistrySnapshot
+	25, // 39: arbiter.TableRegistry.WatchTableRegistry:output_type -> arbiter.TableRegistrySnapshot
+	26, // 40: arbiter.TableRegistry.GetPurgeNodeSet:output_type -> arbiter.PurgeNodeSet
+	38, // [38:41] is the sub-list for method output_type
+	35, // [35:38] is the sub-list for method input_type
+	35, // [35:35] is the sub-list for extension type_name
+	35, // [35:35] is the sub-list for extension extendee
+	0,  // [0:35] is the sub-list for field type_name
 }
 
 func init() { file_table_registry_proto_init() }
@@ -1672,16 +3027,18 @@ func file_table_registry_proto_init() {
 	if File_table_registry_proto != nil {
 		return
 	}
-	file_table_registry_proto_msgTypes[6].OneofWrappers = []any{}
-	file_table_registry_proto_msgTypes[7].OneofWrappers = []any{}
-	file_table_registry_proto_msgTypes[12].OneofWrappers = []any{}
+	file_replay_proto_init()
+	file_table_registry_proto_msgTypes[8].OneofWrappers = []any{}
+	file_table_registry_proto_msgTypes[9].OneofWrappers = []any{}
+	file_table_registry_proto_msgTypes[19].OneofWrappers = []any{}
+	file_table_registry_proto_msgTypes[23].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_table_registry_proto_rawDesc), len(file_table_registry_proto_rawDesc)),
-			NumEnums:      3,
-			NumMessages:   16,
+			NumEnums:      5,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

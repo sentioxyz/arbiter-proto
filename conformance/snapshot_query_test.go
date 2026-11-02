@@ -428,6 +428,12 @@ func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.File
 			if got == nil {
 				t.Fatalf("old message removed: %s", m.GetName())
 			}
+			if want, ok := stage3AppendedFields[m.GetName()]; ok {
+				if len(got.Field) == 0 || !proto.Equal(got.Field[len(got.Field)-1], want) {
+					t.Fatalf("%s stage-3 addition must be exactly %s = %d: %v", m.GetName(), want.GetName(), want.GetNumber(), got)
+				}
+				got.Field = got.Field[:len(got.Field)-1]
+			}
 			if want, ok := tracksFields[m.GetName()]; ok {
 				if len(got.Field) < len(want) {
 					t.Fatalf("%s lacks its tracks fields: %v", m.GetName(), got)
@@ -664,7 +670,8 @@ func TestSnapshotQueryLedgerCoversEveryNewMessage(t *testing.T) {
 			name := string(messages.Get(i).Name())
 			if !oldNames[name] {
 				_, covered := snapshotQueryFields[name]
-				if _, stage3 := stage3Fields[name]; !covered && !stage3 {
+				_, stage3 := stage3Fields[name]
+				if _, consensus := stage3ConsensusFields[name]; !covered && !stage3 && !consensus {
 					t.Errorf("new message %s lacks every-field wire coverage", name)
 				}
 			}

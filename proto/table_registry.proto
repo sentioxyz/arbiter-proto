@@ -8,6 +8,7 @@ package arbiter;
 option go_package = "github.com/sentioxyz/arbiter-proto/gen/pb;pb";
 
 import "google/protobuf/empty.proto";
+import "replay.proto";
 
 // TableRegistryParams is set once through a signed consensus update and never
 // changed. confirmation is "finalized" or "safe".
@@ -56,6 +57,42 @@ message SIIndexerEntry {
   // indexer operator consents to, and controls, this SNode identity (§6.2).
   // Byte-identical in every later update unless signer rotates.
   string enrollment_jws = 5;
+}
+
+// IndexerFailureDomain names one enrolled SI indexer's failure domain
+// (housegate spec 2026-10-14 §6.1, §9.3); equal strings are one domain.
+message IndexerFailureDomain {
+  uint64 indexer_id = 1;
+  string failure_domain = 2;
+}
+
+// Stage3Params is the stage-3 parameter (spec §6.1, §10.4). It is absent until
+// the v21 activation, which sets it with every switch false; afterwards every
+// consensus update carries it. Every field is explicit: there is no
+// absent-means-default (plan S3-E1 K58). The switches and strict_copies are
+// one-way; min_safe_copies and group_size never decrease; each switch requires
+// every earlier switch in field order (purge, eviction_voiding,
+// owner_aware_selection, placement, reselection, checkpoints, narrowed_drain).
+// indexer_failure_domains is sorted by indexer_id without duplicates.
+message Stage3Params {
+  uint32 group_size = 1;
+  bool network_fill_default = 2;
+  uint32 min_safe_copies = 3;
+  bool strict_copies = 4;
+  repeated IndexerFailureDomain indexer_failure_domains = 5;
+  uint32 max_lag_publications = 6;
+  uint32 lag_low = 7;
+  uint64 evidence_timeout_l2_blocks = 8;
+  uint32 max_uncleaned_parts_per_partition = 9;
+  uint32 max_uncleaned_parts_per_table = 10;
+  bool exclude_quarantined_hosts = 11;
+  bool purge = 12;
+  bool eviction_voiding = 13;
+  bool owner_aware_selection = 14;
+  bool placement = 15;
+  bool reselection = 16;
+  bool checkpoints = 17;
+  bool narrowed_drain = 18;
 }
 
 message L2BlockRef {
@@ -149,6 +186,67 @@ message RecordTablePurgedCmd {
   string ed25519_signature = 4;
 }
 
+// CheckpointExclusionReason is why a checkpoint excludes a table (plan S3-E1
+// K63): a closed set; UNSPECIFIED and unknown values are refused.
+enum CheckpointExclusionReason {
+  CHECKPOINT_EXCLUSION_REASON_UNSPECIFIED = 0;
+  CHECKPOINT_EXCLUSION_REASON_NOT_INSTALLED = 1;
+  CHECKPOINT_EXCLUSION_REASON_DIVERGED = 2;
+  CHECKPOINT_EXCLUSION_REASON_FOREIGN = 3;
+  CHECKPOINT_EXCLUSION_REASON_DISK_THRESHOLD = 4;
+  CHECKPOINT_EXCLUSION_REASON_AUDIT_PENDING = 5;
+  CHECKPOINT_EXCLUSION_REASON_RETIRING = 6;
+}
+
+message ExcludedTable {
+  string table_id = 1;
+  CheckpointExclusionReason reason = 2;
+}
+
+// CheckpointGroup is one group a checkpoint speaks for; excluded is sorted by
+// table_id without duplicates.
+message CheckpointGroup {
+  string database_id = 1;
+  uint64 group_generation = 2;
+  repeated ExcludedTable excluded = 3;
+}
+
+// MemberCheckpoint is a replicate member's statement that its copies of the
+// listed groups' tables equal the manifest snapshot_id at entry =
+// track_frontiers[owner] (spec §9.1). checkpoint_seq strictly increases per
+// (member, owner); groups is sorted by database_id without duplicates.
+message MemberCheckpoint {
+  string node_id = 1;
+  uint64 owner_indexer_id = 2;
+  uint64 checkpoint_seq = 3;
+  repeated CheckpointGroup groups = 4;
+  string snapshot_id = 5;
+  TrackFrontier entry = 6;
+}
+
+// MemberCheckpointCmd (Raft tag 41): replica_jws is the ES256K compact JWS of
+// the member's verifiers-entry replica_signer, purpose
+// "arbiter-member-checkpoint-v1", over the checkpoint bound to the network id
+// and genesis snapshot id. Proposed only after the checkpoints switch.
+message MemberCheckpointCmd {
+  MemberCheckpoint checkpoint = 1;
+  string replica_jws = 2;
+}
+
+// MemberReadyCmd (Raft tag 40): a member reports its hg_member_unsafe
+// replicas of group (owner_indexer_id, database_id) at generation (spec
+// §6.4). ed25519_signature is hex, by the node's verifiers-entry ed25519 key,
+// over the "arbiter-member-ready-v1" hash of {node_id, owner_indexer_id,
+// database_id, generation} and the network context. Proposed only after the
+// placement switch.
+message MemberReadyCmd {
+  string node_id = 1;
+  uint64 owner_indexer_id = 2;
+  string database_id = 3;
+  uint64 generation = 4;
+  string ed25519_signature = 5;
+}
+
 // ============================================================
 // TableRegistry read API (sub-project 2c). Leader-barriered like SafeState;
 // a follower answers FAILED_PRECONDITION with a NotLeader detail.
@@ -213,6 +311,15 @@ message TableIncarnation {
   // existing incarnation and every later one is recorded with it. optional
   // because indexer 0 is a valid owner.
   optional uint64 owner_indexer_id = 18;
+  // Set by Apply on every chain incarnation recorded after the stage-3 purge
+  // switch (spec §8.8): its hg_unsafe and hg_member_unsafe replicas use
+  // /sentio/<shard>/unsafe_inc/<db__table>/<seq> instead of
+  // /sentio/<shard>/unsafe/<db__table>. Never set on an earlier incarnation.
+  bool scoped_keeper_path = 19;
+  // The members of the incarnation's group at any generation since it was
+  // recorded (plan S3-E1 K60), sorted ascending without duplicates. Each must
+  // report the incarnation's purge; a node leaves only through EvictNode.
+  repeated string purge_members = 20;
 }
 
 // TableRegistrySnapshot is the whole committed registry at one version.
@@ -249,6 +356,17 @@ message TableRegistrySnapshot {
   // version, and so does the acknowledgement of an indexer's last uncleaned
   // rejected part.
   repeated uint64 quarantined_indexers = 9;
+  // The database groups (spec §6.2), sorted by (owner_indexer_id,
+  // database_id); empty before the placement switch. Every committed change
+  // bumps version.
+  repeated DatabaseGroup groups = 10;
+  // The highest accepted checkpoint_seq per (member, owner) (spec §9.1),
+  // sorted by (node_id, owner_indexer_id); kept through group removal.
+  repeated MemberCheckpointSeq member_checkpoint_seqs = 11;
+  // The committed stage-3 parameter, so data-plane nodes learn the switches
+  // through the registry follower (plan S3-E1 K64); absent before the v21
+  // activation. Every committed change bumps version.
+  Stage3Params stage3 = 12;
 }
 
 // PurgeNodeSet is the committed set of data-plane nodes whose
@@ -259,6 +377,88 @@ message TableRegistrySnapshot {
 // path whose name is not in the set belongs to a decommissioned node.
 message PurgeNodeSet {
   repeated string node_ids = 1;
+}
+
+// MemberClass is a member's class in one group (spec §9.2). A Leaving member
+// is not in DatabaseGroup.members; its record is in DatabaseGroup.leaving.
+enum MemberClass {
+  MEMBER_CLASS_UNSPECIFIED = 0;
+  MEMBER_CLASS_BOOTSTRAPPING = 1;
+  MEMBER_CLASS_CAUGHT_UP = 2;
+  MEMBER_CLASS_BEHIND = 3;
+  MEMBER_CLASS_LAGGING = 4;
+}
+
+// MemberCheckpointRecord is a stored checkpoint with its signature and the
+// consensus epoch whose replica_signer verified it.
+message MemberCheckpointRecord {
+  MemberCheckpoint checkpoint = 1;
+  string replica_jws = 2;
+  uint64 epoch = 3;
+}
+
+// GroupMember is one current member of a group. ready_generation is 0 until
+// a MemberReady is recorded; the member is ready once ready_generation >=
+// joined_generation. checkpoint is the stored checkpoint for this group, absent
+// before the first; observed_entry is set only while member_class is LAGGING;
+// lag_advances counts the owner's published advances after the checkpoint
+// entry, saturating at stage3.max_lag_publications + 1, and is 0 without a
+// checkpoint (plan S3-E3 K76). host_indexer_id is the host_indexer_id of the
+// member's entry in the committed verifiers parameter, filled by the server
+// when it serves the view (never stored in FSM state; fixed for the entry's
+// life, plan S3-E2 K68); it is absent while the node has no host-bound
+// verifiers entry (a delisted member stays in members, plan S3-E3 K73), and a
+// consensus update that lists or delists a member changes the view, so it
+// bumps version. optional because indexer 0 is a valid host.
+message GroupMember {
+  string node_id = 1;
+  uint64 joined_generation = 2;
+  uint64 ready_generation = 3;
+  MemberClass member_class = 4;
+  MemberCheckpointRecord checkpoint = 5;
+  TrackFrontier observed_entry = 6;
+  uint64 lag_advances = 7;
+  optional uint64 host_indexer_id = 8;
+}
+
+// LeavingMember is a member a RebalanceGroup removed (spec §6.4):
+// release_entry is the owner's latest published entry when it applied;
+// frozen_members and frozen_domains are E (node ids, sorted) and |E| as they
+// were then, for the release outside strict mode; released is set the first
+// time the release condition holds and never cleared.
+message LeavingMember {
+  string node_id = 1;
+  uint64 removed_generation = 2;
+  TrackFrontier release_entry = 3;
+  repeated string frozen_members = 4;
+  uint32 frozen_domains = 5;
+  bool released = 6;
+}
+
+// DatabaseGroup is G(owner, database) (spec §6.2). members is sorted by
+// node_id; past_members is sorted without duplicates; leaving is sorted by
+// node_id; group_key is the current GroupKey (spec §7.1); placement_salt is
+// the salt the placement used (plan S3-E1 K61).
+message DatabaseGroup {
+  uint64 owner_indexer_id = 1;
+  string database_id = 2;
+  repeated GroupMember members = 3;
+  bool network_fill = 4;
+  uint64 generation = 5;
+  repeated string past_members = 6;
+  repeated LeavingMember leaving = 7;
+  string group_key = 8;
+  string placement_salt = 9;
+}
+
+// MemberCheckpointSeq is the highest accepted checkpoint_seq of one member for
+// one owner under replica_signer (spec §9.1); a member signs its next
+// checkpoint above both its journal and this value.
+message MemberCheckpointSeq {
+  string node_id = 1;
+  uint64 owner_indexer_id = 2;
+  uint64 checkpoint_seq = 3;
+  string replica_signer = 4;
 }
 
 message WatchTableRegistryRequest {

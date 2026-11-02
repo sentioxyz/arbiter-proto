@@ -31,7 +31,7 @@ var stage3Fields = map[string]string{
 	"PromotionOutcomes":             "promotion_seq:uint64 outcomes:[]PromotionOutcome next_after_promotion_seq:uint64",
 	"StatementCandidates":           "statement_seq:uint64 statement_id:string status:string source_node:string rc_bound:bool source_claim_root:string candidate_parts:[]CandidatePart partition_new_part_sums:[]PartitionLtHashSum unpromoted_part_row_lthashes:[]string",
 	"VerifierEvidence":              "replica_id:string attestation:ReplayAttestation byte_side_scan:ByteSideScanMsg evaluated:bool check1_root_match:bool check2_partition_match:bool check3_byte_side_match:bool pass:bool",
-	"BlockVerification":             "header:L3BlockHeader chain_hash:string replay_job:ReplayJob statements:[]StatementCandidates scan_parts:[]PartRef source_nodes:[]string verifier_set:[]string evidence:[]VerifierEvidence verdict_evaluated:bool quorum:bool anchor:AnchorRef finality:bool last_mergeable:bool",
+	"BlockVerification":             "header:L3BlockHeader chain_hash:string replay_job:ReplayJob statements:[]StatementCandidates scan_parts:[]PartRef source_nodes:[]string verifier_set:[]string evidence:[]VerifierEvidence verdict_evaluated:bool quorum:bool anchor:AnchorRef finality:bool last_mergeable:bool eligible_ring:[]string ring_position:uint32 marked_cursor_block:uint64 group_key:string group_members:[]string group_fill:bool group_databases:[]BlockGroupRef reselections:[]BlockReselection reselections_at_latch:uint32",
 	"PrepareConsensusUpdateRequest": "mode:ConsensusHoldMode draft:UpdateConsensusParamsCmd timeout_ms:uint64",
 	"ConsensusHoldRef":              "hold_id:string",
 	"TrackDrain":                    "indexer_id:uint64 quarantined:bool prefix_block_seq:uint64 frontier_block_seq:uint64 in_flight_blocks:[]uint64",
@@ -228,7 +228,7 @@ func TestStage3RPCSignatures(t *testing.T) {
 		want    int
 	}{
 		{pb.File_arbiter_proto, "SafeState", 10},
-		{pb.File_consensus_proto, "ConsensusAdmin", 16},
+		{pb.File_consensus_proto, "ConsensusAdmin", 18},
 	} {
 		if n := tc.file.Services().ByName(tc.service).Methods().Len(); n != tc.want {
 			t.Fatalf("%s has %d methods, want %d", tc.service, n, tc.want)
@@ -249,7 +249,7 @@ func TestStage3RPCSignatures(t *testing.T) {
 // task adds is reachable from RaftCommand at any depth, so arbiter-core's
 // strict Raft decoder, which refuses an unknown field at any depth, sees an
 // unchanged descriptor and no command can carry stage-3 bytes to a voter of
-// arbiter v0.12.0. RaftCommand keeps exactly its 36 tags (1-28 and 30-37).
+// arbiter v0.12.0. RaftCommand keeps exactly its 41 tags (1-28 and 30-42).
 // The hold request embeds the Raft command type, never the reverse, and
 // UpdateConsensusParamsCmd keeps exactly its two fields, so the hold id
 // cannot travel inside the replicated update.
@@ -281,12 +281,12 @@ func TestStage3MessagesAreNotRaftReachable(t *testing.T) {
 		t.Fatal("PrepareConsensusUpdateRequest walk does not reach its draft and mode")
 	}
 	cmd := raft.Oneofs().ByName("cmd")
-	if cmd == nil || raft.Fields().Len() != 36 || cmd.Fields().Len() != 36 {
-		t.Fatalf("RaftCommand has %d fields, want its 36 oneof tags", raft.Fields().Len())
+	if cmd == nil || raft.Fields().Len() != 41 || cmd.Fields().Len() != 41 {
+		t.Fatalf("RaftCommand has %d fields, want its 41 oneof tags", raft.Fields().Len())
 	}
-	for n := protoreflect.FieldNumber(1); n <= 37; n++ {
+	for n := protoreflect.FieldNumber(1); n <= 42; n++ {
 		if f := raft.Fields().ByNumber(n); (f == nil) != (n == 29) {
-			t.Fatalf("RaftCommand tag %d = %v; want tags 1-28 and 30-37 only", n, f)
+			t.Fatalf("RaftCommand tag %d = %v; want tags 1-28 and 30-42 only", n, f)
 		}
 	}
 	update := (&pb.UpdateConsensusParamsCmd{}).ProtoReflect().Descriptor().Fields()
