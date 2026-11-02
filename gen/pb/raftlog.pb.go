@@ -1093,6 +1093,11 @@ type RaftCommand struct {
 	//	*RaftCommand_RecordTablePurged
 	//	*RaftCommand_QuarantineIndexer
 	//	*RaftCommand_ReleaseIndexer
+	//	*RaftCommand_RebalanceGroup
+	//	*RaftCommand_ReselectVerifiers
+	//	*RaftCommand_MemberReady
+	//	*RaftCommand_MemberCheckpoint
+	//	*RaftCommand_MarkMemberLagging
 	Cmd           isRaftCommand_Cmd `protobuf_oneof:"cmd"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1459,6 +1464,51 @@ func (x *RaftCommand) GetReleaseIndexer() *ReleaseIndexerCmd {
 	return nil
 }
 
+func (x *RaftCommand) GetRebalanceGroup() *RebalanceGroupCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_RebalanceGroup); ok {
+			return x.RebalanceGroup
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetReselectVerifiers() *ReselectVerifiersCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_ReselectVerifiers); ok {
+			return x.ReselectVerifiers
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetMemberReady() *MemberReadyCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_MemberReady); ok {
+			return x.MemberReady
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetMemberCheckpoint() *MemberCheckpointCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_MemberCheckpoint); ok {
+			return x.MemberCheckpoint
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetMarkMemberLagging() *MarkMemberLaggingCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_MarkMemberLagging); ok {
+			return x.MarkMemberLagging
+		}
+	}
+	return nil
+}
+
 type isRaftCommand_Cmd interface {
 	isRaftCommand_Cmd()
 }
@@ -1613,6 +1663,30 @@ type RaftCommand_ReleaseIndexer struct {
 	ReleaseIndexer *ReleaseIndexerCmd `protobuf:"bytes,37,opt,name=release_indexer,json=releaseIndexer,proto3,oneof"`
 }
 
+type RaftCommand_RebalanceGroup struct {
+	// Multi-source SI stage 3 (housegate spec 2026-10-14 §6.4, §7.4, §9.1-§9.2;
+	// tag 29 stays unused): proposed only after the v21 activation and the
+	// command's switch (placement: 38, 40; reselection: 39; checkpoints: 41, 42),
+	// because a voter whose decoder lacks these tags refuses the command.
+	RebalanceGroup *RebalanceGroupCmd `protobuf:"bytes,38,opt,name=rebalance_group,json=rebalanceGroup,proto3,oneof"`
+}
+
+type RaftCommand_ReselectVerifiers struct {
+	ReselectVerifiers *ReselectVerifiersCmd `protobuf:"bytes,39,opt,name=reselect_verifiers,json=reselectVerifiers,proto3,oneof"`
+}
+
+type RaftCommand_MemberReady struct {
+	MemberReady *MemberReadyCmd `protobuf:"bytes,40,opt,name=member_ready,json=memberReady,proto3,oneof"`
+}
+
+type RaftCommand_MemberCheckpoint struct {
+	MemberCheckpoint *MemberCheckpointCmd `protobuf:"bytes,41,opt,name=member_checkpoint,json=memberCheckpoint,proto3,oneof"`
+}
+
+type RaftCommand_MarkMemberLagging struct {
+	MarkMemberLagging *MarkMemberLaggingCmd `protobuf:"bytes,42,opt,name=mark_member_lagging,json=markMemberLagging,proto3,oneof"`
+}
+
 func (*RaftCommand_SubmitStatement) isRaftCommand_Cmd() {}
 
 func (*RaftCommand_SealL3Block) isRaftCommand_Cmd() {}
@@ -1684,6 +1758,16 @@ func (*RaftCommand_RecordTablePurged) isRaftCommand_Cmd() {}
 func (*RaftCommand_QuarantineIndexer) isRaftCommand_Cmd() {}
 
 func (*RaftCommand_ReleaseIndexer) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_RebalanceGroup) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_ReselectVerifiers) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_MemberReady) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_MemberCheckpoint) isRaftCommand_Cmd() {}
+
+func (*RaftCommand_MarkMemberLagging) isRaftCommand_Cmd() {}
 
 // Begins draining using the authenticated request; Apply makes no network calls.
 type BeginSnapshotQueryCmd struct {
@@ -2257,7 +2341,7 @@ const file_raftlog_proto_rawDesc = "" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x16\n" +
 	"\x06reason\x18\x02 \x01(\tR\x06reason\x12:\n" +
 	"\x19expected_registration_seq\x18\x03 \x01(\x04R\x17expectedRegistrationSeq\x12#\n" +
-	"\rauthority_jws\x18\x04 \x01(\tR\fauthorityJws\"\x93\x17\n" +
+	"\rauthority_jws\x18\x04 \x01(\tR\fauthorityJws\"\x86\x1a\n" +
 	"\vRaftCommand\x12H\n" +
 	"\x10submit_statement\x18\x01 \x01(\v2\x1b.arbiter.SubmitStatementCmdH\x00R\x0fsubmitStatement\x12=\n" +
 	"\rseal_l3_block\x18\x02 \x01(\v2\x17.arbiter.SealL3BlockCmdH\x00R\vsealL3Block\x12B\n" +
@@ -2298,7 +2382,12 @@ const file_raftlog_proto_rawDesc = "" +
 	"\x11advance_l2_cursor\x18\" \x01(\v2\x1b.arbiter.AdvanceL2CursorCmdH\x00R\x0fadvanceL2Cursor\x12O\n" +
 	"\x13record_table_purged\x18# \x01(\v2\x1d.arbiter.RecordTablePurgedCmdH\x00R\x11recordTablePurged\x12N\n" +
 	"\x12quarantine_indexer\x18$ \x01(\v2\x1d.arbiter.QuarantineIndexerCmdH\x00R\x11quarantineIndexer\x12E\n" +
-	"\x0frelease_indexer\x18% \x01(\v2\x1a.arbiter.ReleaseIndexerCmdH\x00R\x0ereleaseIndexerB\x05\n" +
+	"\x0frelease_indexer\x18% \x01(\v2\x1a.arbiter.ReleaseIndexerCmdH\x00R\x0ereleaseIndexer\x12E\n" +
+	"\x0frebalance_group\x18& \x01(\v2\x1a.arbiter.RebalanceGroupCmdH\x00R\x0erebalanceGroup\x12N\n" +
+	"\x12reselect_verifiers\x18' \x01(\v2\x1d.arbiter.ReselectVerifiersCmdH\x00R\x11reselectVerifiers\x12<\n" +
+	"\fmember_ready\x18( \x01(\v2\x17.arbiter.MemberReadyCmdH\x00R\vmemberReady\x12K\n" +
+	"\x11member_checkpoint\x18) \x01(\v2\x1c.arbiter.MemberCheckpointCmdH\x00R\x10memberCheckpoint\x12O\n" +
+	"\x13mark_member_lagging\x18* \x01(\v2\x1d.arbiter.MarkMemberLaggingCmdH\x00R\x11markMemberLaggingB\x05\n" +
 	"\x03cmd\"W\n" +
 	"\x15BeginSnapshotQueryCmd\x12>\n" +
 	"\arequest\x18\x01 \x01(\v2$.arbiter.AcquireSnapshotQueryRequestR\arequest\"{\n" +
@@ -2403,17 +2492,22 @@ var file_raftlog_proto_goTypes = []any{
 	(*RecordTablePurgedCmd)(nil),                // 46: arbiter.RecordTablePurgedCmd
 	(*QuarantineIndexerCmd)(nil),                // 47: arbiter.QuarantineIndexerCmd
 	(*ReleaseIndexerCmd)(nil),                   // 48: arbiter.ReleaseIndexerCmd
-	(*AcquireSnapshotQueryRequest)(nil),         // 49: arbiter.AcquireSnapshotQueryRequest
-	(*SnapshotQueryReservation)(nil),            // 50: arbiter.SnapshotQueryReservation
-	(*ReleaseSnapshotQueryRequest)(nil),         // 51: arbiter.ReleaseSnapshotQueryRequest
-	(*SnapshotQueryEnvelope)(nil),               // 52: arbiter.SnapshotQueryEnvelope
-	(*SnapshotQueryAbortRecord)(nil),            // 53: arbiter.SnapshotQueryAbortRecord
-	(*ActiveQueryPolicy)(nil),                   // 54: arbiter.ActiveQueryPolicy
-	(*SnapshotQueryClaim)(nil),                  // 55: arbiter.SnapshotQueryClaim
-	(*SnapshotQueryAttestation)(nil),            // 56: arbiter.SnapshotQueryAttestation
-	(*ExecutorProfileTransition)(nil),           // 57: arbiter.ExecutorProfileTransition
-	(*ExecutorProfileTransitionReceipt)(nil),    // 58: arbiter.ExecutorProfileTransitionReceipt
-	(*SnapshotArtifactReadySubmission)(nil),     // 59: arbiter.SnapshotArtifactReadySubmission
+	(*RebalanceGroupCmd)(nil),                   // 49: arbiter.RebalanceGroupCmd
+	(*ReselectVerifiersCmd)(nil),                // 50: arbiter.ReselectVerifiersCmd
+	(*MemberReadyCmd)(nil),                      // 51: arbiter.MemberReadyCmd
+	(*MemberCheckpointCmd)(nil),                 // 52: arbiter.MemberCheckpointCmd
+	(*MarkMemberLaggingCmd)(nil),                // 53: arbiter.MarkMemberLaggingCmd
+	(*AcquireSnapshotQueryRequest)(nil),         // 54: arbiter.AcquireSnapshotQueryRequest
+	(*SnapshotQueryReservation)(nil),            // 55: arbiter.SnapshotQueryReservation
+	(*ReleaseSnapshotQueryRequest)(nil),         // 56: arbiter.ReleaseSnapshotQueryRequest
+	(*SnapshotQueryEnvelope)(nil),               // 57: arbiter.SnapshotQueryEnvelope
+	(*SnapshotQueryAbortRecord)(nil),            // 58: arbiter.SnapshotQueryAbortRecord
+	(*ActiveQueryPolicy)(nil),                   // 59: arbiter.ActiveQueryPolicy
+	(*SnapshotQueryClaim)(nil),                  // 60: arbiter.SnapshotQueryClaim
+	(*SnapshotQueryAttestation)(nil),            // 61: arbiter.SnapshotQueryAttestation
+	(*ExecutorProfileTransition)(nil),           // 62: arbiter.ExecutorProfileTransition
+	(*ExecutorProfileTransitionReceipt)(nil),    // 63: arbiter.ExecutorProfileTransitionReceipt
+	(*SnapshotArtifactReadySubmission)(nil),     // 64: arbiter.SnapshotArtifactReadySubmission
 }
 var file_raftlog_proto_depIdxs = []int32{
 	29, // 0: arbiter.SubmitStatementCmd.envelope:type_name -> arbiter.StatementEnvelopeV2
@@ -2464,23 +2558,28 @@ var file_raftlog_proto_depIdxs = []int32{
 	46, // 45: arbiter.RaftCommand.record_table_purged:type_name -> arbiter.RecordTablePurgedCmd
 	47, // 46: arbiter.RaftCommand.quarantine_indexer:type_name -> arbiter.QuarantineIndexerCmd
 	48, // 47: arbiter.RaftCommand.release_indexer:type_name -> arbiter.ReleaseIndexerCmd
-	49, // 48: arbiter.BeginSnapshotQueryCmd.request:type_name -> arbiter.AcquireSnapshotQueryRequest
-	50, // 49: arbiter.GrantSnapshotQueryCmd.reservation:type_name -> arbiter.SnapshotQueryReservation
-	51, // 50: arbiter.ReleaseSnapshotQueryCmd.request:type_name -> arbiter.ReleaseSnapshotQueryRequest
-	52, // 51: arbiter.SubmitSnapshotQueryCmd.envelope:type_name -> arbiter.SnapshotQueryEnvelope
-	53, // 52: arbiter.AbortSnapshotQueryCmd.record:type_name -> arbiter.SnapshotQueryAbortRecord
-	54, // 53: arbiter.ActivateQueryProfileCmd.activation:type_name -> arbiter.ActiveQueryPolicy
-	55, // 54: arbiter.RecordSnapshotQueryClaimCmd.claim:type_name -> arbiter.SnapshotQueryClaim
-	56, // 55: arbiter.RecordSnapshotQueryAttestationCmd.attestation:type_name -> arbiter.SnapshotQueryAttestation
-	57, // 56: arbiter.PublishExecutorProfileTransitionCmd.transition:type_name -> arbiter.ExecutorProfileTransition
-	36, // 57: arbiter.PublishExecutorProfileTransitionCmd.manifest:type_name -> arbiter.SafeSnapshotManifest
-	58, // 58: arbiter.PublishExecutorProfileTransitionCmd.receipts:type_name -> arbiter.ExecutorProfileTransitionReceipt
-	59, // 59: arbiter.RecordSnapshotArtifactReadyCmd.submission:type_name -> arbiter.SnapshotArtifactReadySubmission
-	60, // [60:60] is the sub-list for method output_type
-	60, // [60:60] is the sub-list for method input_type
-	60, // [60:60] is the sub-list for extension type_name
-	60, // [60:60] is the sub-list for extension extendee
-	0,  // [0:60] is the sub-list for field type_name
+	49, // 48: arbiter.RaftCommand.rebalance_group:type_name -> arbiter.RebalanceGroupCmd
+	50, // 49: arbiter.RaftCommand.reselect_verifiers:type_name -> arbiter.ReselectVerifiersCmd
+	51, // 50: arbiter.RaftCommand.member_ready:type_name -> arbiter.MemberReadyCmd
+	52, // 51: arbiter.RaftCommand.member_checkpoint:type_name -> arbiter.MemberCheckpointCmd
+	53, // 52: arbiter.RaftCommand.mark_member_lagging:type_name -> arbiter.MarkMemberLaggingCmd
+	54, // 53: arbiter.BeginSnapshotQueryCmd.request:type_name -> arbiter.AcquireSnapshotQueryRequest
+	55, // 54: arbiter.GrantSnapshotQueryCmd.reservation:type_name -> arbiter.SnapshotQueryReservation
+	56, // 55: arbiter.ReleaseSnapshotQueryCmd.request:type_name -> arbiter.ReleaseSnapshotQueryRequest
+	57, // 56: arbiter.SubmitSnapshotQueryCmd.envelope:type_name -> arbiter.SnapshotQueryEnvelope
+	58, // 57: arbiter.AbortSnapshotQueryCmd.record:type_name -> arbiter.SnapshotQueryAbortRecord
+	59, // 58: arbiter.ActivateQueryProfileCmd.activation:type_name -> arbiter.ActiveQueryPolicy
+	60, // 59: arbiter.RecordSnapshotQueryClaimCmd.claim:type_name -> arbiter.SnapshotQueryClaim
+	61, // 60: arbiter.RecordSnapshotQueryAttestationCmd.attestation:type_name -> arbiter.SnapshotQueryAttestation
+	62, // 61: arbiter.PublishExecutorProfileTransitionCmd.transition:type_name -> arbiter.ExecutorProfileTransition
+	36, // 62: arbiter.PublishExecutorProfileTransitionCmd.manifest:type_name -> arbiter.SafeSnapshotManifest
+	63, // 63: arbiter.PublishExecutorProfileTransitionCmd.receipts:type_name -> arbiter.ExecutorProfileTransitionReceipt
+	64, // 64: arbiter.RecordSnapshotArtifactReadyCmd.submission:type_name -> arbiter.SnapshotArtifactReadySubmission
+	65, // [65:65] is the sub-list for method output_type
+	65, // [65:65] is the sub-list for method input_type
+	65, // [65:65] is the sub-list for extension type_name
+	65, // [65:65] is the sub-list for extension extendee
+	0,  // [0:65] is the sub-list for field type_name
 }
 
 func init() { file_raftlog_proto_init() }
@@ -2530,6 +2629,11 @@ func file_raftlog_proto_init() {
 		(*RaftCommand_RecordTablePurged)(nil),
 		(*RaftCommand_QuarantineIndexer)(nil),
 		(*RaftCommand_ReleaseIndexer)(nil),
+		(*RaftCommand_RebalanceGroup)(nil),
+		(*RaftCommand_ReselectVerifiers)(nil),
+		(*RaftCommand_MemberReady)(nil),
+		(*RaftCommand_MemberCheckpoint)(nil),
+		(*RaftCommand_MarkMemberLagging)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

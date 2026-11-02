@@ -82,9 +82,9 @@ func TestSignedClaimsFieldNumbers(t *testing.T) {
 		})
 	}
 	for msg, want := range map[proto.Message]int{
-		&pb.SIIndexerEntry{}: 5, &pb.VerifierEntry{}: 2, &pb.EvictNodeRequest{}: 4,
-		&pb.ConsensusParamsUpdate{}: 13, &pb.ConsensusMutableParams{}: 8,
-		&pb.TableRegistrySnapshot{}: 9, &pb.TableIncarnation{}: 18, &pb.AddTableCmd{}: 8,
+		&pb.SIIndexerEntry{}: 5, &pb.VerifierEntry{}: 11, &pb.EvictNodeRequest{}: 4,
+		&pb.ConsensusParamsUpdate{}: 14, &pb.ConsensusMutableParams{}: 9,
+		&pb.TableRegistrySnapshot{}: 12, &pb.TableIncarnation{}: 20, &pb.AddTableCmd{}: 8,
 		&pb.SeedLegacyTablesCmd{}: 3, &pb.RecordTablePurgedCmd{}: 4,
 		&pb.NodeRegistration{}: 8, &pb.NodeRef{}: 4, &pb.RCRecord{}: 6, &pb.PromotionAck{}: 10, &pb.CleanupAck{}: 6,
 		&pb.RegisterRCCmd{}: 2, &pb.RecordPromotionAckCmd{}: 2, &pb.RecordCleanupAckCmd{}: 2,
@@ -118,8 +118,8 @@ func TestSourceUnavailableAdmissionCodeIsTen(t *testing.T) {
 	if got := int32(pb.AdmissionCode_ADMISSION_CODE_LANE_BUDGET_EXCEEDED); got != 9 {
 		t.Fatalf("ADMISSION_CODE_LANE_BUDGET_EXCEEDED moved to %d", got)
 	}
-	if n := pb.AdmissionCode(0).Descriptor().Values().Len(); n != 12 {
-		t.Fatalf("AdmissionCode has %d values, want 12", n)
+	if n := pb.AdmissionCode(0).Descriptor().Values().Len(); n != 14 {
+		t.Fatalf("AdmissionCode has %d values, want 14", n)
 	}
 }
 

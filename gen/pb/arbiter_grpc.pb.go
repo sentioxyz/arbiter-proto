@@ -567,6 +567,8 @@ const (
 	VerifierGateway_SubmitAttestation_FullMethodName              = "/arbiter.VerifierGateway/SubmitAttestation"
 	VerifierGateway_SubmitSnapshotQueryAttestation_FullMethodName = "/arbiter.VerifierGateway/SubmitSnapshotQueryAttestation"
 	VerifierGateway_SubmitByteSideScan_FullMethodName             = "/arbiter.VerifierGateway/SubmitByteSideScan"
+	VerifierGateway_SubmitMemberReady_FullMethodName              = "/arbiter.VerifierGateway/SubmitMemberReady"
+	VerifierGateway_SubmitMemberCheckpoint_FullMethodName         = "/arbiter.VerifierGateway/SubmitMemberCheckpoint"
 )
 
 // VerifierGatewayClient is the client API for VerifierGateway service.
@@ -585,6 +587,15 @@ type VerifierGatewayClient interface {
 	SubmitSnapshotQueryAttestation(ctx context.Context, in *SnapshotQueryAttestation, opts ...grpc.CallOption) (*Ack, error)
 	// Idempotency key: (replica_id, block_seq).
 	SubmitByteSideScan(ctx context.Context, in *ByteSideScanMsg, opts ...grpc.CallOption) (*Ack, error)
+	// A member reports its replicas of one group (Raft tag 40). Leader-only; the
+	// request is the Raft command. FAILED_PRECONDITION "member readiness is
+	// refused until the placement switch is on" before it (plan S3-E1 K67).
+	// Idempotent for a repeat at the same generation. Ack means committed.
+	SubmitMemberReady(ctx context.Context, in *MemberReadyCmd, opts ...grpc.CallOption) (*Ack, error)
+	// A member submits a signed checkpoint (Raft tag 41). Leader-only; the
+	// request is the Raft command. FAILED_PRECONDITION "member checkpoints are
+	// refused until the checkpoints switch is on" before it. Ack means committed.
+	SubmitMemberCheckpoint(ctx context.Context, in *MemberCheckpointCmd, opts ...grpc.CallOption) (*Ack, error)
 }
 
 type verifierGatewayClient struct {
@@ -644,6 +655,26 @@ func (c *verifierGatewayClient) SubmitByteSideScan(ctx context.Context, in *Byte
 	return out, nil
 }
 
+func (c *verifierGatewayClient) SubmitMemberReady(ctx context.Context, in *MemberReadyCmd, opts ...grpc.CallOption) (*Ack, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Ack)
+	err := c.cc.Invoke(ctx, VerifierGateway_SubmitMemberReady_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *verifierGatewayClient) SubmitMemberCheckpoint(ctx context.Context, in *MemberCheckpointCmd, opts ...grpc.CallOption) (*Ack, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Ack)
+	err := c.cc.Invoke(ctx, VerifierGateway_SubmitMemberCheckpoint_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // VerifierGatewayServer is the server API for VerifierGateway service.
 // All implementations must embed UnimplementedVerifierGatewayServer
 // for forward compatibility.
@@ -660,6 +691,15 @@ type VerifierGatewayServer interface {
 	SubmitSnapshotQueryAttestation(context.Context, *SnapshotQueryAttestation) (*Ack, error)
 	// Idempotency key: (replica_id, block_seq).
 	SubmitByteSideScan(context.Context, *ByteSideScanMsg) (*Ack, error)
+	// A member reports its replicas of one group (Raft tag 40). Leader-only; the
+	// request is the Raft command. FAILED_PRECONDITION "member readiness is
+	// refused until the placement switch is on" before it (plan S3-E1 K67).
+	// Idempotent for a repeat at the same generation. Ack means committed.
+	SubmitMemberReady(context.Context, *MemberReadyCmd) (*Ack, error)
+	// A member submits a signed checkpoint (Raft tag 41). Leader-only; the
+	// request is the Raft command. FAILED_PRECONDITION "member checkpoints are
+	// refused until the checkpoints switch is on" before it. Ack means committed.
+	SubmitMemberCheckpoint(context.Context, *MemberCheckpointCmd) (*Ack, error)
 	mustEmbedUnimplementedVerifierGatewayServer()
 }
 
@@ -681,6 +721,12 @@ func (UnimplementedVerifierGatewayServer) SubmitSnapshotQueryAttestation(context
 }
 func (UnimplementedVerifierGatewayServer) SubmitByteSideScan(context.Context, *ByteSideScanMsg) (*Ack, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SubmitByteSideScan not implemented")
+}
+func (UnimplementedVerifierGatewayServer) SubmitMemberReady(context.Context, *MemberReadyCmd) (*Ack, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SubmitMemberReady not implemented")
+}
+func (UnimplementedVerifierGatewayServer) SubmitMemberCheckpoint(context.Context, *MemberCheckpointCmd) (*Ack, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SubmitMemberCheckpoint not implemented")
 }
 func (UnimplementedVerifierGatewayServer) mustEmbedUnimplementedVerifierGatewayServer() {}
 func (UnimplementedVerifierGatewayServer) testEmbeddedByValue()                         {}
@@ -768,6 +814,42 @@ func _VerifierGateway_SubmitByteSideScan_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _VerifierGateway_SubmitMemberReady_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MemberReadyCmd)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VerifierGatewayServer).SubmitMemberReady(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VerifierGateway_SubmitMemberReady_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VerifierGatewayServer).SubmitMemberReady(ctx, req.(*MemberReadyCmd))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _VerifierGateway_SubmitMemberCheckpoint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MemberCheckpointCmd)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VerifierGatewayServer).SubmitMemberCheckpoint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VerifierGateway_SubmitMemberCheckpoint_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VerifierGatewayServer).SubmitMemberCheckpoint(ctx, req.(*MemberCheckpointCmd))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // VerifierGateway_ServiceDesc is the grpc.ServiceDesc for VerifierGateway service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -786,6 +868,14 @@ var VerifierGateway_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SubmitByteSideScan",
 			Handler:    _VerifierGateway_SubmitByteSideScan_Handler,
+		},
+		{
+			MethodName: "SubmitMemberReady",
+			Handler:    _VerifierGateway_SubmitMemberReady_Handler,
+		},
+		{
+			MethodName: "SubmitMemberCheckpoint",
+			Handler:    _VerifierGateway_SubmitMemberCheckpoint_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
