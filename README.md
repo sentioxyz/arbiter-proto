@@ -2,7 +2,7 @@
 
 Wire contract for the Sentio Arbiter (L3-block sequencer + admission + attestation collector + safe-state publisher). The `.proto` files and the generated Go live here; consumers import `pb "github.com/sentioxyz/arbiter-proto/gen/pb"` — the same pattern as `rewriter-go/gen/pb`.
 
-Design source of truth: housegate `docs/superpowers/specs/2026-06-30-sentio-arbiter-design.md` (§11 services, §4.1 Raft command alphabet).
+Design source of truth: internal design doc `2026-06-30-sentio-arbiter-design` (§11 services, §4.1 Raft command alphabet).
 
 ## Layout
 
@@ -10,8 +10,8 @@ Design source of truth: housegate `docs/superpowers/specs/2026-06-30-sentio-arbi
 |---|---|
 | `proto/replay.proto` | Wire mirror of housegate `pkg/replay` reused types. Field names are frozen against those types' JSON tags — a conformance test in the `arbiter` repo enforces parity. |
 | `proto/arbiter.proto` | Arbiter domain messages + the six gRPC services. |
-| `proto/consensus.proto` | Signed consensus-parameter transitions and `ConsensusAdmin` capability/read/update RPCs. Design: `docs/superpowers/specs/2026-09-17-consensus-parameter-updates.md`. |
-| `proto/da.proto` | Payload store / DA layer: `PayloadStore` (limits, inline+chunked put with ingest lease, batch interleaved fetch, stat) + `PayloadLifecycle` (add-only pins, release-as-permission). Design: `docs/superpowers/specs/2026-07-14-da-payload-store-api-design.md`. |
+| `proto/consensus.proto` | Signed consensus-parameter transitions and `ConsensusAdmin` capability/read/update RPCs. Design: internal design doc `2026-09-17-consensus-parameter-updates`. |
+| `proto/da.proto` | Payload store / DA layer: `PayloadStore` (limits, inline+chunked put with ingest lease, batch interleaved fetch, stat) + `PayloadLifecycle` (add-only pins, release-as-permission). Design: internal design doc `2026-07-14-da-payload-store-api-design`. |
 | `proto/raftlog.proto` | The replicated-FSM command alphabet (Raft log entry payloads). |
 | `gen/pb` | Generated Go (committed). |
 

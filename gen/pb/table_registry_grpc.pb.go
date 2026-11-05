@@ -4,8 +4,8 @@
 // - protoc             (unknown)
 // source: table_registry.proto
 
-// table_registry — the dynamic storage-integrity table set (design
-// housegate docs/superpowers/specs/2026-09-23-dynamic-si-table-set-design.md).
+// table_registry — the dynamic storage-integrity table set (internal
+// design doc 2026-09-23-dynamic-si-table-set-design).
 // The leader observes the L2 Databases contract and proposes these commands
 // with the chain evidence; Apply only checks them deterministically.
 
