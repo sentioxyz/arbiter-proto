@@ -37,7 +37,8 @@ type TableRegistryClient interface {
 	// FAILED_PRECONDITION "table registry is disabled" until the governed
 	// parameter is committed.
 	GetTableRegistry(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*TableRegistrySnapshot, error)
-	// Full snapshots, coalesced: intermediate versions may be skipped. Waits
+	// Snapshots, coalesced: intermediate versions may be skipped. Full
+	// snapshots unless the request sets accept_delta. Waits
 	// while the registry is disabled; ends with NotLeader when this node loses
 	// leadership.
 	WatchTableRegistry(ctx context.Context, in *WatchTableRegistryRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TableRegistrySnapshot], error)
@@ -100,7 +101,8 @@ type TableRegistryServer interface {
 	// FAILED_PRECONDITION "table registry is disabled" until the governed
 	// parameter is committed.
 	GetTableRegistry(context.Context, *emptypb.Empty) (*TableRegistrySnapshot, error)
-	// Full snapshots, coalesced: intermediate versions may be skipped. Waits
+	// Snapshots, coalesced: intermediate versions may be skipped. Full
+	// snapshots unless the request sets accept_delta. Waits
 	// while the registry is disabled; ends with NotLeader when this node loses
 	// leadership.
 	WatchTableRegistry(*WatchTableRegistryRequest, grpc.ServerStreamingServer[TableRegistrySnapshot]) error

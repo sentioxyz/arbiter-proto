@@ -80,7 +80,7 @@ func TestTracksFieldNumbers(t *testing.T) {
 		&pb.TrackFrontier{}: 3, &pb.SafeSnapshotManifest{}: 11, &pb.L3BlockTrack{}: 2, &pb.L3BlockHeader{}: 14,
 		&pb.UnsafeCleanup{}: 5, &pb.CleanupAck{}: 6, &pb.ConsensusParamsUpdate{}: 15, &pb.ConsensusMutableParams{}: 10,
 		&pb.QuarantineIndexerCmd{}: 4, &pb.ReleaseIndexerCmd{}: 4, &pb.IndexerTrackView{}: 9, &pb.TrackStateView{}: 6,
-		&pb.TableRegistrySnapshot{}: 12,
+		&pb.TableRegistrySnapshot{}: 14,
 	} {
 		if got := msg.ProtoReflect().Descriptor().Fields().Len(); got != want {
 			t.Fatalf("%s field count = %d, want %d", msg.ProtoReflect().Descriptor().Name(), got, want)
