@@ -171,9 +171,13 @@ type ConsensusMutableParams struct {
 	TracksEnabled bool `protobuf:"varint,8,opt,name=tracks_enabled,json=tracksEnabled,proto3" json:"tracks_enabled,omitempty"`
 	// The stage-3 parameter (housegate spec 2026-10-14 §6.1, §10.4): absent until
 	// the v21 activation; then carried complete by every update.
-	Stage3        *Stage3Params `protobuf:"bytes,9,opt,name=stage3,proto3" json:"stage3,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Stage3 *Stage3Params `protobuf:"bytes,9,opt,name=stage3,proto3" json:"stage3,omitempty"`
+	// The promotion finality gate: false until one authority-signed update after
+	// the tracks activation sets it, then carried by every update and never
+	// lowered.
+	PromotionFinalityGate bool `protobuf:"varint,10,opt,name=promotion_finality_gate,json=promotionFinalityGate,proto3" json:"promotion_finality_gate,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *ConsensusMutableParams) Reset() {
@@ -269,6 +273,13 @@ func (x *ConsensusMutableParams) GetStage3() *Stage3Params {
 	return nil
 }
 
+func (x *ConsensusMutableParams) GetPromotionFinalityGate() bool {
+	if x != nil {
+		return x.PromotionFinalityGate
+	}
+	return false
+}
+
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
 // Authority addresses are lowercase, sorted and deduplicated before hashing.
 // authority_jws covers every field; it uses a dedicated versioned purpose
@@ -333,9 +344,18 @@ type ConsensusParamsUpdate struct {
 	// data-plane node not on a quarantined track advertises "stage3_v1"; snapshots
 	// are written as v21 from its commit on. Afterwards every update carries it.
 	// It joins the params digest only once set, so earlier digests are unchanged.
-	Stage3        *Stage3Params `protobuf:"bytes,14,opt,name=stage3,proto3" json:"stage3,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Stage3 *Stage3Params `protobuf:"bytes,14,opt,name=stage3,proto3" json:"stage3,omitempty"`
+	// The promotion finality gate: raise-only; once set every update must carry
+	// it, and it needs tracks_enabled (earlier or in the same update). While it
+	// is set, RecordPromotionIssued is refused when any statement the promotion
+	// covers is not Promotable, that is quorum-verified with its block's anchor
+	// final and last-mergeable. Before it the gate lives only in the leader's
+	// work set and the authority signature. It changes Apply, so every voter
+	// must run a binary that knows the field before an update sets it. It joins
+	// the params digest only once set, so earlier digests are unchanged.
+	PromotionFinalityGate bool `protobuf:"varint,15,opt,name=promotion_finality_gate,json=promotionFinalityGate,proto3" json:"promotion_finality_gate,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *ConsensusParamsUpdate) Reset() {
@@ -464,6 +484,13 @@ func (x *ConsensusParamsUpdate) GetStage3() *Stage3Params {
 		return x.Stage3
 	}
 	return nil
+}
+
+func (x *ConsensusParamsUpdate) GetPromotionFinalityGate() bool {
+	if x != nil {
+		return x.PromotionFinalityGate
+	}
+	return false
 }
 
 // UpdateConsensusParamsCmd is both the administration request and the
@@ -2590,7 +2617,7 @@ var File_consensus_proto protoreflect.FileDescriptor
 
 const file_consensus_proto_rawDesc = "" +
 	"\n" +
-	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xfb\x03\n" +
+	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xb3\x04\n" +
 	"\x16ConsensusMutableParams\x12/\n" +
 	"\x13authority_addresses\x18\x01 \x03(\tR\x12authorityAddresses\x12\x1f\n" +
 	"\vmax_writers\x18\x02 \x01(\x04R\n" +
@@ -2602,7 +2629,9 @@ const file_consensus_proto_rawDesc = "" +
 	"siIndexers\x124\n" +
 	"\tverifiers\x18\a \x03(\v2\x16.arbiter.VerifierEntryR\tverifiers\x12%\n" +
 	"\x0etracks_enabled\x18\b \x01(\bR\rtracksEnabled\x12-\n" +
-	"\x06stage3\x18\t \x01(\v2\x15.arbiter.Stage3ParamsR\x06stage3\"\xdc\x05\n" +
+	"\x06stage3\x18\t \x01(\v2\x15.arbiter.Stage3ParamsR\x06stage3\x126\n" +
+	"\x17promotion_finality_gate\x18\n" +
+	" \x01(\bR\x15promotionFinalityGate\"\x94\x06\n" +
 	"\x15ConsensusParamsUpdate\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12.\n" +
@@ -2621,7 +2650,8 @@ const file_consensus_proto_rawDesc = "" +
 	"siIndexers\x124\n" +
 	"\tverifiers\x18\f \x03(\v2\x16.arbiter.VerifierEntryR\tverifiers\x12%\n" +
 	"\x0etracks_enabled\x18\r \x01(\bR\rtracksEnabled\x12-\n" +
-	"\x06stage3\x18\x0e \x01(\v2\x15.arbiter.Stage3ParamsR\x06stage3\"w\n" +
+	"\x06stage3\x18\x0e \x01(\v2\x15.arbiter.Stage3ParamsR\x06stage3\x126\n" +
+	"\x17promotion_finality_gate\x18\x0f \x01(\bR\x15promotionFinalityGate\"w\n" +
 	"\x18UpdateConsensusParamsCmd\x126\n" +
 	"\x06update\x18\x01 \x01(\v2\x1e.arbiter.ConsensusParamsUpdateR\x06update\x12#\n" +
 	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"\xb8\x01\n" +
