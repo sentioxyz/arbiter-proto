@@ -1745,10 +1745,12 @@ type MembershipClient interface {
 	// RenewNodeLease renews the caller's membership lease (Raft tag 44). Once
 	// membership_lease_l2_blocks is committed, an Active node whose last
 	// renewal (or MarkActive) is that many L2 blocks behind the committed table
-	// registry cursor becomes Syncing, as if it had deactivated. Leader-only;
-	// FAILED_PRECONDITION before the lease parameter is committed and for a
-	// node that is not Active (it returns with MarkActive at its current
-	// registration_seq). Ack means committed.
+	// registry cursor becomes Syncing, as if it had deactivated. Leader-only.
+	// Refused with INVALID_ARGUMENT, not FAILED_PRECONDITION (which data-plane
+	// clients read as "not the leader" and retry), before the lease parameter
+	// is committed and for a node that is not Active; a running node answers
+	// the latter with MarkActive at its current registration_seq. Ack means
+	// committed.
 	RenewNodeLease(ctx context.Context, in *NodeLeaseRenewal, opts ...grpc.CallOption) (*Ack, error)
 }
 
@@ -1807,10 +1809,12 @@ type MembershipServer interface {
 	// RenewNodeLease renews the caller's membership lease (Raft tag 44). Once
 	// membership_lease_l2_blocks is committed, an Active node whose last
 	// renewal (or MarkActive) is that many L2 blocks behind the committed table
-	// registry cursor becomes Syncing, as if it had deactivated. Leader-only;
-	// FAILED_PRECONDITION before the lease parameter is committed and for a
-	// node that is not Active (it returns with MarkActive at its current
-	// registration_seq). Ack means committed.
+	// registry cursor becomes Syncing, as if it had deactivated. Leader-only.
+	// Refused with INVALID_ARGUMENT, not FAILED_PRECONDITION (which data-plane
+	// clients read as "not the leader" and retry), before the lease parameter
+	// is committed and for a node that is not Active; a running node answers
+	// the latter with MarkActive at its current registration_seq. Ack means
+	// committed.
 	RenewNodeLease(context.Context, *NodeLeaseRenewal) (*Ack, error)
 	mustEmbedUnimplementedMembershipServer()
 }
