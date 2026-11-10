@@ -60,6 +60,10 @@ message ConsensusMutableParams {
   // The anchor finality quorum: absent until one authority-signed update sets
   // it with voters, then carried by every update; only quorum may change.
   AnchorFinalityParams anchor_finality = 15;
+  // The governance authority threshold k: 0 until an authority-signed update
+  // sets it (effective k is then 1), afterwards carried non-zero by every
+  // update.
+  uint32 authority_threshold = 16;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -186,6 +190,25 @@ message ConsensusParamsUpdate {
   // voter must run a binary that knows both first. Absent from the params
   // digest while unset.
   AnchorFinalityParams anchor_finality = 20;
+  // The governance authority threshold k (k-of-n). 0 means never set, and the
+  // effective threshold is then 1: any single member of the authority set
+  // authorizes, as before the field existed. Once committed non-zero, every
+  // governance command (consensus updates, query-profile activation, node
+  // eviction, indexer quarantine and release, track settle, group rebalance,
+  // snapshot-query abort) needs authority_jws signatures from at least k
+  // distinct members of the current set; operational commands the leader
+  // signs automatically (promotion, cleanup, member lagging, verifier
+  // reselection) stay single-signature. A multi-signature authority_jws is
+  // two or more compact JWS joined by "~", ordered by strictly ascending
+  // recovered signer address (lowercase 0x hex); with k = 1 only a single
+  // compact JWS is accepted. This update itself is authorized by the k in
+  // force before it, so raising and lowering both need the old k. It must
+  // not exceed the number of authority_addresses of this update, and once set
+  // every update must carry a non-zero value. It changes Apply, so every
+  // voter must run a binary that knows the field before an update sets it.
+  // It joins the params digest only once set, so earlier digests are
+  // unchanged.
+  uint32 authority_threshold = 21;
 }
 
 // VoterEntry is one enrolled Raft voter. consent_sig is lowercase hex of the

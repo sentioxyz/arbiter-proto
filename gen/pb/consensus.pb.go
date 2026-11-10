@@ -195,8 +195,12 @@ type ConsensusMutableParams struct {
 	// The anchor finality quorum: absent until one authority-signed update sets
 	// it with voters, then carried by every update; only quorum may change.
 	AnchorFinality *AnchorFinalityParams `protobuf:"bytes,15,opt,name=anchor_finality,json=anchorFinality,proto3" json:"anchor_finality,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// The governance authority threshold k: 0 until an authority-signed update
+	// sets it (effective k is then 1), afterwards carried non-zero by every
+	// update.
+	AuthorityThreshold uint32 `protobuf:"varint,16,opt,name=authority_threshold,json=authorityThreshold,proto3" json:"authority_threshold,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *ConsensusMutableParams) Reset() {
@@ -334,6 +338,13 @@ func (x *ConsensusMutableParams) GetAnchorFinality() *AnchorFinalityParams {
 	return nil
 }
 
+func (x *ConsensusMutableParams) GetAuthorityThreshold() uint32 {
+	if x != nil {
+		return x.AuthorityThreshold
+	}
+	return 0
+}
+
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
 // Authority addresses are lowercase, sorted and deduplicated before hashing.
 // authority_jws covers every field; it uses a dedicated versioned purpose
@@ -459,8 +470,27 @@ type ConsensusParamsUpdate struct {
 	// voter must run a binary that knows both first. Absent from the params
 	// digest while unset.
 	AnchorFinality *AnchorFinalityParams `protobuf:"bytes,20,opt,name=anchor_finality,json=anchorFinality,proto3" json:"anchor_finality,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// The governance authority threshold k (k-of-n). 0 means never set, and the
+	// effective threshold is then 1: any single member of the authority set
+	// authorizes, as before the field existed. Once committed non-zero, every
+	// governance command (consensus updates, query-profile activation, node
+	// eviction, indexer quarantine and release, track settle, group rebalance,
+	// snapshot-query abort) needs authority_jws signatures from at least k
+	// distinct members of the current set; operational commands the leader
+	// signs automatically (promotion, cleanup, member lagging, verifier
+	// reselection) stay single-signature. A multi-signature authority_jws is
+	// two or more compact JWS joined by "~", ordered by strictly ascending
+	// recovered signer address (lowercase 0x hex); with k = 1 only a single
+	// compact JWS is accepted. This update itself is authorized by the k in
+	// force before it, so raising and lowering both need the old k. It must
+	// not exceed the number of authority_addresses of this update, and once set
+	// every update must carry a non-zero value. It changes Apply, so every
+	// voter must run a binary that knows the field before an update sets it.
+	// It joins the params digest only once set, so earlier digests are
+	// unchanged.
+	AuthorityThreshold uint32 `protobuf:"varint,21,opt,name=authority_threshold,json=authorityThreshold,proto3" json:"authority_threshold,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *ConsensusParamsUpdate) Reset() {
@@ -631,6 +661,13 @@ func (x *ConsensusParamsUpdate) GetAnchorFinality() *AnchorFinalityParams {
 		return x.AnchorFinality
 	}
 	return nil
+}
+
+func (x *ConsensusParamsUpdate) GetAuthorityThreshold() uint32 {
+	if x != nil {
+		return x.AuthorityThreshold
+	}
+	return 0
 }
 
 // VoterEntry is one enrolled Raft voter. consent_sig is lowercase hex of the
@@ -3058,7 +3095,7 @@ var File_consensus_proto protoreflect.FileDescriptor
 
 const file_consensus_proto_rawDesc = "" +
 	"\n" +
-	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xd7\x06\n" +
+	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\x88\a\n" +
 	"\x16ConsensusMutableParams\x12/\n" +
 	"\x13authority_addresses\x18\x01 \x03(\tR\x12authorityAddresses\x12\x1f\n" +
 	"\vmax_writers\x18\x02 \x01(\x04R\n" +
@@ -3077,7 +3114,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\x1dtable_admission_rules_version\x18\f \x01(\rR\x1atableAdmissionRulesVersion\x122\n" +
 	"\x15part_claim_uniqueness\x18\r \x01(\bR\x13partClaimUniqueness\x12+\n" +
 	"\x06voters\x18\x0e \x03(\v2\x13.arbiter.VoterEntryR\x06voters\x12F\n" +
-	"\x0fanchor_finality\x18\x0f \x01(\v2\x1d.arbiter.AnchorFinalityParamsR\x0eanchorFinality\"\xb8\b\n" +
+	"\x0fanchor_finality\x18\x0f \x01(\v2\x1d.arbiter.AnchorFinalityParamsR\x0eanchorFinality\x12/\n" +
+	"\x13authority_threshold\x18\x10 \x01(\rR\x12authorityThreshold\"\xe9\b\n" +
 	"\x15ConsensusParamsUpdate\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12.\n" +
@@ -3102,7 +3140,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\x1dtable_admission_rules_version\x18\x11 \x01(\rR\x1atableAdmissionRulesVersion\x122\n" +
 	"\x15part_claim_uniqueness\x18\x12 \x01(\bR\x13partClaimUniqueness\x12+\n" +
 	"\x06voters\x18\x13 \x03(\v2\x13.arbiter.VoterEntryR\x06voters\x12F\n" +
-	"\x0fanchor_finality\x18\x14 \x01(\v2\x1d.arbiter.AnchorFinalityParamsR\x0eanchorFinality\"o\n" +
+	"\x0fanchor_finality\x18\x14 \x01(\v2\x1d.arbiter.AnchorFinalityParamsR\x0eanchorFinality\x12/\n" +
+	"\x13authority_threshold\x18\x15 \x01(\rR\x12authorityThreshold\"o\n" +
 	"\n" +
 	"VoterEntry\x12\x19\n" +
 	"\bvoter_id\x18\x01 \x01(\tR\avoterId\x12%\n" +

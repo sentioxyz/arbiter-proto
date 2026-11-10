@@ -157,6 +157,7 @@ func TestAnchorFinalityFieldLedgers(t *testing.T) {
 func TestAnchorFinalityFieldNumbers(t *testing.T) {
 	for _, msg := range []proto.Message{&pb.ConsensusMutableParams{}, &pb.ConsensusParamsUpdate{}, &pb.ProtocolInfo{}, &pb.BlockVerification{}} {
 		d := protodescProto(msg)
+		stripAuthorityThresholdField(t, d)
 		want := anchorFinalityAppendedFields[d.GetName()]
 		if len(d.Field) < len(want) {
 			t.Fatalf("%s: %d fields", d.GetName(), len(d.Field))
