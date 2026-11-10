@@ -68,6 +68,10 @@ message ConsensusMutableParams {
   // after the table registry activation sets it, then carried non-zero by
   // every update.
   uint64 membership_lease_l2_blocks = 17;
+  // The promotion acknowledgement delta snapshot: false until one
+  // authority-signed update after manifest_delta_snapshot sets it, then
+  // carried by every update and never lowered.
+  bool promotion_ack_delta_snapshot = 18;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -233,6 +237,16 @@ message ConsensusParamsUpdate {
   // one that renews, before an update sets it. It joins the params digest
   // only once set, so earlier digests are unchanged.
   uint64 membership_lease_l2_blocks = 22;
+  // The promotion acknowledgement delta snapshot: raise-only; once set every
+  // update must carry it, and it needs manifest_delta_snapshot (earlier or in
+  // the same update). From its commit on, snapshots are written as v23, which
+  // stores the complete safe-partition inventory of every acknowledged
+  // promotion as a delta against the previous acknowledgement of its
+  // partition. It changes no Apply rule, but an older binary cannot read v23,
+  // so every voter must run a binary that knows the field before an update
+  // sets it. It joins the params digest only once set, so earlier digests are
+  // unchanged.
+  bool promotion_ack_delta_snapshot = 23;
 }
 
 // VoterEntry is one enrolled Raft voter. consent_sig is lowercase hex of the
