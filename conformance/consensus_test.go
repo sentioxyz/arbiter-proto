@@ -15,17 +15,17 @@ func TestConsensusUpdateContract(t *testing.T) {
 		kinds   []protoreflect.Kind
 	}{
 		{&pb.ConsensusParamsUpdate{},
-			[]protoreflect.Name{"network_id", "genesis_snapshot_id", "expected_epoch", "previous_params_digest", "authority_addresses", "max_writers", "expected_promotion_seq", "artifact_disposition_capability", "table_registry", "client_lanes", "si_indexers", "verifiers", "tracks_enabled", "stage3", "promotion_finality_gate", "manifest_delta_snapshot", "table_admission_rules_version"},
-			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.StringKind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.Uint64Kind, protoreflect.Uint32Kind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.BoolKind, protoreflect.MessageKind, protoreflect.BoolKind, protoreflect.BoolKind, protoreflect.Uint32Kind}},
+			[]protoreflect.Name{"network_id", "genesis_snapshot_id", "expected_epoch", "previous_params_digest", "authority_addresses", "max_writers", "expected_promotion_seq", "artifact_disposition_capability", "table_registry", "client_lanes", "si_indexers", "verifiers", "tracks_enabled", "stage3", "promotion_finality_gate", "manifest_delta_snapshot", "table_admission_rules_version", "part_claim_uniqueness", "voters", "anchor_finality"},
+			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.StringKind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.Uint64Kind, protoreflect.Uint32Kind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.BoolKind, protoreflect.MessageKind, protoreflect.BoolKind, protoreflect.BoolKind, protoreflect.Uint32Kind, protoreflect.BoolKind, protoreflect.MessageKind, protoreflect.MessageKind}},
 		{&pb.UpdateConsensusParamsCmd{},
 			[]protoreflect.Name{"update", "authority_jws"},
 			[]protoreflect.Kind{protoreflect.MessageKind, protoreflect.StringKind}},
 		{&pb.ConsensusMutableParams{},
-			[]protoreflect.Name{"authority_addresses", "max_writers", "artifact_disposition_capability", "table_registry", "client_lanes", "si_indexers", "verifiers", "tracks_enabled", "stage3", "promotion_finality_gate", "manifest_delta_snapshot", "table_admission_rules_version"},
-			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.Uint32Kind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.BoolKind, protoreflect.MessageKind, protoreflect.BoolKind, protoreflect.BoolKind, protoreflect.Uint32Kind}},
+			[]protoreflect.Name{"authority_addresses", "max_writers", "artifact_disposition_capability", "table_registry", "client_lanes", "si_indexers", "verifiers", "tracks_enabled", "stage3", "promotion_finality_gate", "manifest_delta_snapshot", "table_admission_rules_version", "part_claim_uniqueness", "voters", "anchor_finality"},
+			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.Uint32Kind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.BoolKind, protoreflect.MessageKind, protoreflect.BoolKind, protoreflect.BoolKind, protoreflect.Uint32Kind, protoreflect.BoolKind, protoreflect.MessageKind, protoreflect.MessageKind}},
 		{&pb.ProtocolInfo{},
-			[]protoreflect.Name{"node_id", "protocol_version", "updates_enabled", "features"},
-			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.Uint32Kind, protoreflect.BoolKind, protoreflect.StringKind}},
+			[]protoreflect.Name{"node_id", "protocol_version", "updates_enabled", "features", "voter_ed25519_pubkey"},
+			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.Uint32Kind, protoreflect.BoolKind, protoreflect.StringKind, protoreflect.BytesKind}},
 		{&pb.ConsensusParamsState{},
 			[]protoreflect.Name{"protocol_version", "network_id", "genesis_snapshot_id", "bootstrap", "current", "epoch", "params_digest", "promotion_seq", "stage3_state"},
 			[]protoreflect.Kind{protoreflect.Uint32Kind, protoreflect.StringKind, protoreflect.StringKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.Uint64Kind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.MessageKind}},
@@ -41,7 +41,7 @@ func TestConsensusUpdateContract(t *testing.T) {
 				if f == nil || f.Number() != protoreflect.FieldNumber(i+1) || f.Kind() != tt.kinds[i] {
 					t.Fatalf("field %s = %v, want number %d kind %s", name, f, i+1, tt.kinds[i])
 				}
-				if f.IsList() != (name == "authority_addresses" || name == "features" || name == "si_indexers" || name == "verifiers") {
+				if f.IsList() != (name == "authority_addresses" || name == "features" || name == "si_indexers" || name == "verifiers" || name == "voters") {
 					t.Fatalf("field %s repeated = %v", name, f.IsList())
 				}
 			}

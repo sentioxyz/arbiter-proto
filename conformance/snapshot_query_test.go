@@ -428,6 +428,7 @@ func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.File
 			if got == nil {
 				t.Fatalf("old message removed: %s", m.GetName())
 			}
+			stripAnchorFinalityFields(t, got)
 			if want, ok := tableAdmissionRulesVersionFields[m.GetName()]; ok {
 				if len(got.Field) == 0 || !proto.Equal(got.Field[len(got.Field)-1], want) {
 					t.Fatalf("%s table admission rules version addition must be exactly %s = %d: %v", m.GetName(), want.GetName(), want.GetNumber(), got)
@@ -689,7 +690,8 @@ func TestSnapshotQueryLedgerCoversEveryNewMessage(t *testing.T) {
 			if !oldNames[name] {
 				_, covered := snapshotQueryFields[name]
 				_, stage3 := stage3Fields[name]
-				if _, consensus := stage3ConsensusFields[name]; !covered && !stage3 && !consensus {
+				_, anchor := anchorFinalityMessageFields[name]
+				if _, consensus := stage3ConsensusFields[name]; !covered && !stage3 && !consensus && !anchor {
 					t.Errorf("new message %s lacks every-field wire coverage", name)
 				}
 			}

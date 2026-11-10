@@ -56,7 +56,7 @@ func TestClientLanesFieldNumbers(t *testing.T) {
 	}
 	for msg, want := range map[proto.Message]int{
 		&pb.StatementID{}: 4, &pb.NodeRegistration{}: 8, &pb.ClientLaneParams{}: 1,
-		&pb.NodeFeatures{}: 2, &pb.NodeFeatureEntry{}: 3, &pb.ProtocolInfo{}: 4,
+		&pb.NodeFeatures{}: 2, &pb.NodeFeatureEntry{}: 3, &pb.ProtocolInfo{}: 5,
 		&pb.GetClientSeqStateRequest{}: 2, &pb.ClientSeqRange{}: 2, &pb.ClientSeqState{}: 4,
 	} {
 		if got := msg.ProtoReflect().Descriptor().Fields().Len(); got != want {

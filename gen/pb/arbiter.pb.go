@@ -3044,6 +3044,116 @@ func (x *StatementStatus) GetBoundSource() string {
 	return ""
 }
 
+// AnchorFinalityAttestation is one enrolled voter's signed judgment that a
+// block's anchor registry entry, read with the voter's own L2 RPC, holds the
+// block's state_root at l2_block_number and is final (and possibly
+// last-mergeable) under the committed AnchorFinalityParams. signature is
+// lowercase hex of the voter key's ed25519 signature over the voter message
+// hash of kind "anchor_finality", whose body is these fields minus signature
+// plus the committed policy (finality_mode, finality_confirmations,
+// last_mergeable_confirmations, l2_chain_id, registry_contract), in the
+// network's message context. The policy is not on the wire: an attestation
+// judged under another policy, chain or contract does not verify.
+type AnchorFinalityAttestation struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	VoterId       string                 `protobuf:"bytes,1,opt,name=voter_id,json=voterId,proto3" json:"voter_id,omitempty"`
+	L3BlockSeq    uint64                 `protobuf:"varint,2,opt,name=l3_block_seq,json=l3BlockSeq,proto3" json:"l3_block_seq,omitempty"`
+	L3BlockHash   string                 `protobuf:"bytes,3,opt,name=l3_block_hash,json=l3BlockHash,proto3" json:"l3_block_hash,omitempty"`
+	StateRoot     string                 `protobuf:"bytes,4,opt,name=state_root,json=stateRoot,proto3" json:"state_root,omitempty"`
+	L2BlockNumber uint64                 `protobuf:"varint,5,opt,name=l2_block_number,json=l2BlockNumber,proto3" json:"l2_block_number,omitempty"`
+	Final         bool                   `protobuf:"varint,6,opt,name=final,proto3" json:"final,omitempty"`
+	LastMergeable bool                   `protobuf:"varint,7,opt,name=last_mergeable,json=lastMergeable,proto3" json:"last_mergeable,omitempty"`
+	Signature     string                 `protobuf:"bytes,8,opt,name=signature,proto3" json:"signature,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AnchorFinalityAttestation) Reset() {
+	*x = AnchorFinalityAttestation{}
+	mi := &file_arbiter_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AnchorFinalityAttestation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AnchorFinalityAttestation) ProtoMessage() {}
+
+func (x *AnchorFinalityAttestation) ProtoReflect() protoreflect.Message {
+	mi := &file_arbiter_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AnchorFinalityAttestation.ProtoReflect.Descriptor instead.
+func (*AnchorFinalityAttestation) Descriptor() ([]byte, []int) {
+	return file_arbiter_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *AnchorFinalityAttestation) GetVoterId() string {
+	if x != nil {
+		return x.VoterId
+	}
+	return ""
+}
+
+func (x *AnchorFinalityAttestation) GetL3BlockSeq() uint64 {
+	if x != nil {
+		return x.L3BlockSeq
+	}
+	return 0
+}
+
+func (x *AnchorFinalityAttestation) GetL3BlockHash() string {
+	if x != nil {
+		return x.L3BlockHash
+	}
+	return ""
+}
+
+func (x *AnchorFinalityAttestation) GetStateRoot() string {
+	if x != nil {
+		return x.StateRoot
+	}
+	return ""
+}
+
+func (x *AnchorFinalityAttestation) GetL2BlockNumber() uint64 {
+	if x != nil {
+		return x.L2BlockNumber
+	}
+	return 0
+}
+
+func (x *AnchorFinalityAttestation) GetFinal() bool {
+	if x != nil {
+		return x.Final
+	}
+	return false
+}
+
+func (x *AnchorFinalityAttestation) GetLastMergeable() bool {
+	if x != nil {
+		return x.LastMergeable
+	}
+	return false
+}
+
+func (x *AnchorFinalityAttestation) GetSignature() string {
+	if x != nil {
+		return x.Signature
+	}
+	return ""
+}
+
 // GetClientSeqStateRequest names one accumulator subject: the account alone
 // for the legacy lane, account and lane for a client lane.
 type GetClientSeqStateRequest struct {
@@ -3056,7 +3166,7 @@ type GetClientSeqStateRequest struct {
 
 func (x *GetClientSeqStateRequest) Reset() {
 	*x = GetClientSeqStateRequest{}
-	mi := &file_arbiter_proto_msgTypes[36]
+	mi := &file_arbiter_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3068,7 +3178,7 @@ func (x *GetClientSeqStateRequest) String() string {
 func (*GetClientSeqStateRequest) ProtoMessage() {}
 
 func (x *GetClientSeqStateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[36]
+	mi := &file_arbiter_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3081,7 +3191,7 @@ func (x *GetClientSeqStateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetClientSeqStateRequest.ProtoReflect.Descriptor instead.
 func (*GetClientSeqStateRequest) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{36}
+	return file_arbiter_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *GetClientSeqStateRequest) GetClientAccount() string {
@@ -3109,7 +3219,7 @@ type ClientSeqRange struct {
 
 func (x *ClientSeqRange) Reset() {
 	*x = ClientSeqRange{}
-	mi := &file_arbiter_proto_msgTypes[37]
+	mi := &file_arbiter_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3121,7 +3231,7 @@ func (x *ClientSeqRange) String() string {
 func (*ClientSeqRange) ProtoMessage() {}
 
 func (x *ClientSeqRange) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[37]
+	mi := &file_arbiter_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3134,7 +3244,7 @@ func (x *ClientSeqRange) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClientSeqRange.ProtoReflect.Descriptor instead.
 func (*ClientSeqRange) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{37}
+	return file_arbiter_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ClientSeqRange) GetStart() uint64 {
@@ -3165,7 +3275,7 @@ type ClientSeqState struct {
 
 func (x *ClientSeqState) Reset() {
 	*x = ClientSeqState{}
-	mi := &file_arbiter_proto_msgTypes[38]
+	mi := &file_arbiter_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3177,7 +3287,7 @@ func (x *ClientSeqState) String() string {
 func (*ClientSeqState) ProtoMessage() {}
 
 func (x *ClientSeqState) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[38]
+	mi := &file_arbiter_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3190,7 +3300,7 @@ func (x *ClientSeqState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClientSeqState.ProtoReflect.Descriptor instead.
 func (*ClientSeqState) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{38}
+	return file_arbiter_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *ClientSeqState) GetFound() bool {
@@ -3236,7 +3346,7 @@ type GetPartitionStatesRequest struct {
 
 func (x *GetPartitionStatesRequest) Reset() {
 	*x = GetPartitionStatesRequest{}
-	mi := &file_arbiter_proto_msgTypes[39]
+	mi := &file_arbiter_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3248,7 +3358,7 @@ func (x *GetPartitionStatesRequest) String() string {
 func (*GetPartitionStatesRequest) ProtoMessage() {}
 
 func (x *GetPartitionStatesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[39]
+	mi := &file_arbiter_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3261,7 +3371,7 @@ func (x *GetPartitionStatesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPartitionStatesRequest.ProtoReflect.Descriptor instead.
 func (*GetPartitionStatesRequest) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{39}
+	return file_arbiter_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *GetPartitionStatesRequest) GetTableId() string {
@@ -3315,7 +3425,7 @@ type PartitionStateEntry struct {
 
 func (x *PartitionStateEntry) Reset() {
 	*x = PartitionStateEntry{}
-	mi := &file_arbiter_proto_msgTypes[40]
+	mi := &file_arbiter_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3327,7 +3437,7 @@ func (x *PartitionStateEntry) String() string {
 func (*PartitionStateEntry) ProtoMessage() {}
 
 func (x *PartitionStateEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[40]
+	mi := &file_arbiter_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3340,7 +3450,7 @@ func (x *PartitionStateEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PartitionStateEntry.ProtoReflect.Descriptor instead.
 func (*PartitionStateEntry) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{40}
+	return file_arbiter_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *PartitionStateEntry) GetTableId() string {
@@ -3429,7 +3539,7 @@ type PartitionStates struct {
 
 func (x *PartitionStates) Reset() {
 	*x = PartitionStates{}
-	mi := &file_arbiter_proto_msgTypes[41]
+	mi := &file_arbiter_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3441,7 +3551,7 @@ func (x *PartitionStates) String() string {
 func (*PartitionStates) ProtoMessage() {}
 
 func (x *PartitionStates) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[41]
+	mi := &file_arbiter_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3454,7 +3564,7 @@ func (x *PartitionStates) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PartitionStates.ProtoReflect.Descriptor instead.
 func (*PartitionStates) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{41}
+	return file_arbiter_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *PartitionStates) GetPromotionSeq() uint64 {
@@ -3497,7 +3607,7 @@ type GetPromotionOutcomesRequest struct {
 
 func (x *GetPromotionOutcomesRequest) Reset() {
 	*x = GetPromotionOutcomesRequest{}
-	mi := &file_arbiter_proto_msgTypes[42]
+	mi := &file_arbiter_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3509,7 +3619,7 @@ func (x *GetPromotionOutcomesRequest) String() string {
 func (*GetPromotionOutcomesRequest) ProtoMessage() {}
 
 func (x *GetPromotionOutcomesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[42]
+	mi := &file_arbiter_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3522,7 +3632,7 @@ func (x *GetPromotionOutcomesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPromotionOutcomesRequest.ProtoReflect.Descriptor instead.
 func (*GetPromotionOutcomesRequest) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{42}
+	return file_arbiter_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *GetPromotionOutcomesRequest) GetTableId() string {
@@ -3594,7 +3704,7 @@ type PromotionOutcome struct {
 
 func (x *PromotionOutcome) Reset() {
 	*x = PromotionOutcome{}
-	mi := &file_arbiter_proto_msgTypes[43]
+	mi := &file_arbiter_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3606,7 +3716,7 @@ func (x *PromotionOutcome) String() string {
 func (*PromotionOutcome) ProtoMessage() {}
 
 func (x *PromotionOutcome) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[43]
+	mi := &file_arbiter_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3619,7 +3729,7 @@ func (x *PromotionOutcome) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PromotionOutcome.ProtoReflect.Descriptor instead.
 func (*PromotionOutcome) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{43}
+	return file_arbiter_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *PromotionOutcome) GetPromotionSeq() uint64 {
@@ -3728,7 +3838,7 @@ type PromotionOutcomes struct {
 
 func (x *PromotionOutcomes) Reset() {
 	*x = PromotionOutcomes{}
-	mi := &file_arbiter_proto_msgTypes[44]
+	mi := &file_arbiter_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3740,7 +3850,7 @@ func (x *PromotionOutcomes) String() string {
 func (*PromotionOutcomes) ProtoMessage() {}
 
 func (x *PromotionOutcomes) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[44]
+	mi := &file_arbiter_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3753,7 +3863,7 @@ func (x *PromotionOutcomes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PromotionOutcomes.ProtoReflect.Descriptor instead.
 func (*PromotionOutcomes) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{44}
+	return file_arbiter_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *PromotionOutcomes) GetPromotionSeq() uint64 {
@@ -3805,7 +3915,7 @@ type StatementCandidates struct {
 
 func (x *StatementCandidates) Reset() {
 	*x = StatementCandidates{}
-	mi := &file_arbiter_proto_msgTypes[45]
+	mi := &file_arbiter_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3817,7 +3927,7 @@ func (x *StatementCandidates) String() string {
 func (*StatementCandidates) ProtoMessage() {}
 
 func (x *StatementCandidates) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[45]
+	mi := &file_arbiter_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3830,7 +3940,7 @@ func (x *StatementCandidates) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatementCandidates.ProtoReflect.Descriptor instead.
 func (*StatementCandidates) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{45}
+	return file_arbiter_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *StatementCandidates) GetStatementSeq() uint64 {
@@ -3919,7 +4029,7 @@ type VerifierEvidence struct {
 
 func (x *VerifierEvidence) Reset() {
 	*x = VerifierEvidence{}
-	mi := &file_arbiter_proto_msgTypes[46]
+	mi := &file_arbiter_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3931,7 +4041,7 @@ func (x *VerifierEvidence) String() string {
 func (*VerifierEvidence) ProtoMessage() {}
 
 func (x *VerifierEvidence) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[46]
+	mi := &file_arbiter_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3944,7 +4054,7 @@ func (x *VerifierEvidence) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifierEvidence.ProtoReflect.Descriptor instead.
 func (*VerifierEvidence) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{46}
+	return file_arbiter_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *VerifierEvidence) GetReplicaId() string {
@@ -4051,13 +4161,17 @@ type BlockVerification struct {
 	// the block had when its quorum latched (spec §7.4).
 	Reselections        []*BlockReselection `protobuf:"bytes,21,rep,name=reselections,proto3" json:"reselections,omitempty"`
 	ReselectionsAtLatch uint32              `protobuf:"varint,22,opt,name=reselections_at_latch,json=reselectionsAtLatch,proto3" json:"reselections_at_latch,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	// The latest anchor finality attestation each voter recorded for the block
+	// (RecordAnchorFinalityAttestationCmd), sorted by voter_id; empty before
+	// the anchor finality quorum is active.
+	FinalityAttestations []*AnchorFinalityAttestation `protobuf:"bytes,23,rep,name=finality_attestations,json=finalityAttestations,proto3" json:"finality_attestations,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *BlockVerification) Reset() {
 	*x = BlockVerification{}
-	mi := &file_arbiter_proto_msgTypes[47]
+	mi := &file_arbiter_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4069,7 +4183,7 @@ func (x *BlockVerification) String() string {
 func (*BlockVerification) ProtoMessage() {}
 
 func (x *BlockVerification) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[47]
+	mi := &file_arbiter_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4082,7 +4196,7 @@ func (x *BlockVerification) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BlockVerification.ProtoReflect.Descriptor instead.
 func (*BlockVerification) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{47}
+	return file_arbiter_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *BlockVerification) GetHeader() *L3BlockHeader {
@@ -4239,6 +4353,13 @@ func (x *BlockVerification) GetReselectionsAtLatch() uint32 {
 	return 0
 }
 
+func (x *BlockVerification) GetFinalityAttestations() []*AnchorFinalityAttestation {
+	if x != nil {
+		return x.FinalityAttestations
+	}
+	return nil
+}
+
 type BlockGroupRef struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	DatabaseId      string                 `protobuf:"bytes,1,opt,name=database_id,json=databaseId,proto3" json:"database_id,omitempty"`
@@ -4249,7 +4370,7 @@ type BlockGroupRef struct {
 
 func (x *BlockGroupRef) Reset() {
 	*x = BlockGroupRef{}
-	mi := &file_arbiter_proto_msgTypes[48]
+	mi := &file_arbiter_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4261,7 +4382,7 @@ func (x *BlockGroupRef) String() string {
 func (*BlockGroupRef) ProtoMessage() {}
 
 func (x *BlockGroupRef) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[48]
+	mi := &file_arbiter_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4274,7 +4395,7 @@ func (x *BlockGroupRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BlockGroupRef.ProtoReflect.Descriptor instead.
 func (*BlockGroupRef) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{48}
+	return file_arbiter_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *BlockGroupRef) GetDatabaseId() string {
@@ -4308,7 +4429,7 @@ type BlockReselection struct {
 
 func (x *BlockReselection) Reset() {
 	*x = BlockReselection{}
-	mi := &file_arbiter_proto_msgTypes[49]
+	mi := &file_arbiter_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4320,7 +4441,7 @@ func (x *BlockReselection) String() string {
 func (*BlockReselection) ProtoMessage() {}
 
 func (x *BlockReselection) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[49]
+	mi := &file_arbiter_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4333,7 +4454,7 @@ func (x *BlockReselection) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BlockReselection.ProtoReflect.Descriptor instead.
 func (*BlockReselection) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{49}
+	return file_arbiter_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *BlockReselection) GetReplaced() []string {
@@ -4396,7 +4517,7 @@ type SnapshotQueryControlBinding struct {
 
 func (x *SnapshotQueryControlBinding) Reset() {
 	*x = SnapshotQueryControlBinding{}
-	mi := &file_arbiter_proto_msgTypes[50]
+	mi := &file_arbiter_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4408,7 +4529,7 @@ func (x *SnapshotQueryControlBinding) String() string {
 func (*SnapshotQueryControlBinding) ProtoMessage() {}
 
 func (x *SnapshotQueryControlBinding) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[50]
+	mi := &file_arbiter_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4421,7 +4542,7 @@ func (x *SnapshotQueryControlBinding) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotQueryControlBinding.ProtoReflect.Descriptor instead.
 func (*SnapshotQueryControlBinding) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{50}
+	return file_arbiter_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *SnapshotQueryControlBinding) GetOperation() string {
@@ -4497,7 +4618,7 @@ type AcquireSnapshotQueryRequest struct {
 
 func (x *AcquireSnapshotQueryRequest) Reset() {
 	*x = AcquireSnapshotQueryRequest{}
-	mi := &file_arbiter_proto_msgTypes[51]
+	mi := &file_arbiter_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4509,7 +4630,7 @@ func (x *AcquireSnapshotQueryRequest) String() string {
 func (*AcquireSnapshotQueryRequest) ProtoMessage() {}
 
 func (x *AcquireSnapshotQueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[51]
+	mi := &file_arbiter_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4522,7 +4643,7 @@ func (x *AcquireSnapshotQueryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AcquireSnapshotQueryRequest.ProtoReflect.Descriptor instead.
 func (*AcquireSnapshotQueryRequest) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{51}
+	return file_arbiter_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *AcquireSnapshotQueryRequest) GetNetworkId() string {
@@ -4585,7 +4706,7 @@ type GetSnapshotQueryReservationRequest struct {
 
 func (x *GetSnapshotQueryReservationRequest) Reset() {
 	*x = GetSnapshotQueryReservationRequest{}
-	mi := &file_arbiter_proto_msgTypes[52]
+	mi := &file_arbiter_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4597,7 +4718,7 @@ func (x *GetSnapshotQueryReservationRequest) String() string {
 func (*GetSnapshotQueryReservationRequest) ProtoMessage() {}
 
 func (x *GetSnapshotQueryReservationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[52]
+	mi := &file_arbiter_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4610,7 +4731,7 @@ func (x *GetSnapshotQueryReservationRequest) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use GetSnapshotQueryReservationRequest.ProtoReflect.Descriptor instead.
 func (*GetSnapshotQueryReservationRequest) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{52}
+	return file_arbiter_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *GetSnapshotQueryReservationRequest) GetNetworkId() string {
@@ -4688,7 +4809,7 @@ type ReleaseSnapshotQueryRequest struct {
 
 func (x *ReleaseSnapshotQueryRequest) Reset() {
 	*x = ReleaseSnapshotQueryRequest{}
-	mi := &file_arbiter_proto_msgTypes[53]
+	mi := &file_arbiter_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4700,7 +4821,7 @@ func (x *ReleaseSnapshotQueryRequest) String() string {
 func (*ReleaseSnapshotQueryRequest) ProtoMessage() {}
 
 func (x *ReleaseSnapshotQueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[53]
+	mi := &file_arbiter_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4713,7 +4834,7 @@ func (x *ReleaseSnapshotQueryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReleaseSnapshotQueryRequest.ProtoReflect.Descriptor instead.
 func (*ReleaseSnapshotQueryRequest) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{53}
+	return file_arbiter_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *ReleaseSnapshotQueryRequest) GetNetworkId() string {
@@ -4793,7 +4914,7 @@ type GetSnapshotQueryStatusRequest struct {
 
 func (x *GetSnapshotQueryStatusRequest) Reset() {
 	*x = GetSnapshotQueryStatusRequest{}
-	mi := &file_arbiter_proto_msgTypes[54]
+	mi := &file_arbiter_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4805,7 +4926,7 @@ func (x *GetSnapshotQueryStatusRequest) String() string {
 func (*GetSnapshotQueryStatusRequest) ProtoMessage() {}
 
 func (x *GetSnapshotQueryStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[54]
+	mi := &file_arbiter_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4818,7 +4939,7 @@ func (x *GetSnapshotQueryStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSnapshotQueryStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetSnapshotQueryStatusRequest) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{54}
+	return file_arbiter_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *GetSnapshotQueryStatusRequest) GetNetworkId() string {
@@ -4880,7 +5001,7 @@ type SnapshotBarrier struct {
 
 func (x *SnapshotBarrier) Reset() {
 	*x = SnapshotBarrier{}
-	mi := &file_arbiter_proto_msgTypes[55]
+	mi := &file_arbiter_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4892,7 +5013,7 @@ func (x *SnapshotBarrier) String() string {
 func (*SnapshotBarrier) ProtoMessage() {}
 
 func (x *SnapshotBarrier) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[55]
+	mi := &file_arbiter_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4905,7 +5026,7 @@ func (x *SnapshotBarrier) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotBarrier.ProtoReflect.Descriptor instead.
 func (*SnapshotBarrier) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{55}
+	return file_arbiter_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *SnapshotBarrier) GetState() string {
@@ -4969,7 +5090,7 @@ type SnapshotArtifactReadySubmission struct {
 
 func (x *SnapshotArtifactReadySubmission) Reset() {
 	*x = SnapshotArtifactReadySubmission{}
-	mi := &file_arbiter_proto_msgTypes[56]
+	mi := &file_arbiter_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4981,7 +5102,7 @@ func (x *SnapshotArtifactReadySubmission) String() string {
 func (*SnapshotArtifactReadySubmission) ProtoMessage() {}
 
 func (x *SnapshotArtifactReadySubmission) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[56]
+	mi := &file_arbiter_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4994,7 +5115,7 @@ func (x *SnapshotArtifactReadySubmission) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotArtifactReadySubmission.ProtoReflect.Descriptor instead.
 func (*SnapshotArtifactReadySubmission) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{56}
+	return file_arbiter_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *SnapshotArtifactReadySubmission) GetRecord() *SnapshotArtifactReady {
@@ -5023,7 +5144,7 @@ type GetPublishedSnapshotRequest struct {
 
 func (x *GetPublishedSnapshotRequest) Reset() {
 	*x = GetPublishedSnapshotRequest{}
-	mi := &file_arbiter_proto_msgTypes[57]
+	mi := &file_arbiter_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5035,7 +5156,7 @@ func (x *GetPublishedSnapshotRequest) String() string {
 func (*GetPublishedSnapshotRequest) ProtoMessage() {}
 
 func (x *GetPublishedSnapshotRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[57]
+	mi := &file_arbiter_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5048,7 +5169,7 @@ func (x *GetPublishedSnapshotRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPublishedSnapshotRequest.ProtoReflect.Descriptor instead.
 func (*GetPublishedSnapshotRequest) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{57}
+	return file_arbiter_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *GetPublishedSnapshotRequest) GetNetworkId() string {
@@ -5088,7 +5209,7 @@ type PublishedSnapshot struct {
 
 func (x *PublishedSnapshot) Reset() {
 	*x = PublishedSnapshot{}
-	mi := &file_arbiter_proto_msgTypes[58]
+	mi := &file_arbiter_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5100,7 +5221,7 @@ func (x *PublishedSnapshot) String() string {
 func (*PublishedSnapshot) ProtoMessage() {}
 
 func (x *PublishedSnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[58]
+	mi := &file_arbiter_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5113,7 +5234,7 @@ func (x *PublishedSnapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PublishedSnapshot.ProtoReflect.Descriptor instead.
 func (*PublishedSnapshot) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{58}
+	return file_arbiter_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *PublishedSnapshot) GetManifest() *SafeSnapshotManifest {
@@ -5158,7 +5279,7 @@ type GetQueryPolicyRequest struct {
 
 func (x *GetQueryPolicyRequest) Reset() {
 	*x = GetQueryPolicyRequest{}
-	mi := &file_arbiter_proto_msgTypes[59]
+	mi := &file_arbiter_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5170,7 +5291,7 @@ func (x *GetQueryPolicyRequest) String() string {
 func (*GetQueryPolicyRequest) ProtoMessage() {}
 
 func (x *GetQueryPolicyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[59]
+	mi := &file_arbiter_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5183,7 +5304,7 @@ func (x *GetQueryPolicyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetQueryPolicyRequest.ProtoReflect.Descriptor instead.
 func (*GetQueryPolicyRequest) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{59}
+	return file_arbiter_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *GetQueryPolicyRequest) GetNetworkId() string {
@@ -5229,7 +5350,7 @@ type QueryPolicyStatus struct {
 
 func (x *QueryPolicyStatus) Reset() {
 	*x = QueryPolicyStatus{}
-	mi := &file_arbiter_proto_msgTypes[60]
+	mi := &file_arbiter_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5241,7 +5362,7 @@ func (x *QueryPolicyStatus) String() string {
 func (*QueryPolicyStatus) ProtoMessage() {}
 
 func (x *QueryPolicyStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[60]
+	mi := &file_arbiter_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5254,7 +5375,7 @@ func (x *QueryPolicyStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryPolicyStatus.ProtoReflect.Descriptor instead.
 func (*QueryPolicyStatus) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{60}
+	return file_arbiter_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *QueryPolicyStatus) GetFound() bool {
@@ -5293,7 +5414,7 @@ type SnapshotArtifactEntry struct {
 
 func (x *SnapshotArtifactEntry) Reset() {
 	*x = SnapshotArtifactEntry{}
-	mi := &file_arbiter_proto_msgTypes[61]
+	mi := &file_arbiter_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5305,7 +5426,7 @@ func (x *SnapshotArtifactEntry) String() string {
 func (*SnapshotArtifactEntry) ProtoMessage() {}
 
 func (x *SnapshotArtifactEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[61]
+	mi := &file_arbiter_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5318,7 +5439,7 @@ func (x *SnapshotArtifactEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotArtifactEntry.ProtoReflect.Descriptor instead.
 func (*SnapshotArtifactEntry) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{61}
+	return file_arbiter_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *SnapshotArtifactEntry) GetTableId() string {
@@ -5374,7 +5495,7 @@ type SnapshotArtifactSet struct {
 
 func (x *SnapshotArtifactSet) Reset() {
 	*x = SnapshotArtifactSet{}
-	mi := &file_arbiter_proto_msgTypes[62]
+	mi := &file_arbiter_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5386,7 +5507,7 @@ func (x *SnapshotArtifactSet) String() string {
 func (*SnapshotArtifactSet) ProtoMessage() {}
 
 func (x *SnapshotArtifactSet) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[62]
+	mi := &file_arbiter_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5399,7 +5520,7 @@ func (x *SnapshotArtifactSet) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotArtifactSet.ProtoReflect.Descriptor instead.
 func (*SnapshotArtifactSet) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{62}
+	return file_arbiter_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *SnapshotArtifactSet) GetParts() []*SnapshotArtifactEntry {
@@ -5641,7 +5762,18 @@ const file_arbiter_proto_rawDesc = "" +
 	"\rstatement_seq\x18\x02 \x01(\x04R\fstatementSeq\x12\x16\n" +
 	"\x06status\x18\x03 \x01(\tR\x06status\x12\x19\n" +
 	"\brc_bound\x18\x04 \x01(\bR\arcBound\x12!\n" +
-	"\fbound_source\x18\x05 \x01(\tR\vboundSource\"b\n" +
+	"\fbound_source\x18\x05 \x01(\tR\vboundSource\"\x9e\x02\n" +
+	"\x19AnchorFinalityAttestation\x12\x19\n" +
+	"\bvoter_id\x18\x01 \x01(\tR\avoterId\x12 \n" +
+	"\fl3_block_seq\x18\x02 \x01(\x04R\n" +
+	"l3BlockSeq\x12\"\n" +
+	"\rl3_block_hash\x18\x03 \x01(\tR\vl3BlockHash\x12\x1d\n" +
+	"\n" +
+	"state_root\x18\x04 \x01(\tR\tstateRoot\x12&\n" +
+	"\x0fl2_block_number\x18\x05 \x01(\x04R\rl2BlockNumber\x12\x14\n" +
+	"\x05final\x18\x06 \x01(\bR\x05final\x12%\n" +
+	"\x0elast_mergeable\x18\a \x01(\bR\rlastMergeable\x12\x1c\n" +
+	"\tsignature\x18\b \x01(\tR\tsignature\"b\n" +
 	"\x18GetClientSeqStateRequest\x12%\n" +
 	"\x0eclient_account\x18\x01 \x01(\tR\rclientAccount\x12\x1f\n" +
 	"\vclient_lane\x18\x02 \x01(\tR\n" +
@@ -5722,7 +5854,7 @@ const file_arbiter_proto_rawDesc = "" +
 	"\x11check1_root_match\x18\x05 \x01(\bR\x0fcheck1RootMatch\x124\n" +
 	"\x16check2_partition_match\x18\x06 \x01(\bR\x14check2PartitionMatch\x123\n" +
 	"\x16check3_byte_side_match\x18\a \x01(\bR\x13check3ByteSideMatch\x12\x12\n" +
-	"\x04pass\x18\b \x01(\bR\x04pass\"\xc4\a\n" +
+	"\x04pass\x18\b \x01(\bR\x04pass\"\x9d\b\n" +
 	"\x11BlockVerification\x12.\n" +
 	"\x06header\x18\x01 \x01(\v2\x16.arbiter.L3BlockHeaderR\x06header\x12\x1d\n" +
 	"\n" +
@@ -5752,7 +5884,8 @@ const file_arbiter_proto_rawDesc = "" +
 	"group_fill\x18\x13 \x01(\bR\tgroupFill\x12?\n" +
 	"\x0fgroup_databases\x18\x14 \x03(\v2\x16.arbiter.BlockGroupRefR\x0egroupDatabases\x12=\n" +
 	"\freselections\x18\x15 \x03(\v2\x19.arbiter.BlockReselectionR\freselections\x122\n" +
-	"\x15reselections_at_latch\x18\x16 \x01(\rR\x13reselectionsAtLatch\"[\n" +
+	"\x15reselections_at_latch\x18\x16 \x01(\rR\x13reselectionsAtLatch\x12W\n" +
+	"\x15finality_attestations\x18\x17 \x03(\v2\".arbiter.AnchorFinalityAttestationR\x14finalityAttestations\"[\n" +
 	"\rBlockGroupRef\x12\x1f\n" +
 	"\vdatabase_id\x18\x01 \x01(\tR\n" +
 	"databaseId\x12)\n" +
@@ -5914,7 +6047,9 @@ const file_arbiter_proto_rawDesc = "" +
 	"\fAckPromotion\x12\x15.arbiter.PromotionAck\x1a\f.arbiter.Ack\"\x00\x121\n" +
 	"\n" +
 	"AckCleanup\x12\x13.arbiter.CleanupAck\x1a\f.arbiter.Ack\"\x00\x12B\n" +
-	"\x11SubmitTablePurged\x12\x1d.arbiter.RecordTablePurgedCmd\x1a\f.arbiter.Ack\"\x002\x9e\x06\n" +
+	"\x11SubmitTablePurged\x12\x1d.arbiter.RecordTablePurgedCmd\x1a\f.arbiter.Ack\"\x002e\n" +
+	"\fVoterGateway\x12U\n" +
+	"\x1fSubmitAnchorFinalityAttestation\x12\".arbiter.AnchorFinalityAttestation\x1a\f.arbiter.Ack\"\x002\x9e\x06\n" +
 	"\tSafeState\x12N\n" +
 	"\x10GetSafeWatermark\x12 .arbiter.GetSafeWatermarkRequest\x1a\x16.arbiter.SafeWatermark\"\x00\x12D\n" +
 	"\vGetManifest\x12\x14.arbiter.SnapshotRef\x1a\x1d.arbiter.SafeSnapshotManifest\"\x00\x12H\n" +
@@ -5946,7 +6081,7 @@ func file_arbiter_proto_rawDescGZIP() []byte {
 }
 
 var file_arbiter_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_arbiter_proto_msgTypes = make([]protoimpl.MessageInfo, 63)
+var file_arbiter_proto_msgTypes = make([]protoimpl.MessageInfo, 64)
 var file_arbiter_proto_goTypes = []any{
 	(StatementKind)(0),                         // 0: arbiter.StatementKind
 	(AdmissionCode)(0),                         // 1: arbiter.AdmissionCode
@@ -5987,50 +6122,51 @@ var file_arbiter_proto_goTypes = []any{
 	(*NotLeader)(nil),                          // 36: arbiter.NotLeader
 	(*GetStatementStatusRequest)(nil),          // 37: arbiter.GetStatementStatusRequest
 	(*StatementStatus)(nil),                    // 38: arbiter.StatementStatus
-	(*GetClientSeqStateRequest)(nil),           // 39: arbiter.GetClientSeqStateRequest
-	(*ClientSeqRange)(nil),                     // 40: arbiter.ClientSeqRange
-	(*ClientSeqState)(nil),                     // 41: arbiter.ClientSeqState
-	(*GetPartitionStatesRequest)(nil),          // 42: arbiter.GetPartitionStatesRequest
-	(*PartitionStateEntry)(nil),                // 43: arbiter.PartitionStateEntry
-	(*PartitionStates)(nil),                    // 44: arbiter.PartitionStates
-	(*GetPromotionOutcomesRequest)(nil),        // 45: arbiter.GetPromotionOutcomesRequest
-	(*PromotionOutcome)(nil),                   // 46: arbiter.PromotionOutcome
-	(*PromotionOutcomes)(nil),                  // 47: arbiter.PromotionOutcomes
-	(*StatementCandidates)(nil),                // 48: arbiter.StatementCandidates
-	(*VerifierEvidence)(nil),                   // 49: arbiter.VerifierEvidence
-	(*BlockVerification)(nil),                  // 50: arbiter.BlockVerification
-	(*BlockGroupRef)(nil),                      // 51: arbiter.BlockGroupRef
-	(*BlockReselection)(nil),                   // 52: arbiter.BlockReselection
-	(*SnapshotQueryControlBinding)(nil),        // 53: arbiter.SnapshotQueryControlBinding
-	(*AcquireSnapshotQueryRequest)(nil),        // 54: arbiter.AcquireSnapshotQueryRequest
-	(*GetSnapshotQueryReservationRequest)(nil), // 55: arbiter.GetSnapshotQueryReservationRequest
-	(*ReleaseSnapshotQueryRequest)(nil),        // 56: arbiter.ReleaseSnapshotQueryRequest
-	(*GetSnapshotQueryStatusRequest)(nil),      // 57: arbiter.GetSnapshotQueryStatusRequest
-	(*SnapshotBarrier)(nil),                    // 58: arbiter.SnapshotBarrier
-	(*SnapshotArtifactReadySubmission)(nil),    // 59: arbiter.SnapshotArtifactReadySubmission
-	(*GetPublishedSnapshotRequest)(nil),        // 60: arbiter.GetPublishedSnapshotRequest
-	(*PublishedSnapshot)(nil),                  // 61: arbiter.PublishedSnapshot
-	(*GetQueryPolicyRequest)(nil),              // 62: arbiter.GetQueryPolicyRequest
-	(*QueryPolicyStatus)(nil),                  // 63: arbiter.QueryPolicyStatus
-	(*SnapshotArtifactEntry)(nil),              // 64: arbiter.SnapshotArtifactEntry
-	(*SnapshotArtifactSet)(nil),                // 65: arbiter.SnapshotArtifactSet
-	(*ReplayJob)(nil),                          // 66: arbiter.ReplayJob
-	(*SnapshotQueryJob)(nil),                   // 67: arbiter.SnapshotQueryJob
-	(*PartManifestEntry)(nil),                  // 68: arbiter.PartManifestEntry
-	(*ReplayAttestation)(nil),                  // 69: arbiter.ReplayAttestation
-	(*SnapshotQueryReservation)(nil),           // 70: arbiter.SnapshotQueryReservation
-	(*SnapshotArtifactReady)(nil),              // 71: arbiter.SnapshotArtifactReady
-	(*SafeSnapshotManifest)(nil),               // 72: arbiter.SafeSnapshotManifest
-	(*ActiveQueryPolicy)(nil),                  // 73: arbiter.ActiveQueryPolicy
-	(*SnapshotQueryEnvelope)(nil),              // 74: arbiter.SnapshotQueryEnvelope
-	(*SnapshotQueryClaim)(nil),                 // 75: arbiter.SnapshotQueryClaim
-	(*SnapshotQueryAttestation)(nil),           // 76: arbiter.SnapshotQueryAttestation
-	(*MemberReadyCmd)(nil),                     // 77: arbiter.MemberReadyCmd
-	(*MemberCheckpointCmd)(nil),                // 78: arbiter.MemberCheckpointCmd
-	(*RecordTablePurgedCmd)(nil),               // 79: arbiter.RecordTablePurgedCmd
-	(*SnapshotQueryReservationStatus)(nil),     // 80: arbiter.SnapshotQueryReservationStatus
-	(*SnapshotQuerySubmitResult)(nil),          // 81: arbiter.SnapshotQuerySubmitResult
-	(*SnapshotQueryStatus)(nil),                // 82: arbiter.SnapshotQueryStatus
+	(*AnchorFinalityAttestation)(nil),          // 39: arbiter.AnchorFinalityAttestation
+	(*GetClientSeqStateRequest)(nil),           // 40: arbiter.GetClientSeqStateRequest
+	(*ClientSeqRange)(nil),                     // 41: arbiter.ClientSeqRange
+	(*ClientSeqState)(nil),                     // 42: arbiter.ClientSeqState
+	(*GetPartitionStatesRequest)(nil),          // 43: arbiter.GetPartitionStatesRequest
+	(*PartitionStateEntry)(nil),                // 44: arbiter.PartitionStateEntry
+	(*PartitionStates)(nil),                    // 45: arbiter.PartitionStates
+	(*GetPromotionOutcomesRequest)(nil),        // 46: arbiter.GetPromotionOutcomesRequest
+	(*PromotionOutcome)(nil),                   // 47: arbiter.PromotionOutcome
+	(*PromotionOutcomes)(nil),                  // 48: arbiter.PromotionOutcomes
+	(*StatementCandidates)(nil),                // 49: arbiter.StatementCandidates
+	(*VerifierEvidence)(nil),                   // 50: arbiter.VerifierEvidence
+	(*BlockVerification)(nil),                  // 51: arbiter.BlockVerification
+	(*BlockGroupRef)(nil),                      // 52: arbiter.BlockGroupRef
+	(*BlockReselection)(nil),                   // 53: arbiter.BlockReselection
+	(*SnapshotQueryControlBinding)(nil),        // 54: arbiter.SnapshotQueryControlBinding
+	(*AcquireSnapshotQueryRequest)(nil),        // 55: arbiter.AcquireSnapshotQueryRequest
+	(*GetSnapshotQueryReservationRequest)(nil), // 56: arbiter.GetSnapshotQueryReservationRequest
+	(*ReleaseSnapshotQueryRequest)(nil),        // 57: arbiter.ReleaseSnapshotQueryRequest
+	(*GetSnapshotQueryStatusRequest)(nil),      // 58: arbiter.GetSnapshotQueryStatusRequest
+	(*SnapshotBarrier)(nil),                    // 59: arbiter.SnapshotBarrier
+	(*SnapshotArtifactReadySubmission)(nil),    // 60: arbiter.SnapshotArtifactReadySubmission
+	(*GetPublishedSnapshotRequest)(nil),        // 61: arbiter.GetPublishedSnapshotRequest
+	(*PublishedSnapshot)(nil),                  // 62: arbiter.PublishedSnapshot
+	(*GetQueryPolicyRequest)(nil),              // 63: arbiter.GetQueryPolicyRequest
+	(*QueryPolicyStatus)(nil),                  // 64: arbiter.QueryPolicyStatus
+	(*SnapshotArtifactEntry)(nil),              // 65: arbiter.SnapshotArtifactEntry
+	(*SnapshotArtifactSet)(nil),                // 66: arbiter.SnapshotArtifactSet
+	(*ReplayJob)(nil),                          // 67: arbiter.ReplayJob
+	(*SnapshotQueryJob)(nil),                   // 68: arbiter.SnapshotQueryJob
+	(*PartManifestEntry)(nil),                  // 69: arbiter.PartManifestEntry
+	(*ReplayAttestation)(nil),                  // 70: arbiter.ReplayAttestation
+	(*SnapshotQueryReservation)(nil),           // 71: arbiter.SnapshotQueryReservation
+	(*SnapshotArtifactReady)(nil),              // 72: arbiter.SnapshotArtifactReady
+	(*SafeSnapshotManifest)(nil),               // 73: arbiter.SafeSnapshotManifest
+	(*ActiveQueryPolicy)(nil),                  // 74: arbiter.ActiveQueryPolicy
+	(*SnapshotQueryEnvelope)(nil),              // 75: arbiter.SnapshotQueryEnvelope
+	(*SnapshotQueryClaim)(nil),                 // 76: arbiter.SnapshotQueryClaim
+	(*SnapshotQueryAttestation)(nil),           // 77: arbiter.SnapshotQueryAttestation
+	(*MemberReadyCmd)(nil),                     // 78: arbiter.MemberReadyCmd
+	(*MemberCheckpointCmd)(nil),                // 79: arbiter.MemberCheckpointCmd
+	(*RecordTablePurgedCmd)(nil),               // 80: arbiter.RecordTablePurgedCmd
+	(*SnapshotQueryReservationStatus)(nil),     // 81: arbiter.SnapshotQueryReservationStatus
+	(*SnapshotQuerySubmitResult)(nil),          // 82: arbiter.SnapshotQuerySubmitResult
+	(*SnapshotQueryStatus)(nil),                // 83: arbiter.SnapshotQueryStatus
 }
 var file_arbiter_proto_depIdxs = []int32{
 	3,  // 0: arbiter.StatementEnvelopeV2.statement_id:type_name -> arbiter.StatementID
@@ -6039,9 +6175,9 @@ var file_arbiter_proto_depIdxs = []int32{
 	3,  // 3: arbiter.RCRecord.statement_id:type_name -> arbiter.StatementID
 	6,  // 4: arbiter.RCRecord.candidate_parts:type_name -> arbiter.CandidatePart
 	7,  // 5: arbiter.RCRecord.partition_new_part_sums:type_name -> arbiter.PartitionLtHashSum
-	66, // 6: arbiter.VerifierDispatch.replay_job:type_name -> arbiter.ReplayJob
+	67, // 6: arbiter.VerifierDispatch.replay_job:type_name -> arbiter.ReplayJob
 	11, // 7: arbiter.VerifierDispatch.byte_side_scan:type_name -> arbiter.ByteSideScanRequest
-	67, // 8: arbiter.VerifierDispatch.snapshot_query_job:type_name -> arbiter.SnapshotQueryJob
+	68, // 8: arbiter.VerifierDispatch.snapshot_query_job:type_name -> arbiter.SnapshotQueryJob
 	14, // 9: arbiter.ByteSideScanRequest.parts:type_name -> arbiter.PartRef
 	12, // 10: arbiter.ByteSideScanMsg.parts:type_name -> arbiter.PartScan
 	14, // 11: arbiter.PromoteSafePartition.candidate_parts:type_name -> arbiter.PartRef
@@ -6057,102 +6193,105 @@ var file_arbiter_proto_depIdxs = []int32{
 	27, // 21: arbiter.L3Block.header:type_name -> arbiter.L3BlockHeader
 	4,  // 22: arbiter.L3Block.statements:type_name -> arbiter.StatementEnvelopeV2
 	2,  // 23: arbiter.NodeRegistration.roles:type_name -> arbiter.NodeRole
-	40, // 24: arbiter.ClientSeqState.ranges:type_name -> arbiter.ClientSeqRange
-	68, // 25: arbiter.PartitionStateEntry.safe_parts:type_name -> arbiter.PartManifestEntry
+	41, // 24: arbiter.ClientSeqState.ranges:type_name -> arbiter.ClientSeqRange
+	69, // 25: arbiter.PartitionStateEntry.safe_parts:type_name -> arbiter.PartManifestEntry
 	24, // 26: arbiter.PartitionStates.safe_watermark:type_name -> arbiter.SafeWatermark
-	43, // 27: arbiter.PartitionStates.partitions:type_name -> arbiter.PartitionStateEntry
+	44, // 27: arbiter.PartitionStates.partitions:type_name -> arbiter.PartitionStateEntry
 	15, // 28: arbiter.PromotionOutcome.promote:type_name -> arbiter.PromoteSafePartition
 	30, // 29: arbiter.PromotionOutcome.track:type_name -> arbiter.L3BlockTrack
 	20, // 30: arbiter.PromotionOutcome.ack:type_name -> arbiter.PromotionAck
-	46, // 31: arbiter.PromotionOutcomes.outcomes:type_name -> arbiter.PromotionOutcome
+	47, // 31: arbiter.PromotionOutcomes.outcomes:type_name -> arbiter.PromotionOutcome
 	6,  // 32: arbiter.StatementCandidates.candidate_parts:type_name -> arbiter.CandidatePart
 	7,  // 33: arbiter.StatementCandidates.partition_new_part_sums:type_name -> arbiter.PartitionLtHashSum
-	69, // 34: arbiter.VerifierEvidence.attestation:type_name -> arbiter.ReplayAttestation
+	70, // 34: arbiter.VerifierEvidence.attestation:type_name -> arbiter.ReplayAttestation
 	13, // 35: arbiter.VerifierEvidence.byte_side_scan:type_name -> arbiter.ByteSideScanMsg
 	27, // 36: arbiter.BlockVerification.header:type_name -> arbiter.L3BlockHeader
-	66, // 37: arbiter.BlockVerification.replay_job:type_name -> arbiter.ReplayJob
-	48, // 38: arbiter.BlockVerification.statements:type_name -> arbiter.StatementCandidates
+	67, // 37: arbiter.BlockVerification.replay_job:type_name -> arbiter.ReplayJob
+	49, // 38: arbiter.BlockVerification.statements:type_name -> arbiter.StatementCandidates
 	14, // 39: arbiter.BlockVerification.scan_parts:type_name -> arbiter.PartRef
-	49, // 40: arbiter.BlockVerification.evidence:type_name -> arbiter.VerifierEvidence
+	50, // 40: arbiter.BlockVerification.evidence:type_name -> arbiter.VerifierEvidence
 	22, // 41: arbiter.BlockVerification.anchor:type_name -> arbiter.AnchorRef
-	51, // 42: arbiter.BlockVerification.group_databases:type_name -> arbiter.BlockGroupRef
-	52, // 43: arbiter.BlockVerification.reselections:type_name -> arbiter.BlockReselection
-	70, // 44: arbiter.SnapshotBarrier.reservation:type_name -> arbiter.SnapshotQueryReservation
-	71, // 45: arbiter.SnapshotArtifactReadySubmission.record:type_name -> arbiter.SnapshotArtifactReady
-	72, // 46: arbiter.PublishedSnapshot.manifest:type_name -> arbiter.SafeSnapshotManifest
-	73, // 47: arbiter.PublishedSnapshot.activation:type_name -> arbiter.ActiveQueryPolicy
-	59, // 48: arbiter.PublishedSnapshot.artifact_ready:type_name -> arbiter.SnapshotArtifactReadySubmission
-	73, // 49: arbiter.QueryPolicyStatus.activation:type_name -> arbiter.ActiveQueryPolicy
-	64, // 50: arbiter.SnapshotArtifactSet.parts:type_name -> arbiter.SnapshotArtifactEntry
-	4,  // 51: arbiter.ArbiterIngress.SubmitStatement:input_type -> arbiter.StatementEnvelopeV2
-	37, // 52: arbiter.ArbiterIngress.GetStatementStatus:input_type -> arbiter.GetStatementStatusRequest
-	54, // 53: arbiter.ArbiterIngress.AcquireSnapshotQuery:input_type -> arbiter.AcquireSnapshotQueryRequest
-	55, // 54: arbiter.ArbiterIngress.GetSnapshotQueryReservation:input_type -> arbiter.GetSnapshotQueryReservationRequest
-	56, // 55: arbiter.ArbiterIngress.ReleaseSnapshotQuery:input_type -> arbiter.ReleaseSnapshotQueryRequest
-	74, // 56: arbiter.ArbiterIngress.SubmitSnapshotQuery:input_type -> arbiter.SnapshotQueryEnvelope
-	57, // 57: arbiter.ArbiterIngress.GetSnapshotQueryStatus:input_type -> arbiter.GetSnapshotQueryStatusRequest
-	8,  // 58: arbiter.SourceClaims.RegisterResultClaim:input_type -> arbiter.RCRecord
-	75, // 59: arbiter.SourceClaims.RegisterSnapshotQueryClaim:input_type -> arbiter.SnapshotQueryClaim
-	59, // 60: arbiter.SourceClaims.RecordSnapshotArtifactReady:input_type -> arbiter.SnapshotArtifactReadySubmission
-	9,  // 61: arbiter.VerifierGateway.SubscribeVerifierDispatch:input_type -> arbiter.VerifierHello
-	69, // 62: arbiter.VerifierGateway.SubmitAttestation:input_type -> arbiter.ReplayAttestation
-	76, // 63: arbiter.VerifierGateway.SubmitSnapshotQueryAttestation:input_type -> arbiter.SnapshotQueryAttestation
-	13, // 64: arbiter.VerifierGateway.SubmitByteSideScan:input_type -> arbiter.ByteSideScanMsg
-	77, // 65: arbiter.VerifierGateway.SubmitMemberReady:input_type -> arbiter.MemberReadyCmd
-	78, // 66: arbiter.VerifierGateway.SubmitMemberCheckpoint:input_type -> arbiter.MemberCheckpointCmd
-	18, // 67: arbiter.PromotionGateway.SubscribePromotions:input_type -> arbiter.SNodeHello
-	20, // 68: arbiter.PromotionGateway.AckPromotion:input_type -> arbiter.PromotionAck
-	21, // 69: arbiter.PromotionGateway.AckCleanup:input_type -> arbiter.CleanupAck
-	79, // 70: arbiter.PromotionGateway.SubmitTablePurged:input_type -> arbiter.RecordTablePurgedCmd
-	23, // 71: arbiter.SafeState.GetSafeWatermark:input_type -> arbiter.GetSafeWatermarkRequest
-	25, // 72: arbiter.SafeState.GetManifest:input_type -> arbiter.SnapshotRef
-	26, // 73: arbiter.SafeState.GetManifestByBlock:input_type -> arbiter.BlockRef
-	31, // 74: arbiter.SafeState.GetL3Block:input_type -> arbiter.L3BlockRef
-	60, // 75: arbiter.SafeState.GetPublishedSnapshot:input_type -> arbiter.GetPublishedSnapshotRequest
-	62, // 76: arbiter.SafeState.GetQueryPolicy:input_type -> arbiter.GetQueryPolicyRequest
-	39, // 77: arbiter.SafeState.GetClientSeqState:input_type -> arbiter.GetClientSeqStateRequest
-	42, // 78: arbiter.SafeState.GetPartitionStates:input_type -> arbiter.GetPartitionStatesRequest
-	45, // 79: arbiter.SafeState.GetPromotionOutcomes:input_type -> arbiter.GetPromotionOutcomesRequest
-	31, // 80: arbiter.SafeState.GetBlockVerification:input_type -> arbiter.L3BlockRef
-	33, // 81: arbiter.Membership.RegisterNode:input_type -> arbiter.NodeRegistration
-	34, // 82: arbiter.Membership.MarkActive:input_type -> arbiter.NodeRef
-	5,  // 83: arbiter.ArbiterIngress.SubmitStatement:output_type -> arbiter.SequencedAck
-	38, // 84: arbiter.ArbiterIngress.GetStatementStatus:output_type -> arbiter.StatementStatus
-	70, // 85: arbiter.ArbiterIngress.AcquireSnapshotQuery:output_type -> arbiter.SnapshotQueryReservation
-	80, // 86: arbiter.ArbiterIngress.GetSnapshotQueryReservation:output_type -> arbiter.SnapshotQueryReservationStatus
-	80, // 87: arbiter.ArbiterIngress.ReleaseSnapshotQuery:output_type -> arbiter.SnapshotQueryReservationStatus
-	81, // 88: arbiter.ArbiterIngress.SubmitSnapshotQuery:output_type -> arbiter.SnapshotQuerySubmitResult
-	82, // 89: arbiter.ArbiterIngress.GetSnapshotQueryStatus:output_type -> arbiter.SnapshotQueryStatus
-	35, // 90: arbiter.SourceClaims.RegisterResultClaim:output_type -> arbiter.Ack
-	35, // 91: arbiter.SourceClaims.RegisterSnapshotQueryClaim:output_type -> arbiter.Ack
-	35, // 92: arbiter.SourceClaims.RecordSnapshotArtifactReady:output_type -> arbiter.Ack
-	10, // 93: arbiter.VerifierGateway.SubscribeVerifierDispatch:output_type -> arbiter.VerifierDispatch
-	35, // 94: arbiter.VerifierGateway.SubmitAttestation:output_type -> arbiter.Ack
-	35, // 95: arbiter.VerifierGateway.SubmitSnapshotQueryAttestation:output_type -> arbiter.Ack
-	35, // 96: arbiter.VerifierGateway.SubmitByteSideScan:output_type -> arbiter.Ack
-	35, // 97: arbiter.VerifierGateway.SubmitMemberReady:output_type -> arbiter.Ack
-	35, // 98: arbiter.VerifierGateway.SubmitMemberCheckpoint:output_type -> arbiter.Ack
-	17, // 99: arbiter.PromotionGateway.SubscribePromotions:output_type -> arbiter.PromotionCommand
-	35, // 100: arbiter.PromotionGateway.AckPromotion:output_type -> arbiter.Ack
-	35, // 101: arbiter.PromotionGateway.AckCleanup:output_type -> arbiter.Ack
-	35, // 102: arbiter.PromotionGateway.SubmitTablePurged:output_type -> arbiter.Ack
-	24, // 103: arbiter.SafeState.GetSafeWatermark:output_type -> arbiter.SafeWatermark
-	72, // 104: arbiter.SafeState.GetManifest:output_type -> arbiter.SafeSnapshotManifest
-	72, // 105: arbiter.SafeState.GetManifestByBlock:output_type -> arbiter.SafeSnapshotManifest
-	32, // 106: arbiter.SafeState.GetL3Block:output_type -> arbiter.L3Block
-	61, // 107: arbiter.SafeState.GetPublishedSnapshot:output_type -> arbiter.PublishedSnapshot
-	63, // 108: arbiter.SafeState.GetQueryPolicy:output_type -> arbiter.QueryPolicyStatus
-	41, // 109: arbiter.SafeState.GetClientSeqState:output_type -> arbiter.ClientSeqState
-	44, // 110: arbiter.SafeState.GetPartitionStates:output_type -> arbiter.PartitionStates
-	47, // 111: arbiter.SafeState.GetPromotionOutcomes:output_type -> arbiter.PromotionOutcomes
-	50, // 112: arbiter.SafeState.GetBlockVerification:output_type -> arbiter.BlockVerification
-	35, // 113: arbiter.Membership.RegisterNode:output_type -> arbiter.Ack
-	35, // 114: arbiter.Membership.MarkActive:output_type -> arbiter.Ack
-	83, // [83:115] is the sub-list for method output_type
-	51, // [51:83] is the sub-list for method input_type
-	51, // [51:51] is the sub-list for extension type_name
-	51, // [51:51] is the sub-list for extension extendee
-	0,  // [0:51] is the sub-list for field type_name
+	52, // 42: arbiter.BlockVerification.group_databases:type_name -> arbiter.BlockGroupRef
+	53, // 43: arbiter.BlockVerification.reselections:type_name -> arbiter.BlockReselection
+	39, // 44: arbiter.BlockVerification.finality_attestations:type_name -> arbiter.AnchorFinalityAttestation
+	71, // 45: arbiter.SnapshotBarrier.reservation:type_name -> arbiter.SnapshotQueryReservation
+	72, // 46: arbiter.SnapshotArtifactReadySubmission.record:type_name -> arbiter.SnapshotArtifactReady
+	73, // 47: arbiter.PublishedSnapshot.manifest:type_name -> arbiter.SafeSnapshotManifest
+	74, // 48: arbiter.PublishedSnapshot.activation:type_name -> arbiter.ActiveQueryPolicy
+	60, // 49: arbiter.PublishedSnapshot.artifact_ready:type_name -> arbiter.SnapshotArtifactReadySubmission
+	74, // 50: arbiter.QueryPolicyStatus.activation:type_name -> arbiter.ActiveQueryPolicy
+	65, // 51: arbiter.SnapshotArtifactSet.parts:type_name -> arbiter.SnapshotArtifactEntry
+	4,  // 52: arbiter.ArbiterIngress.SubmitStatement:input_type -> arbiter.StatementEnvelopeV2
+	37, // 53: arbiter.ArbiterIngress.GetStatementStatus:input_type -> arbiter.GetStatementStatusRequest
+	55, // 54: arbiter.ArbiterIngress.AcquireSnapshotQuery:input_type -> arbiter.AcquireSnapshotQueryRequest
+	56, // 55: arbiter.ArbiterIngress.GetSnapshotQueryReservation:input_type -> arbiter.GetSnapshotQueryReservationRequest
+	57, // 56: arbiter.ArbiterIngress.ReleaseSnapshotQuery:input_type -> arbiter.ReleaseSnapshotQueryRequest
+	75, // 57: arbiter.ArbiterIngress.SubmitSnapshotQuery:input_type -> arbiter.SnapshotQueryEnvelope
+	58, // 58: arbiter.ArbiterIngress.GetSnapshotQueryStatus:input_type -> arbiter.GetSnapshotQueryStatusRequest
+	8,  // 59: arbiter.SourceClaims.RegisterResultClaim:input_type -> arbiter.RCRecord
+	76, // 60: arbiter.SourceClaims.RegisterSnapshotQueryClaim:input_type -> arbiter.SnapshotQueryClaim
+	60, // 61: arbiter.SourceClaims.RecordSnapshotArtifactReady:input_type -> arbiter.SnapshotArtifactReadySubmission
+	9,  // 62: arbiter.VerifierGateway.SubscribeVerifierDispatch:input_type -> arbiter.VerifierHello
+	70, // 63: arbiter.VerifierGateway.SubmitAttestation:input_type -> arbiter.ReplayAttestation
+	77, // 64: arbiter.VerifierGateway.SubmitSnapshotQueryAttestation:input_type -> arbiter.SnapshotQueryAttestation
+	13, // 65: arbiter.VerifierGateway.SubmitByteSideScan:input_type -> arbiter.ByteSideScanMsg
+	78, // 66: arbiter.VerifierGateway.SubmitMemberReady:input_type -> arbiter.MemberReadyCmd
+	79, // 67: arbiter.VerifierGateway.SubmitMemberCheckpoint:input_type -> arbiter.MemberCheckpointCmd
+	18, // 68: arbiter.PromotionGateway.SubscribePromotions:input_type -> arbiter.SNodeHello
+	20, // 69: arbiter.PromotionGateway.AckPromotion:input_type -> arbiter.PromotionAck
+	21, // 70: arbiter.PromotionGateway.AckCleanup:input_type -> arbiter.CleanupAck
+	80, // 71: arbiter.PromotionGateway.SubmitTablePurged:input_type -> arbiter.RecordTablePurgedCmd
+	39, // 72: arbiter.VoterGateway.SubmitAnchorFinalityAttestation:input_type -> arbiter.AnchorFinalityAttestation
+	23, // 73: arbiter.SafeState.GetSafeWatermark:input_type -> arbiter.GetSafeWatermarkRequest
+	25, // 74: arbiter.SafeState.GetManifest:input_type -> arbiter.SnapshotRef
+	26, // 75: arbiter.SafeState.GetManifestByBlock:input_type -> arbiter.BlockRef
+	31, // 76: arbiter.SafeState.GetL3Block:input_type -> arbiter.L3BlockRef
+	61, // 77: arbiter.SafeState.GetPublishedSnapshot:input_type -> arbiter.GetPublishedSnapshotRequest
+	63, // 78: arbiter.SafeState.GetQueryPolicy:input_type -> arbiter.GetQueryPolicyRequest
+	40, // 79: arbiter.SafeState.GetClientSeqState:input_type -> arbiter.GetClientSeqStateRequest
+	43, // 80: arbiter.SafeState.GetPartitionStates:input_type -> arbiter.GetPartitionStatesRequest
+	46, // 81: arbiter.SafeState.GetPromotionOutcomes:input_type -> arbiter.GetPromotionOutcomesRequest
+	31, // 82: arbiter.SafeState.GetBlockVerification:input_type -> arbiter.L3BlockRef
+	33, // 83: arbiter.Membership.RegisterNode:input_type -> arbiter.NodeRegistration
+	34, // 84: arbiter.Membership.MarkActive:input_type -> arbiter.NodeRef
+	5,  // 85: arbiter.ArbiterIngress.SubmitStatement:output_type -> arbiter.SequencedAck
+	38, // 86: arbiter.ArbiterIngress.GetStatementStatus:output_type -> arbiter.StatementStatus
+	71, // 87: arbiter.ArbiterIngress.AcquireSnapshotQuery:output_type -> arbiter.SnapshotQueryReservation
+	81, // 88: arbiter.ArbiterIngress.GetSnapshotQueryReservation:output_type -> arbiter.SnapshotQueryReservationStatus
+	81, // 89: arbiter.ArbiterIngress.ReleaseSnapshotQuery:output_type -> arbiter.SnapshotQueryReservationStatus
+	82, // 90: arbiter.ArbiterIngress.SubmitSnapshotQuery:output_type -> arbiter.SnapshotQuerySubmitResult
+	83, // 91: arbiter.ArbiterIngress.GetSnapshotQueryStatus:output_type -> arbiter.SnapshotQueryStatus
+	35, // 92: arbiter.SourceClaims.RegisterResultClaim:output_type -> arbiter.Ack
+	35, // 93: arbiter.SourceClaims.RegisterSnapshotQueryClaim:output_type -> arbiter.Ack
+	35, // 94: arbiter.SourceClaims.RecordSnapshotArtifactReady:output_type -> arbiter.Ack
+	10, // 95: arbiter.VerifierGateway.SubscribeVerifierDispatch:output_type -> arbiter.VerifierDispatch
+	35, // 96: arbiter.VerifierGateway.SubmitAttestation:output_type -> arbiter.Ack
+	35, // 97: arbiter.VerifierGateway.SubmitSnapshotQueryAttestation:output_type -> arbiter.Ack
+	35, // 98: arbiter.VerifierGateway.SubmitByteSideScan:output_type -> arbiter.Ack
+	35, // 99: arbiter.VerifierGateway.SubmitMemberReady:output_type -> arbiter.Ack
+	35, // 100: arbiter.VerifierGateway.SubmitMemberCheckpoint:output_type -> arbiter.Ack
+	17, // 101: arbiter.PromotionGateway.SubscribePromotions:output_type -> arbiter.PromotionCommand
+	35, // 102: arbiter.PromotionGateway.AckPromotion:output_type -> arbiter.Ack
+	35, // 103: arbiter.PromotionGateway.AckCleanup:output_type -> arbiter.Ack
+	35, // 104: arbiter.PromotionGateway.SubmitTablePurged:output_type -> arbiter.Ack
+	35, // 105: arbiter.VoterGateway.SubmitAnchorFinalityAttestation:output_type -> arbiter.Ack
+	24, // 106: arbiter.SafeState.GetSafeWatermark:output_type -> arbiter.SafeWatermark
+	73, // 107: arbiter.SafeState.GetManifest:output_type -> arbiter.SafeSnapshotManifest
+	73, // 108: arbiter.SafeState.GetManifestByBlock:output_type -> arbiter.SafeSnapshotManifest
+	32, // 109: arbiter.SafeState.GetL3Block:output_type -> arbiter.L3Block
+	62, // 110: arbiter.SafeState.GetPublishedSnapshot:output_type -> arbiter.PublishedSnapshot
+	64, // 111: arbiter.SafeState.GetQueryPolicy:output_type -> arbiter.QueryPolicyStatus
+	42, // 112: arbiter.SafeState.GetClientSeqState:output_type -> arbiter.ClientSeqState
+	45, // 113: arbiter.SafeState.GetPartitionStates:output_type -> arbiter.PartitionStates
+	48, // 114: arbiter.SafeState.GetPromotionOutcomes:output_type -> arbiter.PromotionOutcomes
+	51, // 115: arbiter.SafeState.GetBlockVerification:output_type -> arbiter.BlockVerification
+	35, // 116: arbiter.Membership.RegisterNode:output_type -> arbiter.Ack
+	35, // 117: arbiter.Membership.MarkActive:output_type -> arbiter.Ack
+	85, // [85:118] is the sub-list for method output_type
+	52, // [52:85] is the sub-list for method input_type
+	52, // [52:52] is the sub-list for extension type_name
+	52, // [52:52] is the sub-list for extension extendee
+	0,  // [0:52] is the sub-list for field type_name
 }
 
 func init() { file_arbiter_proto_init() }
@@ -6177,9 +6316,9 @@ func file_arbiter_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_arbiter_proto_rawDesc), len(file_arbiter_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   63,
+			NumMessages:   64,
 			NumExtensions: 0,
-			NumServices:   6,
+			NumServices:   7,
 		},
 		GoTypes:           file_arbiter_proto_goTypes,
 		DependencyIndexes: file_arbiter_proto_depIdxs,

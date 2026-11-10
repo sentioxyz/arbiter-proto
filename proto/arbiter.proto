@@ -668,6 +668,40 @@ service PromotionGateway {
   rpc SubmitTablePurged (RecordTablePurgedCmd) returns (Ack) {}
 }
 
+// AnchorFinalityAttestation is one enrolled voter's signed judgment that a
+// block's anchor registry entry, read with the voter's own L2 RPC, holds the
+// block's state_root at l2_block_number and is final (and possibly
+// last-mergeable) under the committed AnchorFinalityParams. signature is
+// lowercase hex of the voter key's ed25519 signature over the voter message
+// hash of kind "anchor_finality", whose body is these fields minus signature
+// plus the committed policy (finality_mode, finality_confirmations,
+// last_mergeable_confirmations, l2_chain_id, registry_contract), in the
+// network's message context. The policy is not on the wire: an attestation
+// judged under another policy, chain or contract does not verify.
+message AnchorFinalityAttestation {
+  string voter_id = 1;
+  uint64 l3_block_seq = 2;
+  string l3_block_hash = 3;
+  string state_root = 4;
+  uint64 l2_block_number = 5;
+  bool final = 6;
+  bool last_mergeable = 7;
+  string signature = 8;
+}
+
+// VoterGateway is called by the Raft voters themselves (each voter's
+// attester dials the leader).
+service VoterGateway {
+  // Proposes the attestation as RecordAnchorFinalityAttestationCmd after the
+  // leader checked it as Apply would (enrolled voter, signature, block hash,
+  // state root, the recorded anchor ref's l2_block_number, a flag the voter
+  // has not recorded yet). FAILED_PRECONDITION without a NotLeader detail
+  // means the anchor finality quorum is not active or the attestation is
+  // refused; an attestation that adds nothing returns Ack. Ack means
+  // committed.
+  rpc SubmitAnchorFinalityAttestation (AnchorFinalityAttestation) returns (Ack) {}
+}
+
 // GetClientSeqStateRequest names one accumulator subject: the account alone
 // for the legacy lane, account and lane for a client lane.
 message GetClientSeqStateRequest {
@@ -903,6 +937,10 @@ message BlockVerification {
   // the block had when its quorum latched (spec §7.4).
   repeated BlockReselection reselections = 21;
   uint32 reselections_at_latch = 22;
+  // The latest anchor finality attestation each voter recorded for the block
+  // (RecordAnchorFinalityAttestationCmd), sorted by voter_id; empty before
+  // the anchor finality quorum is active.
+  repeated AnchorFinalityAttestation finality_attestations = 23;
 }
 
 message BlockGroupRef {
