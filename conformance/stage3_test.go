@@ -73,8 +73,9 @@ func stage3ConsensusMessageFiles() map[string]protoreflect.FileDescriptor {
 // stage3AppendedFields pins the singular message field the stage-3 P5 wire
 // contract appends to each consensus message that exists in the hash-pinned
 // baselines: ConsensusMutableParams.stage3 = 9, ConsensusParamsUpdate.stage3 =
-// 14 and ConsensusParamsState.stage3_state = 9. Each is now its message's last
-// field, so assertSnapshotBaselineDescriptors strips it first, before
+// 14 and ConsensusParamsState.stage3_state = 9. Each is its message's last
+// field once promotion_finality_gate is stripped, so
+// assertSnapshotBaselineDescriptors strips it right after that field, before
 // tracksFields inspects the then-last tracks_enabled. Every existing baseline
 // predates them, so the exemption applies unconditionally.
 var stage3AppendedFields = map[string]*descriptorpb.FieldDescriptorProto{
@@ -144,7 +145,7 @@ func TestStage3ConsensusFieldNumbers(t *testing.T) {
 		})
 	}
 	for msg, want := range map[proto.Message]int{
-		&pb.VerifierEntry{}: 11, &pb.ConsensusMutableParams{}: 9, &pb.ConsensusParamsUpdate{}: 14, &pb.ConsensusParamsState{}: 9,
+		&pb.VerifierEntry{}: 11, &pb.ConsensusMutableParams{}: 10, &pb.ConsensusParamsUpdate{}: 15, &pb.ConsensusParamsState{}: 9,
 		&pb.TableIncarnation{}: 20, &pb.TableRegistrySnapshot{}: 12, &pb.L3BlockTrack{}: 2, &pb.BlockVerification{}: 22,
 	} {
 		if got := msg.ProtoReflect().Descriptor().Fields().Len(); got != want {
