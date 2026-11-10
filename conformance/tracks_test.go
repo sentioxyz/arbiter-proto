@@ -78,9 +78,9 @@ func TestTracksFieldNumbers(t *testing.T) {
 	}
 	for msg, want := range map[proto.Message]int{
 		&pb.TrackFrontier{}: 3, &pb.SafeSnapshotManifest{}: 11, &pb.L3BlockTrack{}: 2, &pb.L3BlockHeader{}: 14,
-		&pb.UnsafeCleanup{}: 5, &pb.CleanupAck{}: 6, &pb.ConsensusParamsUpdate{}: 16, &pb.ConsensusMutableParams{}: 11,
+		&pb.UnsafeCleanup{}: 5, &pb.CleanupAck{}: 6, &pb.ConsensusParamsUpdate{}: 17, &pb.ConsensusMutableParams{}: 12,
 		&pb.QuarantineIndexerCmd{}: 4, &pb.ReleaseIndexerCmd{}: 4, &pb.IndexerTrackView{}: 9, &pb.TrackStateView{}: 6,
-		&pb.TableRegistrySnapshot{}: 14,
+		&pb.TableRegistrySnapshot{}: 15,
 	} {
 		if got := msg.ProtoReflect().Descriptor().Fields().Len(); got != want {
 			t.Fatalf("%s field count = %d, want %d", msg.ProtoReflect().Descriptor().Name(), got, want)

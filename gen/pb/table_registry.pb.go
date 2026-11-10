@@ -2026,8 +2026,12 @@ type TableRegistrySnapshot struct {
 	DeltaBaseVersion uint64 `protobuf:"varint,13,opt,name=delta_base_version,json=deltaBaseVersion,proto3" json:"delta_base_version,omitempty"`
 	// The total number of incarnations at version; set on a delta.
 	IncarnationCount uint64 `protobuf:"varint,14,opt,name=incarnation_count,json=incarnationCount,proto3" json:"incarnation_count,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// The consensus table admission rules version in force (0 = rules v1), so a
+	// host can judge a CREATE TABLE by the rules the arbiter will apply to its
+	// AddTable. Carried by full and delta snapshots alike.
+	AdmissionRulesVersion uint32 `protobuf:"varint,15,opt,name=admission_rules_version,json=admissionRulesVersion,proto3" json:"admission_rules_version,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *TableRegistrySnapshot) Reset() {
@@ -2154,6 +2158,13 @@ func (x *TableRegistrySnapshot) GetDeltaBaseVersion() uint64 {
 func (x *TableRegistrySnapshot) GetIncarnationCount() uint64 {
 	if x != nil {
 		return x.IncarnationCount
+	}
+	return 0
+}
+
+func (x *TableRegistrySnapshot) GetAdmissionRulesVersion() uint32 {
+	if x != nil {
+		return x.AdmissionRulesVersion
 	}
 	return 0
 }
@@ -2873,7 +2884,7 @@ const file_table_registry_proto_rawDesc = "" +
 	"\x10owner_indexer_id\x18\x12 \x01(\x04H\x00R\x0eownerIndexerId\x88\x01\x01\x12,\n" +
 	"\x12scoped_keeper_path\x18\x13 \x01(\bR\x10scopedKeeperPath\x12#\n" +
 	"\rpurge_members\x18\x14 \x03(\tR\fpurgeMembersB\x13\n" +
-	"\x11_owner_indexer_id\"\xd6\x05\n" +
+	"\x11_owner_indexer_id\"\x8e\x06\n" +
 	"\x15TableRegistrySnapshot\x124\n" +
 	"\x06params\x18\x01 \x01(\v2\x1c.arbiter.TableRegistryParamsR\x06params\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\x04R\aversion\x12\x16\n" +
@@ -2890,7 +2901,8 @@ const file_table_registry_proto_rawDesc = "" +
 	"\x16member_checkpoint_seqs\x18\v \x03(\v2\x1c.arbiter.MemberCheckpointSeqR\x14memberCheckpointSeqs\x12-\n" +
 	"\x06stage3\x18\f \x01(\v2\x15.arbiter.Stage3ParamsR\x06stage3\x12,\n" +
 	"\x12delta_base_version\x18\r \x01(\x04R\x10deltaBaseVersion\x12+\n" +
-	"\x11incarnation_count\x18\x0e \x01(\x04R\x10incarnationCount\")\n" +
+	"\x11incarnation_count\x18\x0e \x01(\x04R\x10incarnationCount\x126\n" +
+	"\x17admission_rules_version\x18\x0f \x01(\rR\x15admissionRulesVersion\")\n" +
 	"\fPurgeNodeSet\x12\x19\n" +
 	"\bnode_ids\x18\x01 \x03(\tR\anodeIds\"\x8a\x01\n" +
 	"\x16MemberCheckpointRecord\x129\n" +

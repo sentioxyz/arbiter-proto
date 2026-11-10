@@ -40,9 +40,10 @@ func TestPromotionFinalityGateFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.BoolKind || f.IsList() || f.HasOptionalKeyword() || f.ContainingOneof() != nil {
 				t.Fatalf("field = %v, want plain bool number %d", f, tc.number)
 			}
-			// manifest_delta_snapshot is the only field appended after it.
-			if got := d.Fields().Len(); got != int(tc.number)+1 {
-				t.Fatalf("field count = %d, want %d (only manifest_delta_snapshot follows the gate)", got, tc.number+1)
+			// manifest_delta_snapshot and table_admission_rules_version are the
+			// only fields appended after it.
+			if got := d.Fields().Len(); got != int(tc.number)+2 {
+				t.Fatalf("field count = %d, want %d (only manifest_delta_snapshot and table_admission_rules_version follow the gate)", got, tc.number+2)
 			}
 		})
 	}
