@@ -1723,8 +1723,9 @@ var SafeState_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	Membership_RegisterNode_FullMethodName = "/arbiter.Membership/RegisterNode"
-	Membership_MarkActive_FullMethodName   = "/arbiter.Membership/MarkActive"
+	Membership_RegisterNode_FullMethodName   = "/arbiter.Membership/RegisterNode"
+	Membership_MarkActive_FullMethodName     = "/arbiter.Membership/MarkActive"
+	Membership_RenewNodeLease_FullMethodName = "/arbiter.Membership/RenewNodeLease"
 )
 
 // MembershipClient is the client API for Membership service.
@@ -1741,6 +1742,14 @@ type MembershipClient interface {
 	// deterministic selection pools (§4.1, §7.4). After the signed-claims
 	// activation it names the node's current registration_seq and is signed.
 	MarkActive(ctx context.Context, in *NodeRef, opts ...grpc.CallOption) (*Ack, error)
+	// RenewNodeLease renews the caller's membership lease (Raft tag 44). Once
+	// membership_lease_l2_blocks is committed, an Active node whose last
+	// renewal (or MarkActive) is that many L2 blocks behind the committed table
+	// registry cursor becomes Syncing, as if it had deactivated. Leader-only;
+	// FAILED_PRECONDITION before the lease parameter is committed and for a
+	// node that is not Active (it returns with MarkActive at its current
+	// registration_seq). Ack means committed.
+	RenewNodeLease(ctx context.Context, in *NodeLeaseRenewal, opts ...grpc.CallOption) (*Ack, error)
 }
 
 type membershipClient struct {
@@ -1771,6 +1780,16 @@ func (c *membershipClient) MarkActive(ctx context.Context, in *NodeRef, opts ...
 	return out, nil
 }
 
+func (c *membershipClient) RenewNodeLease(ctx context.Context, in *NodeLeaseRenewal, opts ...grpc.CallOption) (*Ack, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Ack)
+	err := c.cc.Invoke(ctx, Membership_RenewNodeLease_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MembershipServer is the server API for Membership service.
 // All implementations must embed UnimplementedMembershipServer
 // for forward compatibility.
@@ -1785,6 +1804,14 @@ type MembershipServer interface {
 	// deterministic selection pools (§4.1, §7.4). After the signed-claims
 	// activation it names the node's current registration_seq and is signed.
 	MarkActive(context.Context, *NodeRef) (*Ack, error)
+	// RenewNodeLease renews the caller's membership lease (Raft tag 44). Once
+	// membership_lease_l2_blocks is committed, an Active node whose last
+	// renewal (or MarkActive) is that many L2 blocks behind the committed table
+	// registry cursor becomes Syncing, as if it had deactivated. Leader-only;
+	// FAILED_PRECONDITION before the lease parameter is committed and for a
+	// node that is not Active (it returns with MarkActive at its current
+	// registration_seq). Ack means committed.
+	RenewNodeLease(context.Context, *NodeLeaseRenewal) (*Ack, error)
 	mustEmbedUnimplementedMembershipServer()
 }
 
@@ -1800,6 +1827,9 @@ func (UnimplementedMembershipServer) RegisterNode(context.Context, *NodeRegistra
 }
 func (UnimplementedMembershipServer) MarkActive(context.Context, *NodeRef) (*Ack, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MarkActive not implemented")
+}
+func (UnimplementedMembershipServer) RenewNodeLease(context.Context, *NodeLeaseRenewal) (*Ack, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RenewNodeLease not implemented")
 }
 func (UnimplementedMembershipServer) mustEmbedUnimplementedMembershipServer() {}
 func (UnimplementedMembershipServer) testEmbeddedByValue()                    {}
@@ -1858,6 +1888,24 @@ func _Membership_MarkActive_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Membership_RenewNodeLease_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NodeLeaseRenewal)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MembershipServer).RenewNodeLease(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Membership_RenewNodeLease_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MembershipServer).RenewNodeLease(ctx, req.(*NodeLeaseRenewal))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Membership_ServiceDesc is the grpc.ServiceDesc for Membership service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1872,6 +1920,10 @@ var Membership_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "MarkActive",
 			Handler:    _Membership_MarkActive_Handler,
+		},
+		{
+			MethodName: "RenewNodeLease",
+			Handler:    _Membership_RenewNodeLease_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

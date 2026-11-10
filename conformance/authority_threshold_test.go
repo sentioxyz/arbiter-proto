@@ -23,6 +23,7 @@ var authorityThresholdFields = map[string]*descriptorpb.FieldDescriptorProto{
 // so the older baseline comparisons see the message as it was before.
 func stripAuthorityThresholdField(t *testing.T, d *descriptorpb.DescriptorProto) {
 	t.Helper()
+	stripMembershipLeaseField(t, d)
 	want, ok := authorityThresholdFields[d.GetName()]
 	if !ok {
 		return
@@ -53,8 +54,9 @@ func TestAuthorityThresholdFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.Uint32Kind || f.IsList() || f.HasOptionalKeyword() || f.ContainingOneof() != nil {
 				t.Fatalf("field = %v, want plain uint32 number %d", f, tc.number)
 			}
-			if got := d.Fields().Len(); got != int(tc.number) {
-				t.Fatalf("field count = %d, want %d (authority_threshold is the last field)", got, tc.number)
+			// membership_lease_l2_blocks is the only field appended after it.
+			if got := d.Fields().Len(); got != int(tc.number)+1 {
+				t.Fatalf("field count = %d, want %d (only membership_lease_l2_blocks follows authority_threshold)", got, tc.number+1)
 			}
 		})
 	}

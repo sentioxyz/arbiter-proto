@@ -41,10 +41,10 @@ func TestPromotionFinalityGateFieldNumbers(t *testing.T) {
 				t.Fatalf("field = %v, want plain bool number %d", f, tc.number)
 			}
 			// manifest_delta_snapshot, table_admission_rules_version, the
-			// three anchor finality quorum fields and authority_threshold are
-			// the only fields appended after it.
-			if got := d.Fields().Len(); got != int(tc.number)+6 {
-				t.Fatalf("field count = %d, want %d (only manifest_delta_snapshot, table_admission_rules_version, the anchor finality quorum fields and authority_threshold follow the gate)", got, tc.number+6)
+			// three anchor finality quorum fields, authority_threshold and
+			// membership_lease_l2_blocks are the only fields appended after it.
+			if got := d.Fields().Len(); got != int(tc.number)+7 {
+				t.Fatalf("field count = %d, want %d (only manifest_delta_snapshot, table_admission_rules_version, the anchor finality quorum fields, authority_threshold and membership_lease_l2_blocks follow the gate)", got, tc.number+7)
 			}
 		})
 	}

@@ -1101,6 +1101,7 @@ type RaftCommand struct {
 	//	*RaftCommand_MemberCheckpoint
 	//	*RaftCommand_MarkMemberLagging
 	//	*RaftCommand_RecordAnchorFinalityAttestation
+	//	*RaftCommand_RenewNodeLease
 	Cmd           isRaftCommand_Cmd `protobuf_oneof:"cmd"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1521,6 +1522,15 @@ func (x *RaftCommand) GetRecordAnchorFinalityAttestation() *RecordAnchorFinality
 	return nil
 }
 
+func (x *RaftCommand) GetRenewNodeLease() *RenewNodeLeaseCmd {
+	if x != nil {
+		if x, ok := x.Cmd.(*RaftCommand_RenewNodeLease); ok {
+			return x.RenewNodeLease
+		}
+	}
+	return nil
+}
+
 type isRaftCommand_Cmd interface {
 	isRaftCommand_Cmd()
 }
@@ -1706,6 +1716,13 @@ type RaftCommand_RecordAnchorFinalityAttestation struct {
 	RecordAnchorFinalityAttestation *RecordAnchorFinalityAttestationCmd `protobuf:"bytes,43,opt,name=record_anchor_finality_attestation,json=recordAnchorFinalityAttestation,proto3,oneof"`
 }
 
+type RaftCommand_RenewNodeLease struct {
+	// Membership lease: one node's signed lease renewal, proposed only after
+	// the membership_lease_l2_blocks parameter is committed, because a voter
+	// whose decoder lacks this tag refuses the command.
+	RenewNodeLease *RenewNodeLeaseCmd `protobuf:"bytes,44,opt,name=renew_node_lease,json=renewNodeLease,proto3,oneof"`
+}
+
 func (*RaftCommand_SubmitStatement) isRaftCommand_Cmd() {}
 
 func (*RaftCommand_SealL3Block) isRaftCommand_Cmd() {}
@@ -1790,6 +1807,56 @@ func (*RaftCommand_MarkMemberLagging) isRaftCommand_Cmd() {}
 
 func (*RaftCommand_RecordAnchorFinalityAttestation) isRaftCommand_Cmd() {}
 
+func (*RaftCommand_RenewNodeLease) isRaftCommand_Cmd() {}
+
+// RenewNodeLeaseCmd records one node's lease renewal; Apply verifies the
+// node's signature, its current registration_seq and a lease_seq above the
+// last applied one, and restarts the node's lease at the committed table
+// registry cursor block.
+type RenewNodeLeaseCmd struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Renewal       *NodeLeaseRenewal      `protobuf:"bytes,1,opt,name=renewal,proto3" json:"renewal,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RenewNodeLeaseCmd) Reset() {
+	*x = RenewNodeLeaseCmd{}
+	mi := &file_raftlog_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RenewNodeLeaseCmd) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RenewNodeLeaseCmd) ProtoMessage() {}
+
+func (x *RenewNodeLeaseCmd) ProtoReflect() protoreflect.Message {
+	mi := &file_raftlog_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RenewNodeLeaseCmd.ProtoReflect.Descriptor instead.
+func (*RenewNodeLeaseCmd) Descriptor() ([]byte, []int) {
+	return file_raftlog_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *RenewNodeLeaseCmd) GetRenewal() *NodeLeaseRenewal {
+	if x != nil {
+		return x.Renewal
+	}
+	return nil
+}
+
 // RecordAnchorFinalityAttestationCmd records one voter's attestation; Apply
 // verifies it against the committed voters and anchor_finality and latches a
 // flag once quorum distinct enrolled voters attest it.
@@ -1802,7 +1869,7 @@ type RecordAnchorFinalityAttestationCmd struct {
 
 func (x *RecordAnchorFinalityAttestationCmd) Reset() {
 	*x = RecordAnchorFinalityAttestationCmd{}
-	mi := &file_raftlog_proto_msgTypes[18]
+	mi := &file_raftlog_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1814,7 +1881,7 @@ func (x *RecordAnchorFinalityAttestationCmd) String() string {
 func (*RecordAnchorFinalityAttestationCmd) ProtoMessage() {}
 
 func (x *RecordAnchorFinalityAttestationCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_raftlog_proto_msgTypes[18]
+	mi := &file_raftlog_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1827,7 +1894,7 @@ func (x *RecordAnchorFinalityAttestationCmd) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use RecordAnchorFinalityAttestationCmd.ProtoReflect.Descriptor instead.
 func (*RecordAnchorFinalityAttestationCmd) Descriptor() ([]byte, []int) {
-	return file_raftlog_proto_rawDescGZIP(), []int{18}
+	return file_raftlog_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *RecordAnchorFinalityAttestationCmd) GetAttestation() *AnchorFinalityAttestation {
@@ -1847,7 +1914,7 @@ type BeginSnapshotQueryCmd struct {
 
 func (x *BeginSnapshotQueryCmd) Reset() {
 	*x = BeginSnapshotQueryCmd{}
-	mi := &file_raftlog_proto_msgTypes[19]
+	mi := &file_raftlog_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1859,7 +1926,7 @@ func (x *BeginSnapshotQueryCmd) String() string {
 func (*BeginSnapshotQueryCmd) ProtoMessage() {}
 
 func (x *BeginSnapshotQueryCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_raftlog_proto_msgTypes[19]
+	mi := &file_raftlog_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1872,7 +1939,7 @@ func (x *BeginSnapshotQueryCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BeginSnapshotQueryCmd.ProtoReflect.Descriptor instead.
 func (*BeginSnapshotQueryCmd) Descriptor() ([]byte, []int) {
-	return file_raftlog_proto_rawDescGZIP(), []int{19}
+	return file_raftlog_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *BeginSnapshotQueryCmd) GetRequest() *AcquireSnapshotQueryRequest {
@@ -1893,7 +1960,7 @@ type GrantSnapshotQueryCmd struct {
 
 func (x *GrantSnapshotQueryCmd) Reset() {
 	*x = GrantSnapshotQueryCmd{}
-	mi := &file_raftlog_proto_msgTypes[20]
+	mi := &file_raftlog_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1905,7 +1972,7 @@ func (x *GrantSnapshotQueryCmd) String() string {
 func (*GrantSnapshotQueryCmd) ProtoMessage() {}
 
 func (x *GrantSnapshotQueryCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_raftlog_proto_msgTypes[20]
+	mi := &file_raftlog_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1918,7 +1985,7 @@ func (x *GrantSnapshotQueryCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GrantSnapshotQueryCmd.ProtoReflect.Descriptor instead.
 func (*GrantSnapshotQueryCmd) Descriptor() ([]byte, []int) {
-	return file_raftlog_proto_rawDescGZIP(), []int{20}
+	return file_raftlog_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GrantSnapshotQueryCmd) GetRequestId() string {
@@ -1945,7 +2012,7 @@ type ReleaseSnapshotQueryCmd struct {
 
 func (x *ReleaseSnapshotQueryCmd) Reset() {
 	*x = ReleaseSnapshotQueryCmd{}
-	mi := &file_raftlog_proto_msgTypes[21]
+	mi := &file_raftlog_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1957,7 +2024,7 @@ func (x *ReleaseSnapshotQueryCmd) String() string {
 func (*ReleaseSnapshotQueryCmd) ProtoMessage() {}
 
 func (x *ReleaseSnapshotQueryCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_raftlog_proto_msgTypes[21]
+	mi := &file_raftlog_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1970,7 +2037,7 @@ func (x *ReleaseSnapshotQueryCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReleaseSnapshotQueryCmd.ProtoReflect.Descriptor instead.
 func (*ReleaseSnapshotQueryCmd) Descriptor() ([]byte, []int) {
-	return file_raftlog_proto_rawDescGZIP(), []int{21}
+	return file_raftlog_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ReleaseSnapshotQueryCmd) GetRequest() *ReleaseSnapshotQueryRequest {
@@ -1991,7 +2058,7 @@ type SubmitSnapshotQueryCmd struct {
 
 func (x *SubmitSnapshotQueryCmd) Reset() {
 	*x = SubmitSnapshotQueryCmd{}
-	mi := &file_raftlog_proto_msgTypes[22]
+	mi := &file_raftlog_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2003,7 +2070,7 @@ func (x *SubmitSnapshotQueryCmd) String() string {
 func (*SubmitSnapshotQueryCmd) ProtoMessage() {}
 
 func (x *SubmitSnapshotQueryCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_raftlog_proto_msgTypes[22]
+	mi := &file_raftlog_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2016,7 +2083,7 @@ func (x *SubmitSnapshotQueryCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitSnapshotQueryCmd.ProtoReflect.Descriptor instead.
 func (*SubmitSnapshotQueryCmd) Descriptor() ([]byte, []int) {
-	return file_raftlog_proto_rawDescGZIP(), []int{22}
+	return file_raftlog_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *SubmitSnapshotQueryCmd) GetEnvelope() *SnapshotQueryEnvelope {
@@ -2044,7 +2111,7 @@ type AbortSnapshotQueryCmd struct {
 
 func (x *AbortSnapshotQueryCmd) Reset() {
 	*x = AbortSnapshotQueryCmd{}
-	mi := &file_raftlog_proto_msgTypes[23]
+	mi := &file_raftlog_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2056,7 +2123,7 @@ func (x *AbortSnapshotQueryCmd) String() string {
 func (*AbortSnapshotQueryCmd) ProtoMessage() {}
 
 func (x *AbortSnapshotQueryCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_raftlog_proto_msgTypes[23]
+	mi := &file_raftlog_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2069,7 +2136,7 @@ func (x *AbortSnapshotQueryCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AbortSnapshotQueryCmd.ProtoReflect.Descriptor instead.
 func (*AbortSnapshotQueryCmd) Descriptor() ([]byte, []int) {
-	return file_raftlog_proto_rawDescGZIP(), []int{23}
+	return file_raftlog_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *AbortSnapshotQueryCmd) GetRecord() *SnapshotQueryAbortRecord {
@@ -2097,7 +2164,7 @@ type ActivateQueryProfileCmd struct {
 
 func (x *ActivateQueryProfileCmd) Reset() {
 	*x = ActivateQueryProfileCmd{}
-	mi := &file_raftlog_proto_msgTypes[24]
+	mi := &file_raftlog_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2109,7 +2176,7 @@ func (x *ActivateQueryProfileCmd) String() string {
 func (*ActivateQueryProfileCmd) ProtoMessage() {}
 
 func (x *ActivateQueryProfileCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_raftlog_proto_msgTypes[24]
+	mi := &file_raftlog_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2122,7 +2189,7 @@ func (x *ActivateQueryProfileCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActivateQueryProfileCmd.ProtoReflect.Descriptor instead.
 func (*ActivateQueryProfileCmd) Descriptor() ([]byte, []int) {
-	return file_raftlog_proto_rawDescGZIP(), []int{24}
+	return file_raftlog_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ActivateQueryProfileCmd) GetActivation() *ActiveQueryPolicy {
@@ -2150,7 +2217,7 @@ type RecordSnapshotQueryClaimCmd struct {
 
 func (x *RecordSnapshotQueryClaimCmd) Reset() {
 	*x = RecordSnapshotQueryClaimCmd{}
-	mi := &file_raftlog_proto_msgTypes[25]
+	mi := &file_raftlog_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2162,7 +2229,7 @@ func (x *RecordSnapshotQueryClaimCmd) String() string {
 func (*RecordSnapshotQueryClaimCmd) ProtoMessage() {}
 
 func (x *RecordSnapshotQueryClaimCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_raftlog_proto_msgTypes[25]
+	mi := &file_raftlog_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2175,7 +2242,7 @@ func (x *RecordSnapshotQueryClaimCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecordSnapshotQueryClaimCmd.ProtoReflect.Descriptor instead.
 func (*RecordSnapshotQueryClaimCmd) Descriptor() ([]byte, []int) {
-	return file_raftlog_proto_rawDescGZIP(), []int{25}
+	return file_raftlog_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *RecordSnapshotQueryClaimCmd) GetClaim() *SnapshotQueryClaim {
@@ -2195,7 +2262,7 @@ type RecordSnapshotQueryAttestationCmd struct {
 
 func (x *RecordSnapshotQueryAttestationCmd) Reset() {
 	*x = RecordSnapshotQueryAttestationCmd{}
-	mi := &file_raftlog_proto_msgTypes[26]
+	mi := &file_raftlog_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2207,7 +2274,7 @@ func (x *RecordSnapshotQueryAttestationCmd) String() string {
 func (*RecordSnapshotQueryAttestationCmd) ProtoMessage() {}
 
 func (x *RecordSnapshotQueryAttestationCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_raftlog_proto_msgTypes[26]
+	mi := &file_raftlog_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2220,7 +2287,7 @@ func (x *RecordSnapshotQueryAttestationCmd) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use RecordSnapshotQueryAttestationCmd.ProtoReflect.Descriptor instead.
 func (*RecordSnapshotQueryAttestationCmd) Descriptor() ([]byte, []int) {
-	return file_raftlog_proto_rawDescGZIP(), []int{26}
+	return file_raftlog_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *RecordSnapshotQueryAttestationCmd) GetAttestation() *SnapshotQueryAttestation {
@@ -2245,7 +2312,7 @@ type PublishExecutorProfileTransitionCmd struct {
 
 func (x *PublishExecutorProfileTransitionCmd) Reset() {
 	*x = PublishExecutorProfileTransitionCmd{}
-	mi := &file_raftlog_proto_msgTypes[27]
+	mi := &file_raftlog_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2257,7 +2324,7 @@ func (x *PublishExecutorProfileTransitionCmd) String() string {
 func (*PublishExecutorProfileTransitionCmd) ProtoMessage() {}
 
 func (x *PublishExecutorProfileTransitionCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_raftlog_proto_msgTypes[27]
+	mi := &file_raftlog_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2270,7 +2337,7 @@ func (x *PublishExecutorProfileTransitionCmd) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use PublishExecutorProfileTransitionCmd.ProtoReflect.Descriptor instead.
 func (*PublishExecutorProfileTransitionCmd) Descriptor() ([]byte, []int) {
-	return file_raftlog_proto_rawDescGZIP(), []int{27}
+	return file_raftlog_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *PublishExecutorProfileTransitionCmd) GetTransition() *ExecutorProfileTransition {
@@ -2311,7 +2378,7 @@ type RecordSnapshotArtifactReadyCmd struct {
 
 func (x *RecordSnapshotArtifactReadyCmd) Reset() {
 	*x = RecordSnapshotArtifactReadyCmd{}
-	mi := &file_raftlog_proto_msgTypes[28]
+	mi := &file_raftlog_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2323,7 +2390,7 @@ func (x *RecordSnapshotArtifactReadyCmd) String() string {
 func (*RecordSnapshotArtifactReadyCmd) ProtoMessage() {}
 
 func (x *RecordSnapshotArtifactReadyCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_raftlog_proto_msgTypes[28]
+	mi := &file_raftlog_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2336,7 +2403,7 @@ func (x *RecordSnapshotArtifactReadyCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecordSnapshotArtifactReadyCmd.ProtoReflect.Descriptor instead.
 func (*RecordSnapshotArtifactReadyCmd) Descriptor() ([]byte, []int) {
-	return file_raftlog_proto_rawDescGZIP(), []int{28}
+	return file_raftlog_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *RecordSnapshotArtifactReadyCmd) GetSubmission() *SnapshotArtifactReadySubmission {
@@ -2409,7 +2476,7 @@ const file_raftlog_proto_rawDesc = "" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x16\n" +
 	"\x06reason\x18\x02 \x01(\tR\x06reason\x12:\n" +
 	"\x19expected_registration_seq\x18\x03 \x01(\x04R\x17expectedRegistrationSeq\x12#\n" +
-	"\rauthority_jws\x18\x04 \x01(\tR\fauthorityJws\"\x82\x1b\n" +
+	"\rauthority_jws\x18\x04 \x01(\tR\fauthorityJws\"\xca\x1b\n" +
 	"\vRaftCommand\x12H\n" +
 	"\x10submit_statement\x18\x01 \x01(\v2\x1b.arbiter.SubmitStatementCmdH\x00R\x0fsubmitStatement\x12=\n" +
 	"\rseal_l3_block\x18\x02 \x01(\v2\x17.arbiter.SealL3BlockCmdH\x00R\vsealL3Block\x12B\n" +
@@ -2456,8 +2523,11 @@ const file_raftlog_proto_rawDesc = "" +
 	"\fmember_ready\x18( \x01(\v2\x17.arbiter.MemberReadyCmdH\x00R\vmemberReady\x12K\n" +
 	"\x11member_checkpoint\x18) \x01(\v2\x1c.arbiter.MemberCheckpointCmdH\x00R\x10memberCheckpoint\x12O\n" +
 	"\x13mark_member_lagging\x18* \x01(\v2\x1d.arbiter.MarkMemberLaggingCmdH\x00R\x11markMemberLagging\x12z\n" +
-	"\"record_anchor_finality_attestation\x18+ \x01(\v2+.arbiter.RecordAnchorFinalityAttestationCmdH\x00R\x1frecordAnchorFinalityAttestationB\x05\n" +
-	"\x03cmd\"j\n" +
+	"\"record_anchor_finality_attestation\x18+ \x01(\v2+.arbiter.RecordAnchorFinalityAttestationCmdH\x00R\x1frecordAnchorFinalityAttestation\x12F\n" +
+	"\x10renew_node_lease\x18, \x01(\v2\x1a.arbiter.RenewNodeLeaseCmdH\x00R\x0erenewNodeLeaseB\x05\n" +
+	"\x03cmd\"H\n" +
+	"\x11RenewNodeLeaseCmd\x123\n" +
+	"\arenewal\x18\x01 \x01(\v2\x19.arbiter.NodeLeaseRenewalR\arenewal\"j\n" +
 	"\"RecordAnchorFinalityAttestationCmd\x12D\n" +
 	"\vattestation\x18\x01 \x01(\v2\".arbiter.AnchorFinalityAttestationR\vattestation\"W\n" +
 	"\x15BeginSnapshotQueryCmd\x12>\n" +
@@ -2512,7 +2582,7 @@ func file_raftlog_proto_rawDescGZIP() []byte {
 }
 
 var file_raftlog_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_raftlog_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
+var file_raftlog_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
 var file_raftlog_proto_goTypes = []any{
 	(ChallengeVerdict)(0),                       // 0: arbiter.ChallengeVerdict
 	(*SubmitStatementCmd)(nil),                  // 1: arbiter.SubmitStatementCmd
@@ -2533,68 +2603,70 @@ var file_raftlog_proto_goTypes = []any{
 	(*MarkActiveCmd)(nil),                       // 16: arbiter.MarkActiveCmd
 	(*EvictNodeCmd)(nil),                        // 17: arbiter.EvictNodeCmd
 	(*RaftCommand)(nil),                         // 18: arbiter.RaftCommand
-	(*RecordAnchorFinalityAttestationCmd)(nil),  // 19: arbiter.RecordAnchorFinalityAttestationCmd
-	(*BeginSnapshotQueryCmd)(nil),               // 20: arbiter.BeginSnapshotQueryCmd
-	(*GrantSnapshotQueryCmd)(nil),               // 21: arbiter.GrantSnapshotQueryCmd
-	(*ReleaseSnapshotQueryCmd)(nil),             // 22: arbiter.ReleaseSnapshotQueryCmd
-	(*SubmitSnapshotQueryCmd)(nil),              // 23: arbiter.SubmitSnapshotQueryCmd
-	(*AbortSnapshotQueryCmd)(nil),               // 24: arbiter.AbortSnapshotQueryCmd
-	(*ActivateQueryProfileCmd)(nil),             // 25: arbiter.ActivateQueryProfileCmd
-	(*RecordSnapshotQueryClaimCmd)(nil),         // 26: arbiter.RecordSnapshotQueryClaimCmd
-	(*RecordSnapshotQueryAttestationCmd)(nil),   // 27: arbiter.RecordSnapshotQueryAttestationCmd
-	(*PublishExecutorProfileTransitionCmd)(nil), // 28: arbiter.PublishExecutorProfileTransitionCmd
-	(*RecordSnapshotArtifactReadyCmd)(nil),      // 29: arbiter.RecordSnapshotArtifactReadyCmd
-	(*StatementEnvelopeV2)(nil),                 // 30: arbiter.StatementEnvelopeV2
-	(*RCRecord)(nil),                            // 31: arbiter.RCRecord
-	(*ReplayAttestation)(nil),                   // 32: arbiter.ReplayAttestation
-	(*ByteSideScanMsg)(nil),                     // 33: arbiter.ByteSideScanMsg
-	(*AnchorRef)(nil),                           // 34: arbiter.AnchorRef
-	(*PromoteSafePartition)(nil),                // 35: arbiter.PromoteSafePartition
-	(*PromotionAck)(nil),                        // 36: arbiter.PromotionAck
-	(*SafeSnapshotManifest)(nil),                // 37: arbiter.SafeSnapshotManifest
-	(*UnsafeCleanup)(nil),                       // 38: arbiter.UnsafeCleanup
-	(*CleanupAck)(nil),                          // 39: arbiter.CleanupAck
-	(*NodeRegistration)(nil),                    // 40: arbiter.NodeRegistration
-	(*UpdateConsensusParamsCmd)(nil),            // 41: arbiter.UpdateConsensusParamsCmd
-	(*ArtifactDispositionCmd)(nil),              // 42: arbiter.ArtifactDispositionCmd
-	(*SeedLegacyTablesCmd)(nil),                 // 43: arbiter.SeedLegacyTablesCmd
-	(*AddTableCmd)(nil),                         // 44: arbiter.AddTableCmd
-	(*RetireTablesCmd)(nil),                     // 45: arbiter.RetireTablesCmd
-	(*AdvanceL2CursorCmd)(nil),                  // 46: arbiter.AdvanceL2CursorCmd
-	(*RecordTablePurgedCmd)(nil),                // 47: arbiter.RecordTablePurgedCmd
-	(*QuarantineIndexerCmd)(nil),                // 48: arbiter.QuarantineIndexerCmd
-	(*ReleaseIndexerCmd)(nil),                   // 49: arbiter.ReleaseIndexerCmd
-	(*RebalanceGroupCmd)(nil),                   // 50: arbiter.RebalanceGroupCmd
-	(*ReselectVerifiersCmd)(nil),                // 51: arbiter.ReselectVerifiersCmd
-	(*MemberReadyCmd)(nil),                      // 52: arbiter.MemberReadyCmd
-	(*MemberCheckpointCmd)(nil),                 // 53: arbiter.MemberCheckpointCmd
-	(*MarkMemberLaggingCmd)(nil),                // 54: arbiter.MarkMemberLaggingCmd
-	(*AnchorFinalityAttestation)(nil),           // 55: arbiter.AnchorFinalityAttestation
-	(*AcquireSnapshotQueryRequest)(nil),         // 56: arbiter.AcquireSnapshotQueryRequest
-	(*SnapshotQueryReservation)(nil),            // 57: arbiter.SnapshotQueryReservation
-	(*ReleaseSnapshotQueryRequest)(nil),         // 58: arbiter.ReleaseSnapshotQueryRequest
-	(*SnapshotQueryEnvelope)(nil),               // 59: arbiter.SnapshotQueryEnvelope
-	(*SnapshotQueryAbortRecord)(nil),            // 60: arbiter.SnapshotQueryAbortRecord
-	(*ActiveQueryPolicy)(nil),                   // 61: arbiter.ActiveQueryPolicy
-	(*SnapshotQueryClaim)(nil),                  // 62: arbiter.SnapshotQueryClaim
-	(*SnapshotQueryAttestation)(nil),            // 63: arbiter.SnapshotQueryAttestation
-	(*ExecutorProfileTransition)(nil),           // 64: arbiter.ExecutorProfileTransition
-	(*ExecutorProfileTransitionReceipt)(nil),    // 65: arbiter.ExecutorProfileTransitionReceipt
-	(*SnapshotArtifactReadySubmission)(nil),     // 66: arbiter.SnapshotArtifactReadySubmission
+	(*RenewNodeLeaseCmd)(nil),                   // 19: arbiter.RenewNodeLeaseCmd
+	(*RecordAnchorFinalityAttestationCmd)(nil),  // 20: arbiter.RecordAnchorFinalityAttestationCmd
+	(*BeginSnapshotQueryCmd)(nil),               // 21: arbiter.BeginSnapshotQueryCmd
+	(*GrantSnapshotQueryCmd)(nil),               // 22: arbiter.GrantSnapshotQueryCmd
+	(*ReleaseSnapshotQueryCmd)(nil),             // 23: arbiter.ReleaseSnapshotQueryCmd
+	(*SubmitSnapshotQueryCmd)(nil),              // 24: arbiter.SubmitSnapshotQueryCmd
+	(*AbortSnapshotQueryCmd)(nil),               // 25: arbiter.AbortSnapshotQueryCmd
+	(*ActivateQueryProfileCmd)(nil),             // 26: arbiter.ActivateQueryProfileCmd
+	(*RecordSnapshotQueryClaimCmd)(nil),         // 27: arbiter.RecordSnapshotQueryClaimCmd
+	(*RecordSnapshotQueryAttestationCmd)(nil),   // 28: arbiter.RecordSnapshotQueryAttestationCmd
+	(*PublishExecutorProfileTransitionCmd)(nil), // 29: arbiter.PublishExecutorProfileTransitionCmd
+	(*RecordSnapshotArtifactReadyCmd)(nil),      // 30: arbiter.RecordSnapshotArtifactReadyCmd
+	(*StatementEnvelopeV2)(nil),                 // 31: arbiter.StatementEnvelopeV2
+	(*RCRecord)(nil),                            // 32: arbiter.RCRecord
+	(*ReplayAttestation)(nil),                   // 33: arbiter.ReplayAttestation
+	(*ByteSideScanMsg)(nil),                     // 34: arbiter.ByteSideScanMsg
+	(*AnchorRef)(nil),                           // 35: arbiter.AnchorRef
+	(*PromoteSafePartition)(nil),                // 36: arbiter.PromoteSafePartition
+	(*PromotionAck)(nil),                        // 37: arbiter.PromotionAck
+	(*SafeSnapshotManifest)(nil),                // 38: arbiter.SafeSnapshotManifest
+	(*UnsafeCleanup)(nil),                       // 39: arbiter.UnsafeCleanup
+	(*CleanupAck)(nil),                          // 40: arbiter.CleanupAck
+	(*NodeRegistration)(nil),                    // 41: arbiter.NodeRegistration
+	(*UpdateConsensusParamsCmd)(nil),            // 42: arbiter.UpdateConsensusParamsCmd
+	(*ArtifactDispositionCmd)(nil),              // 43: arbiter.ArtifactDispositionCmd
+	(*SeedLegacyTablesCmd)(nil),                 // 44: arbiter.SeedLegacyTablesCmd
+	(*AddTableCmd)(nil),                         // 45: arbiter.AddTableCmd
+	(*RetireTablesCmd)(nil),                     // 46: arbiter.RetireTablesCmd
+	(*AdvanceL2CursorCmd)(nil),                  // 47: arbiter.AdvanceL2CursorCmd
+	(*RecordTablePurgedCmd)(nil),                // 48: arbiter.RecordTablePurgedCmd
+	(*QuarantineIndexerCmd)(nil),                // 49: arbiter.QuarantineIndexerCmd
+	(*ReleaseIndexerCmd)(nil),                   // 50: arbiter.ReleaseIndexerCmd
+	(*RebalanceGroupCmd)(nil),                   // 51: arbiter.RebalanceGroupCmd
+	(*ReselectVerifiersCmd)(nil),                // 52: arbiter.ReselectVerifiersCmd
+	(*MemberReadyCmd)(nil),                      // 53: arbiter.MemberReadyCmd
+	(*MemberCheckpointCmd)(nil),                 // 54: arbiter.MemberCheckpointCmd
+	(*MarkMemberLaggingCmd)(nil),                // 55: arbiter.MarkMemberLaggingCmd
+	(*NodeLeaseRenewal)(nil),                    // 56: arbiter.NodeLeaseRenewal
+	(*AnchorFinalityAttestation)(nil),           // 57: arbiter.AnchorFinalityAttestation
+	(*AcquireSnapshotQueryRequest)(nil),         // 58: arbiter.AcquireSnapshotQueryRequest
+	(*SnapshotQueryReservation)(nil),            // 59: arbiter.SnapshotQueryReservation
+	(*ReleaseSnapshotQueryRequest)(nil),         // 60: arbiter.ReleaseSnapshotQueryRequest
+	(*SnapshotQueryEnvelope)(nil),               // 61: arbiter.SnapshotQueryEnvelope
+	(*SnapshotQueryAbortRecord)(nil),            // 62: arbiter.SnapshotQueryAbortRecord
+	(*ActiveQueryPolicy)(nil),                   // 63: arbiter.ActiveQueryPolicy
+	(*SnapshotQueryClaim)(nil),                  // 64: arbiter.SnapshotQueryClaim
+	(*SnapshotQueryAttestation)(nil),            // 65: arbiter.SnapshotQueryAttestation
+	(*ExecutorProfileTransition)(nil),           // 66: arbiter.ExecutorProfileTransition
+	(*ExecutorProfileTransitionReceipt)(nil),    // 67: arbiter.ExecutorProfileTransitionReceipt
+	(*SnapshotArtifactReadySubmission)(nil),     // 68: arbiter.SnapshotArtifactReadySubmission
 }
 var file_raftlog_proto_depIdxs = []int32{
-	30, // 0: arbiter.SubmitStatementCmd.envelope:type_name -> arbiter.StatementEnvelopeV2
-	31, // 1: arbiter.RegisterRCCmd.rc:type_name -> arbiter.RCRecord
-	32, // 2: arbiter.RecordAttestationCmd.attestation:type_name -> arbiter.ReplayAttestation
-	33, // 3: arbiter.RecordByteSideScanCmd.scan:type_name -> arbiter.ByteSideScanMsg
-	34, // 4: arbiter.RecordAnchorFinalityCmd.anchor:type_name -> arbiter.AnchorRef
-	35, // 5: arbiter.RecordPromotionIssuedCmd.promote:type_name -> arbiter.PromoteSafePartition
-	36, // 6: arbiter.RecordPromotionAckCmd.ack:type_name -> arbiter.PromotionAck
-	37, // 7: arbiter.PublishSafeSnapshotCmd.manifest:type_name -> arbiter.SafeSnapshotManifest
-	38, // 8: arbiter.ScheduleUnsafeCleanupCmd.cleanup:type_name -> arbiter.UnsafeCleanup
-	39, // 9: arbiter.RecordCleanupAckCmd.ack:type_name -> arbiter.CleanupAck
+	31, // 0: arbiter.SubmitStatementCmd.envelope:type_name -> arbiter.StatementEnvelopeV2
+	32, // 1: arbiter.RegisterRCCmd.rc:type_name -> arbiter.RCRecord
+	33, // 2: arbiter.RecordAttestationCmd.attestation:type_name -> arbiter.ReplayAttestation
+	34, // 3: arbiter.RecordByteSideScanCmd.scan:type_name -> arbiter.ByteSideScanMsg
+	35, // 4: arbiter.RecordAnchorFinalityCmd.anchor:type_name -> arbiter.AnchorRef
+	36, // 5: arbiter.RecordPromotionIssuedCmd.promote:type_name -> arbiter.PromoteSafePartition
+	37, // 6: arbiter.RecordPromotionAckCmd.ack:type_name -> arbiter.PromotionAck
+	38, // 7: arbiter.PublishSafeSnapshotCmd.manifest:type_name -> arbiter.SafeSnapshotManifest
+	39, // 8: arbiter.ScheduleUnsafeCleanupCmd.cleanup:type_name -> arbiter.UnsafeCleanup
+	40, // 9: arbiter.RecordCleanupAckCmd.ack:type_name -> arbiter.CleanupAck
 	0,  // 10: arbiter.ResolveChallengeCmd.verdict:type_name -> arbiter.ChallengeVerdict
-	40, // 11: arbiter.RegisterNodeCmd.registration:type_name -> arbiter.NodeRegistration
+	41, // 11: arbiter.RegisterNodeCmd.registration:type_name -> arbiter.NodeRegistration
 	1,  // 12: arbiter.RaftCommand.submit_statement:type_name -> arbiter.SubmitStatementCmd
 	2,  // 13: arbiter.RaftCommand.seal_l3_block:type_name -> arbiter.SealL3BlockCmd
 	3,  // 14: arbiter.RaftCommand.mark_replaying:type_name -> arbiter.MarkReplayingCmd
@@ -2612,49 +2684,51 @@ var file_raftlog_proto_depIdxs = []int32{
 	15, // 26: arbiter.RaftCommand.register_node:type_name -> arbiter.RegisterNodeCmd
 	16, // 27: arbiter.RaftCommand.mark_active:type_name -> arbiter.MarkActiveCmd
 	17, // 28: arbiter.RaftCommand.evict_node:type_name -> arbiter.EvictNodeCmd
-	41, // 29: arbiter.RaftCommand.update_consensus_params:type_name -> arbiter.UpdateConsensusParamsCmd
-	20, // 30: arbiter.RaftCommand.begin_snapshot_query:type_name -> arbiter.BeginSnapshotQueryCmd
-	21, // 31: arbiter.RaftCommand.grant_snapshot_query:type_name -> arbiter.GrantSnapshotQueryCmd
-	22, // 32: arbiter.RaftCommand.release_snapshot_query:type_name -> arbiter.ReleaseSnapshotQueryCmd
-	23, // 33: arbiter.RaftCommand.submit_snapshot_query:type_name -> arbiter.SubmitSnapshotQueryCmd
-	24, // 34: arbiter.RaftCommand.abort_snapshot_query:type_name -> arbiter.AbortSnapshotQueryCmd
-	25, // 35: arbiter.RaftCommand.activate_query_profile:type_name -> arbiter.ActivateQueryProfileCmd
-	26, // 36: arbiter.RaftCommand.record_snapshot_query_claim:type_name -> arbiter.RecordSnapshotQueryClaimCmd
-	27, // 37: arbiter.RaftCommand.record_snapshot_query_attestation:type_name -> arbiter.RecordSnapshotQueryAttestationCmd
-	28, // 38: arbiter.RaftCommand.publish_executor_profile_transition:type_name -> arbiter.PublishExecutorProfileTransitionCmd
-	29, // 39: arbiter.RaftCommand.record_snapshot_artifact_ready:type_name -> arbiter.RecordSnapshotArtifactReadyCmd
-	42, // 40: arbiter.RaftCommand.artifact_disposition:type_name -> arbiter.ArtifactDispositionCmd
-	43, // 41: arbiter.RaftCommand.seed_legacy_tables:type_name -> arbiter.SeedLegacyTablesCmd
-	44, // 42: arbiter.RaftCommand.add_table:type_name -> arbiter.AddTableCmd
-	45, // 43: arbiter.RaftCommand.retire_tables:type_name -> arbiter.RetireTablesCmd
-	46, // 44: arbiter.RaftCommand.advance_l2_cursor:type_name -> arbiter.AdvanceL2CursorCmd
-	47, // 45: arbiter.RaftCommand.record_table_purged:type_name -> arbiter.RecordTablePurgedCmd
-	48, // 46: arbiter.RaftCommand.quarantine_indexer:type_name -> arbiter.QuarantineIndexerCmd
-	49, // 47: arbiter.RaftCommand.release_indexer:type_name -> arbiter.ReleaseIndexerCmd
-	50, // 48: arbiter.RaftCommand.rebalance_group:type_name -> arbiter.RebalanceGroupCmd
-	51, // 49: arbiter.RaftCommand.reselect_verifiers:type_name -> arbiter.ReselectVerifiersCmd
-	52, // 50: arbiter.RaftCommand.member_ready:type_name -> arbiter.MemberReadyCmd
-	53, // 51: arbiter.RaftCommand.member_checkpoint:type_name -> arbiter.MemberCheckpointCmd
-	54, // 52: arbiter.RaftCommand.mark_member_lagging:type_name -> arbiter.MarkMemberLaggingCmd
-	19, // 53: arbiter.RaftCommand.record_anchor_finality_attestation:type_name -> arbiter.RecordAnchorFinalityAttestationCmd
-	55, // 54: arbiter.RecordAnchorFinalityAttestationCmd.attestation:type_name -> arbiter.AnchorFinalityAttestation
-	56, // 55: arbiter.BeginSnapshotQueryCmd.request:type_name -> arbiter.AcquireSnapshotQueryRequest
-	57, // 56: arbiter.GrantSnapshotQueryCmd.reservation:type_name -> arbiter.SnapshotQueryReservation
-	58, // 57: arbiter.ReleaseSnapshotQueryCmd.request:type_name -> arbiter.ReleaseSnapshotQueryRequest
-	59, // 58: arbiter.SubmitSnapshotQueryCmd.envelope:type_name -> arbiter.SnapshotQueryEnvelope
-	60, // 59: arbiter.AbortSnapshotQueryCmd.record:type_name -> arbiter.SnapshotQueryAbortRecord
-	61, // 60: arbiter.ActivateQueryProfileCmd.activation:type_name -> arbiter.ActiveQueryPolicy
-	62, // 61: arbiter.RecordSnapshotQueryClaimCmd.claim:type_name -> arbiter.SnapshotQueryClaim
-	63, // 62: arbiter.RecordSnapshotQueryAttestationCmd.attestation:type_name -> arbiter.SnapshotQueryAttestation
-	64, // 63: arbiter.PublishExecutorProfileTransitionCmd.transition:type_name -> arbiter.ExecutorProfileTransition
-	37, // 64: arbiter.PublishExecutorProfileTransitionCmd.manifest:type_name -> arbiter.SafeSnapshotManifest
-	65, // 65: arbiter.PublishExecutorProfileTransitionCmd.receipts:type_name -> arbiter.ExecutorProfileTransitionReceipt
-	66, // 66: arbiter.RecordSnapshotArtifactReadyCmd.submission:type_name -> arbiter.SnapshotArtifactReadySubmission
-	67, // [67:67] is the sub-list for method output_type
-	67, // [67:67] is the sub-list for method input_type
-	67, // [67:67] is the sub-list for extension type_name
-	67, // [67:67] is the sub-list for extension extendee
-	0,  // [0:67] is the sub-list for field type_name
+	42, // 29: arbiter.RaftCommand.update_consensus_params:type_name -> arbiter.UpdateConsensusParamsCmd
+	21, // 30: arbiter.RaftCommand.begin_snapshot_query:type_name -> arbiter.BeginSnapshotQueryCmd
+	22, // 31: arbiter.RaftCommand.grant_snapshot_query:type_name -> arbiter.GrantSnapshotQueryCmd
+	23, // 32: arbiter.RaftCommand.release_snapshot_query:type_name -> arbiter.ReleaseSnapshotQueryCmd
+	24, // 33: arbiter.RaftCommand.submit_snapshot_query:type_name -> arbiter.SubmitSnapshotQueryCmd
+	25, // 34: arbiter.RaftCommand.abort_snapshot_query:type_name -> arbiter.AbortSnapshotQueryCmd
+	26, // 35: arbiter.RaftCommand.activate_query_profile:type_name -> arbiter.ActivateQueryProfileCmd
+	27, // 36: arbiter.RaftCommand.record_snapshot_query_claim:type_name -> arbiter.RecordSnapshotQueryClaimCmd
+	28, // 37: arbiter.RaftCommand.record_snapshot_query_attestation:type_name -> arbiter.RecordSnapshotQueryAttestationCmd
+	29, // 38: arbiter.RaftCommand.publish_executor_profile_transition:type_name -> arbiter.PublishExecutorProfileTransitionCmd
+	30, // 39: arbiter.RaftCommand.record_snapshot_artifact_ready:type_name -> arbiter.RecordSnapshotArtifactReadyCmd
+	43, // 40: arbiter.RaftCommand.artifact_disposition:type_name -> arbiter.ArtifactDispositionCmd
+	44, // 41: arbiter.RaftCommand.seed_legacy_tables:type_name -> arbiter.SeedLegacyTablesCmd
+	45, // 42: arbiter.RaftCommand.add_table:type_name -> arbiter.AddTableCmd
+	46, // 43: arbiter.RaftCommand.retire_tables:type_name -> arbiter.RetireTablesCmd
+	47, // 44: arbiter.RaftCommand.advance_l2_cursor:type_name -> arbiter.AdvanceL2CursorCmd
+	48, // 45: arbiter.RaftCommand.record_table_purged:type_name -> arbiter.RecordTablePurgedCmd
+	49, // 46: arbiter.RaftCommand.quarantine_indexer:type_name -> arbiter.QuarantineIndexerCmd
+	50, // 47: arbiter.RaftCommand.release_indexer:type_name -> arbiter.ReleaseIndexerCmd
+	51, // 48: arbiter.RaftCommand.rebalance_group:type_name -> arbiter.RebalanceGroupCmd
+	52, // 49: arbiter.RaftCommand.reselect_verifiers:type_name -> arbiter.ReselectVerifiersCmd
+	53, // 50: arbiter.RaftCommand.member_ready:type_name -> arbiter.MemberReadyCmd
+	54, // 51: arbiter.RaftCommand.member_checkpoint:type_name -> arbiter.MemberCheckpointCmd
+	55, // 52: arbiter.RaftCommand.mark_member_lagging:type_name -> arbiter.MarkMemberLaggingCmd
+	20, // 53: arbiter.RaftCommand.record_anchor_finality_attestation:type_name -> arbiter.RecordAnchorFinalityAttestationCmd
+	19, // 54: arbiter.RaftCommand.renew_node_lease:type_name -> arbiter.RenewNodeLeaseCmd
+	56, // 55: arbiter.RenewNodeLeaseCmd.renewal:type_name -> arbiter.NodeLeaseRenewal
+	57, // 56: arbiter.RecordAnchorFinalityAttestationCmd.attestation:type_name -> arbiter.AnchorFinalityAttestation
+	58, // 57: arbiter.BeginSnapshotQueryCmd.request:type_name -> arbiter.AcquireSnapshotQueryRequest
+	59, // 58: arbiter.GrantSnapshotQueryCmd.reservation:type_name -> arbiter.SnapshotQueryReservation
+	60, // 59: arbiter.ReleaseSnapshotQueryCmd.request:type_name -> arbiter.ReleaseSnapshotQueryRequest
+	61, // 60: arbiter.SubmitSnapshotQueryCmd.envelope:type_name -> arbiter.SnapshotQueryEnvelope
+	62, // 61: arbiter.AbortSnapshotQueryCmd.record:type_name -> arbiter.SnapshotQueryAbortRecord
+	63, // 62: arbiter.ActivateQueryProfileCmd.activation:type_name -> arbiter.ActiveQueryPolicy
+	64, // 63: arbiter.RecordSnapshotQueryClaimCmd.claim:type_name -> arbiter.SnapshotQueryClaim
+	65, // 64: arbiter.RecordSnapshotQueryAttestationCmd.attestation:type_name -> arbiter.SnapshotQueryAttestation
+	66, // 65: arbiter.PublishExecutorProfileTransitionCmd.transition:type_name -> arbiter.ExecutorProfileTransition
+	38, // 66: arbiter.PublishExecutorProfileTransitionCmd.manifest:type_name -> arbiter.SafeSnapshotManifest
+	67, // 67: arbiter.PublishExecutorProfileTransitionCmd.receipts:type_name -> arbiter.ExecutorProfileTransitionReceipt
+	68, // 68: arbiter.RecordSnapshotArtifactReadyCmd.submission:type_name -> arbiter.SnapshotArtifactReadySubmission
+	69, // [69:69] is the sub-list for method output_type
+	69, // [69:69] is the sub-list for method input_type
+	69, // [69:69] is the sub-list for extension type_name
+	69, // [69:69] is the sub-list for extension extendee
+	0,  // [0:69] is the sub-list for field type_name
 }
 
 func init() { file_raftlog_proto_init() }
@@ -2710,6 +2784,7 @@ func file_raftlog_proto_init() {
 		(*RaftCommand_MemberCheckpoint)(nil),
 		(*RaftCommand_MarkMemberLagging)(nil),
 		(*RaftCommand_RecordAnchorFinalityAttestation)(nil),
+		(*RaftCommand_RenewNodeLease)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -2717,7 +2792,7 @@ func file_raftlog_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_raftlog_proto_rawDesc), len(file_raftlog_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   29,
+			NumMessages:   30,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
