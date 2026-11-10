@@ -390,6 +390,10 @@ message TableRegistrySnapshot {
   uint64 delta_base_version = 13;
   // The total number of incarnations at version; set on a delta.
   uint64 incarnation_count = 14;
+  // The consensus table admission rules version in force (0 = rules v1), so a
+  // host can judge a CREATE TABLE by the rules the arbiter will apply to its
+  // AddTable. Carried by full and delta snapshots alike.
+  uint32 admission_rules_version = 15;
 }
 
 // PurgeNodeSet is the committed set of data-plane nodes whose

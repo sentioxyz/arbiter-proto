@@ -45,6 +45,10 @@ message ConsensusMutableParams {
   // the stage-3 activation sets it, then carried by every update and never
   // lowered.
   bool manifest_delta_snapshot = 11;
+  // The table admission rules version: 0 (rules v1) until one authority-signed
+  // update after the table registry activation raises it, then carried by
+  // every update and never lowered.
+  uint32 table_admission_rules_version = 12;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -129,6 +133,19 @@ message ConsensusParamsUpdate {
   // it. It joins the params digest only once set, so earlier digests are
   // unchanged.
   bool manifest_delta_snapshot = 16;
+  // The table admission rules version every later AddTable is judged by: 0
+  // means admission rules v1 (the only rules before the field existed); 2
+  // selects admission rules v2, which admits a wider column-type set (Date32,
+  // UUID, the 128- and 256-bit integers, LowCardinality(String) and
+  // Nullable over a plain scalar). Raise-only; once set every update must
+  // carry it, and it needs the table registry (earlier or in the same update).
+  // An AddTable is judged by the version in force when it commits, so tables
+  // admitted before the raise keep their verdicts on replay. It changes Apply,
+  // so every voter must run a binary that knows the field before an update
+  // sets it, and every SNode and verifier must run a profile that replays the
+  // wider types. It joins the params digest only once set, so earlier digests
+  // are unchanged.
+  uint32 table_admission_rules_version = 17;
 }
 
 // UpdateConsensusParamsCmd is both the administration request and the

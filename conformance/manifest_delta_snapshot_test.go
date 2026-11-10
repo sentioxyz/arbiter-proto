@@ -11,8 +11,9 @@ import (
 
 // manifestDeltaSnapshotFields pins the bool the manifest delta snapshot
 // switch appends to each consensus parameter message: ConsensusMutableParams =
-// 11 and ConsensusParamsUpdate = 16. Each is its message's last field, so
-// assertSnapshotBaselineDescriptors strips it before every older exemption,
+// 11 and ConsensusParamsUpdate = 16. Each is its message's last field once
+// table_admission_rules_version is stripped, so assertSnapshotBaselineDescriptors
+// strips it right after that field, before every older exemption,
 // promotion_finality_gate's included.
 // Every existing baseline predates it, so the exemption applies
 // unconditionally.
@@ -40,8 +41,9 @@ func TestManifestDeltaSnapshotFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.BoolKind || f.IsList() || f.HasOptionalKeyword() || f.ContainingOneof() != nil {
 				t.Fatalf("field = %v, want plain bool number %d", f, tc.number)
 			}
-			if got := d.Fields().Len(); got != int(tc.number) {
-				t.Fatalf("field count = %d, want %d (the switch is the last field)", got, tc.number)
+			// table_admission_rules_version is the only field appended after it.
+			if got := d.Fields().Len(); got != int(tc.number)+1 {
+				t.Fatalf("field count = %d, want %d (only table_admission_rules_version follows the switch)", got, tc.number+1)
 			}
 		})
 	}

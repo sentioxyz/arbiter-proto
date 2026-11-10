@@ -180,8 +180,12 @@ type ConsensusMutableParams struct {
 	// the stage-3 activation sets it, then carried by every update and never
 	// lowered.
 	ManifestDeltaSnapshot bool `protobuf:"varint,11,opt,name=manifest_delta_snapshot,json=manifestDeltaSnapshot,proto3" json:"manifest_delta_snapshot,omitempty"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	// The table admission rules version: 0 (rules v1) until one authority-signed
+	// update after the table registry activation raises it, then carried by
+	// every update and never lowered.
+	TableAdmissionRulesVersion uint32 `protobuf:"varint,12,opt,name=table_admission_rules_version,json=tableAdmissionRulesVersion,proto3" json:"table_admission_rules_version,omitempty"`
+	unknownFields              protoimpl.UnknownFields
+	sizeCache                  protoimpl.SizeCache
 }
 
 func (x *ConsensusMutableParams) Reset() {
@@ -291,6 +295,13 @@ func (x *ConsensusMutableParams) GetManifestDeltaSnapshot() bool {
 	return false
 }
 
+func (x *ConsensusMutableParams) GetTableAdmissionRulesVersion() uint32 {
+	if x != nil {
+		return x.TableAdmissionRulesVersion
+	}
+	return 0
+}
+
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
 // Authority addresses are lowercase, sorted and deduplicated before hashing.
 // authority_jws covers every field; it uses a dedicated versioned purpose
@@ -374,8 +385,21 @@ type ConsensusParamsUpdate struct {
 	// it. It joins the params digest only once set, so earlier digests are
 	// unchanged.
 	ManifestDeltaSnapshot bool `protobuf:"varint,16,opt,name=manifest_delta_snapshot,json=manifestDeltaSnapshot,proto3" json:"manifest_delta_snapshot,omitempty"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	// The table admission rules version every later AddTable is judged by: 0
+	// means admission rules v1 (the only rules before the field existed); 2
+	// selects admission rules v2, which admits a wider column-type set (Date32,
+	// UUID, the 128- and 256-bit integers, LowCardinality(String) and
+	// Nullable over a plain scalar). Raise-only; once set every update must
+	// carry it, and it needs the table registry (earlier or in the same update).
+	// An AddTable is judged by the version in force when it commits, so tables
+	// admitted before the raise keep their verdicts on replay. It changes Apply,
+	// so every voter must run a binary that knows the field before an update
+	// sets it, and every SNode and verifier must run a profile that replays the
+	// wider types. It joins the params digest only once set, so earlier digests
+	// are unchanged.
+	TableAdmissionRulesVersion uint32 `protobuf:"varint,17,opt,name=table_admission_rules_version,json=tableAdmissionRulesVersion,proto3" json:"table_admission_rules_version,omitempty"`
+	unknownFields              protoimpl.UnknownFields
+	sizeCache                  protoimpl.SizeCache
 }
 
 func (x *ConsensusParamsUpdate) Reset() {
@@ -518,6 +542,13 @@ func (x *ConsensusParamsUpdate) GetManifestDeltaSnapshot() bool {
 		return x.ManifestDeltaSnapshot
 	}
 	return false
+}
+
+func (x *ConsensusParamsUpdate) GetTableAdmissionRulesVersion() uint32 {
+	if x != nil {
+		return x.TableAdmissionRulesVersion
+	}
+	return 0
 }
 
 // UpdateConsensusParamsCmd is both the administration request and the
@@ -2644,7 +2675,7 @@ var File_consensus_proto protoreflect.FileDescriptor
 
 const file_consensus_proto_rawDesc = "" +
 	"\n" +
-	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xeb\x04\n" +
+	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xae\x05\n" +
 	"\x16ConsensusMutableParams\x12/\n" +
 	"\x13authority_addresses\x18\x01 \x03(\tR\x12authorityAddresses\x12\x1f\n" +
 	"\vmax_writers\x18\x02 \x01(\x04R\n" +
@@ -2659,7 +2690,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\x06stage3\x18\t \x01(\v2\x15.arbiter.Stage3ParamsR\x06stage3\x126\n" +
 	"\x17promotion_finality_gate\x18\n" +
 	" \x01(\bR\x15promotionFinalityGate\x126\n" +
-	"\x17manifest_delta_snapshot\x18\v \x01(\bR\x15manifestDeltaSnapshot\"\xcc\x06\n" +
+	"\x17manifest_delta_snapshot\x18\v \x01(\bR\x15manifestDeltaSnapshot\x12A\n" +
+	"\x1dtable_admission_rules_version\x18\f \x01(\rR\x1atableAdmissionRulesVersion\"\x8f\a\n" +
 	"\x15ConsensusParamsUpdate\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12.\n" +
@@ -2680,7 +2712,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\x0etracks_enabled\x18\r \x01(\bR\rtracksEnabled\x12-\n" +
 	"\x06stage3\x18\x0e \x01(\v2\x15.arbiter.Stage3ParamsR\x06stage3\x126\n" +
 	"\x17promotion_finality_gate\x18\x0f \x01(\bR\x15promotionFinalityGate\x126\n" +
-	"\x17manifest_delta_snapshot\x18\x10 \x01(\bR\x15manifestDeltaSnapshot\"w\n" +
+	"\x17manifest_delta_snapshot\x18\x10 \x01(\bR\x15manifestDeltaSnapshot\x12A\n" +
+	"\x1dtable_admission_rules_version\x18\x11 \x01(\rR\x1atableAdmissionRulesVersion\"w\n" +
 	"\x18UpdateConsensusParamsCmd\x126\n" +
 	"\x06update\x18\x01 \x01(\v2\x1e.arbiter.ConsensusParamsUpdateR\x06update\x12#\n" +
 	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"\xb8\x01\n" +
