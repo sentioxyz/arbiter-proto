@@ -176,6 +176,10 @@ type ConsensusMutableParams struct {
 	// the tracks activation sets it, then carried by every update and never
 	// lowered.
 	PromotionFinalityGate bool `protobuf:"varint,10,opt,name=promotion_finality_gate,json=promotionFinalityGate,proto3" json:"promotion_finality_gate,omitempty"`
+	// The manifest delta snapshot: false until one authority-signed update after
+	// the stage-3 activation sets it, then carried by every update and never
+	// lowered.
+	ManifestDeltaSnapshot bool `protobuf:"varint,11,opt,name=manifest_delta_snapshot,json=manifestDeltaSnapshot,proto3" json:"manifest_delta_snapshot,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -280,6 +284,13 @@ func (x *ConsensusMutableParams) GetPromotionFinalityGate() bool {
 	return false
 }
 
+func (x *ConsensusMutableParams) GetManifestDeltaSnapshot() bool {
+	if x != nil {
+		return x.ManifestDeltaSnapshot
+	}
+	return false
+}
+
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
 // Authority addresses are lowercase, sorted and deduplicated before hashing.
 // authority_jws covers every field; it uses a dedicated versioned purpose
@@ -354,6 +365,15 @@ type ConsensusParamsUpdate struct {
 	// must run a binary that knows the field before an update sets it. It joins
 	// the params digest only once set, so earlier digests are unchanged.
 	PromotionFinalityGate bool `protobuf:"varint,15,opt,name=promotion_finality_gate,json=promotionFinalityGate,proto3" json:"promotion_finality_gate,omitempty"`
+	// The manifest delta snapshot: raise-only; once set every update must carry
+	// it, and it needs stage3 (earlier or in the same update). From its commit
+	// on, snapshots are written as v22, which stores every published manifest
+	// other than the genesis and the safe watermark's as a delta against its
+	// parent. It changes no Apply rule, but an older binary cannot read v22, so
+	// every voter must run a binary that knows the field before an update sets
+	// it. It joins the params digest only once set, so earlier digests are
+	// unchanged.
+	ManifestDeltaSnapshot bool `protobuf:"varint,16,opt,name=manifest_delta_snapshot,json=manifestDeltaSnapshot,proto3" json:"manifest_delta_snapshot,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -489,6 +509,13 @@ func (x *ConsensusParamsUpdate) GetStage3() *Stage3Params {
 func (x *ConsensusParamsUpdate) GetPromotionFinalityGate() bool {
 	if x != nil {
 		return x.PromotionFinalityGate
+	}
+	return false
+}
+
+func (x *ConsensusParamsUpdate) GetManifestDeltaSnapshot() bool {
+	if x != nil {
+		return x.ManifestDeltaSnapshot
 	}
 	return false
 }
@@ -2617,7 +2644,7 @@ var File_consensus_proto protoreflect.FileDescriptor
 
 const file_consensus_proto_rawDesc = "" +
 	"\n" +
-	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xb3\x04\n" +
+	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xeb\x04\n" +
 	"\x16ConsensusMutableParams\x12/\n" +
 	"\x13authority_addresses\x18\x01 \x03(\tR\x12authorityAddresses\x12\x1f\n" +
 	"\vmax_writers\x18\x02 \x01(\x04R\n" +
@@ -2631,7 +2658,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\x0etracks_enabled\x18\b \x01(\bR\rtracksEnabled\x12-\n" +
 	"\x06stage3\x18\t \x01(\v2\x15.arbiter.Stage3ParamsR\x06stage3\x126\n" +
 	"\x17promotion_finality_gate\x18\n" +
-	" \x01(\bR\x15promotionFinalityGate\"\x94\x06\n" +
+	" \x01(\bR\x15promotionFinalityGate\x126\n" +
+	"\x17manifest_delta_snapshot\x18\v \x01(\bR\x15manifestDeltaSnapshot\"\xcc\x06\n" +
 	"\x15ConsensusParamsUpdate\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12.\n" +
@@ -2651,7 +2679,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\tverifiers\x18\f \x03(\v2\x16.arbiter.VerifierEntryR\tverifiers\x12%\n" +
 	"\x0etracks_enabled\x18\r \x01(\bR\rtracksEnabled\x12-\n" +
 	"\x06stage3\x18\x0e \x01(\v2\x15.arbiter.Stage3ParamsR\x06stage3\x126\n" +
-	"\x17promotion_finality_gate\x18\x0f \x01(\bR\x15promotionFinalityGate\"w\n" +
+	"\x17promotion_finality_gate\x18\x0f \x01(\bR\x15promotionFinalityGate\x126\n" +
+	"\x17manifest_delta_snapshot\x18\x10 \x01(\bR\x15manifestDeltaSnapshot\"w\n" +
 	"\x18UpdateConsensusParamsCmd\x126\n" +
 	"\x06update\x18\x01 \x01(\v2\x1e.arbiter.ConsensusParamsUpdateR\x06update\x12#\n" +
 	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"\xb8\x01\n" +
