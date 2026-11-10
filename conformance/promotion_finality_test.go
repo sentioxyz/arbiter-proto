@@ -11,8 +11,9 @@ import (
 
 // promotionFinalityGateFields pins the bool the promotion finality gate
 // appends to each consensus parameter message: ConsensusMutableParams = 10 and
-// ConsensusParamsUpdate = 15. Each is its message's last field, so
-// assertSnapshotBaselineDescriptors strips it before every older exemption.
+// ConsensusParamsUpdate = 15. Each is its message's last field once
+// manifest_delta_snapshot is stripped, so assertSnapshotBaselineDescriptors
+// strips it right after that field, before every older exemption.
 // Every existing baseline predates it, so the exemption applies
 // unconditionally.
 var promotionFinalityGateFields = map[string]*descriptorpb.FieldDescriptorProto{
@@ -39,8 +40,9 @@ func TestPromotionFinalityGateFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.BoolKind || f.IsList() || f.HasOptionalKeyword() || f.ContainingOneof() != nil {
 				t.Fatalf("field = %v, want plain bool number %d", f, tc.number)
 			}
-			if got := d.Fields().Len(); got != int(tc.number) {
-				t.Fatalf("field count = %d, want %d (the gate is the last field)", got, tc.number)
+			// manifest_delta_snapshot is the only field appended after it.
+			if got := d.Fields().Len(); got != int(tc.number)+1 {
+				t.Fatalf("field count = %d, want %d (only manifest_delta_snapshot follows the gate)", got, tc.number+1)
 			}
 		})
 	}

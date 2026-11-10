@@ -41,6 +41,10 @@ message ConsensusMutableParams {
   // the tracks activation sets it, then carried by every update and never
   // lowered.
   bool promotion_finality_gate = 10;
+  // The manifest delta snapshot: false until one authority-signed update after
+  // the stage-3 activation sets it, then carried by every update and never
+  // lowered.
+  bool manifest_delta_snapshot = 11;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -116,6 +120,15 @@ message ConsensusParamsUpdate {
   // must run a binary that knows the field before an update sets it. It joins
   // the params digest only once set, so earlier digests are unchanged.
   bool promotion_finality_gate = 15;
+  // The manifest delta snapshot: raise-only; once set every update must carry
+  // it, and it needs stage3 (earlier or in the same update). From its commit
+  // on, snapshots are written as v22, which stores every published manifest
+  // other than the genesis and the safe watermark's as a delta against its
+  // parent. It changes no Apply rule, but an older binary cannot read v22, so
+  // every voter must run a binary that knows the field before an update sets
+  // it. It joins the params digest only once set, so earlier digests are
+  // unchanged.
+  bool manifest_delta_snapshot = 16;
 }
 
 // UpdateConsensusParamsCmd is both the administration request and the

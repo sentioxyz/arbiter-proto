@@ -428,6 +428,12 @@ func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.File
 			if got == nil {
 				t.Fatalf("old message removed: %s", m.GetName())
 			}
+			if want, ok := manifestDeltaSnapshotFields[m.GetName()]; ok {
+				if len(got.Field) == 0 || !proto.Equal(got.Field[len(got.Field)-1], want) {
+					t.Fatalf("%s manifest delta snapshot addition must be exactly %s = %d: %v", m.GetName(), want.GetName(), want.GetNumber(), got)
+				}
+				got.Field = got.Field[:len(got.Field)-1]
+			}
 			if want, ok := promotionFinalityGateFields[m.GetName()]; ok {
 				if len(got.Field) == 0 || !proto.Equal(got.Field[len(got.Field)-1], want) {
 					t.Fatalf("%s promotion finality gate addition must be exactly %s = %d: %v", m.GetName(), want.GetName(), want.GetNumber(), got)
