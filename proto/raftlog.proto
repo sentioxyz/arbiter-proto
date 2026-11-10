@@ -75,7 +75,9 @@ message RecordByteSideScanCmd {
 }
 
 // RecordAnchorFinalityCmd: QuorumVerified + finality + last_mergeable →
-// promotable (§4.1, §4.4).
+// promotable (§4.1, §4.4). Once the anchor_finality parameter is committed it
+// only records the anchor ref; one that sets either flag is refused, and the
+// flags latch from RecordAnchorFinalityAttestationCmd instead.
 message RecordAnchorFinalityCmd {
   uint64 l3_block_seq = 1;
   AnchorRef anchor = 2;
@@ -236,7 +238,18 @@ message RaftCommand {
     MemberReadyCmd member_ready = 40;
     MemberCheckpointCmd member_checkpoint = 41;
     MarkMemberLaggingCmd mark_member_lagging = 42;
+    // Anchor finality quorum: one voter's signed finality attestation,
+    // proposed only after the anchor_finality parameter is committed, because
+    // a voter whose decoder lacks this tag refuses the command.
+    RecordAnchorFinalityAttestationCmd record_anchor_finality_attestation = 43;
   }
+}
+
+// RecordAnchorFinalityAttestationCmd records one voter's attestation; Apply
+// verifies it against the committed voters and anchor_finality and latches a
+// flag once quorum distinct enrolled voters attest it.
+message RecordAnchorFinalityAttestationCmd {
+  AnchorFinalityAttestation attestation = 1;
 }
 
 // Begins draining using the authenticated request; Apply makes no network calls.

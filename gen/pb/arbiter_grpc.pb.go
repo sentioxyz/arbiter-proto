@@ -1141,6 +1141,128 @@ var PromotionGateway_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
+	VoterGateway_SubmitAnchorFinalityAttestation_FullMethodName = "/arbiter.VoterGateway/SubmitAnchorFinalityAttestation"
+)
+
+// VoterGatewayClient is the client API for VoterGateway service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// VoterGateway is called by the Raft voters themselves (each voter's
+// attester dials the leader).
+type VoterGatewayClient interface {
+	// Proposes the attestation as RecordAnchorFinalityAttestationCmd after the
+	// leader checked it as Apply would (enrolled voter, signature, block hash,
+	// state root, the recorded anchor ref's l2_block_number, a flag the voter
+	// has not recorded yet). FAILED_PRECONDITION without a NotLeader detail
+	// means the anchor finality quorum is not active or the attestation is
+	// refused; an attestation that adds nothing returns Ack. Ack means
+	// committed.
+	SubmitAnchorFinalityAttestation(ctx context.Context, in *AnchorFinalityAttestation, opts ...grpc.CallOption) (*Ack, error)
+}
+
+type voterGatewayClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewVoterGatewayClient(cc grpc.ClientConnInterface) VoterGatewayClient {
+	return &voterGatewayClient{cc}
+}
+
+func (c *voterGatewayClient) SubmitAnchorFinalityAttestation(ctx context.Context, in *AnchorFinalityAttestation, opts ...grpc.CallOption) (*Ack, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Ack)
+	err := c.cc.Invoke(ctx, VoterGateway_SubmitAnchorFinalityAttestation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// VoterGatewayServer is the server API for VoterGateway service.
+// All implementations must embed UnimplementedVoterGatewayServer
+// for forward compatibility.
+//
+// VoterGateway is called by the Raft voters themselves (each voter's
+// attester dials the leader).
+type VoterGatewayServer interface {
+	// Proposes the attestation as RecordAnchorFinalityAttestationCmd after the
+	// leader checked it as Apply would (enrolled voter, signature, block hash,
+	// state root, the recorded anchor ref's l2_block_number, a flag the voter
+	// has not recorded yet). FAILED_PRECONDITION without a NotLeader detail
+	// means the anchor finality quorum is not active or the attestation is
+	// refused; an attestation that adds nothing returns Ack. Ack means
+	// committed.
+	SubmitAnchorFinalityAttestation(context.Context, *AnchorFinalityAttestation) (*Ack, error)
+	mustEmbedUnimplementedVoterGatewayServer()
+}
+
+// UnimplementedVoterGatewayServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedVoterGatewayServer struct{}
+
+func (UnimplementedVoterGatewayServer) SubmitAnchorFinalityAttestation(context.Context, *AnchorFinalityAttestation) (*Ack, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SubmitAnchorFinalityAttestation not implemented")
+}
+func (UnimplementedVoterGatewayServer) mustEmbedUnimplementedVoterGatewayServer() {}
+func (UnimplementedVoterGatewayServer) testEmbeddedByValue()                      {}
+
+// UnsafeVoterGatewayServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to VoterGatewayServer will
+// result in compilation errors.
+type UnsafeVoterGatewayServer interface {
+	mustEmbedUnimplementedVoterGatewayServer()
+}
+
+func RegisterVoterGatewayServer(s grpc.ServiceRegistrar, srv VoterGatewayServer) {
+	// If the following call pancis, it indicates UnimplementedVoterGatewayServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&VoterGateway_ServiceDesc, srv)
+}
+
+func _VoterGateway_SubmitAnchorFinalityAttestation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AnchorFinalityAttestation)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VoterGatewayServer).SubmitAnchorFinalityAttestation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VoterGateway_SubmitAnchorFinalityAttestation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VoterGatewayServer).SubmitAnchorFinalityAttestation(ctx, req.(*AnchorFinalityAttestation))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// VoterGateway_ServiceDesc is the grpc.ServiceDesc for VoterGateway service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var VoterGateway_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "arbiter.VoterGateway",
+	HandlerType: (*VoterGatewayServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "SubmitAnchorFinalityAttestation",
+			Handler:    _VoterGateway_SubmitAnchorFinalityAttestation_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "arbiter.proto",
+}
+
+const (
 	SafeState_GetSafeWatermark_FullMethodName     = "/arbiter.SafeState/GetSafeWatermark"
 	SafeState_GetManifest_FullMethodName          = "/arbiter.SafeState/GetManifest"
 	SafeState_GetManifestByBlock_FullMethodName   = "/arbiter.SafeState/GetManifestByBlock"

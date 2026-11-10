@@ -42,8 +42,14 @@ func TestTableAdmissionRulesVersionFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.Uint32Kind || f.IsList() || f.HasOptionalKeyword() || f.ContainingOneof() != nil {
 				t.Fatalf("field = %v, want plain uint32 number %d", f, tc.number)
 			}
-			if got := d.Fields().Len(); got != int(tc.number) {
-				t.Fatalf("field count = %d, want %d (the version is the last field)", got, tc.number)
+			// The three anchor finality quorum fields are the only fields
+			// appended after it on the consensus messages.
+			want := int(tc.number)
+			if d.Name() != "TableRegistrySnapshot" {
+				want += 3
+			}
+			if got := d.Fields().Len(); got != want {
+				t.Fatalf("field count = %d, want %d (only the anchor finality quorum fields follow the version)", got, want)
 			}
 		})
 	}

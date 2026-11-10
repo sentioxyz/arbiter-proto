@@ -49,6 +49,17 @@ message ConsensusMutableParams {
   // update after the table registry activation raises it, then carried by
   // every update and never lowered.
   uint32 table_admission_rules_version = 12;
+  // The part-claim uniqueness gate: false until one authority-signed update
+  // after the tracks activation sets it, then carried by every update and
+  // never lowered.
+  bool part_claim_uniqueness = 13;
+  // The enrolled Raft voters and their ed25519 keys: absent until an
+  // authority-signed update sets it; once anchor_finality is set, carried
+  // complete and non-empty by every update.
+  repeated VoterEntry voters = 14;
+  // The anchor finality quorum: absent until one authority-signed update sets
+  // it with voters, then carried by every update; only quorum may change.
+  AnchorFinalityParams anchor_finality = 15;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -146,6 +157,63 @@ message ConsensusParamsUpdate {
   // wider types. It joins the params digest only once set, so earlier digests
   // are unchanged.
   uint32 table_admission_rules_version = 17;
+  // The part-claim uniqueness gate. Once committed, Apply refuses a result
+  // claim whose candidate parts name one (table, partition, part hash) twice
+  // or one that another statement's bound or parked claim names, and the
+  // acknowledged cleanup of a rejected partition removes the Rejected
+  // statements' parts in it from coverage, so a cleaned Rejected statement no
+  // longer pins an earlier block that shares a part hash. Raise-only; once set
+  // every update must carry it, and it needs tracks_enabled in the same
+  // update. It changes Apply, so every voter must run a binary that knows the
+  // field before an update sets it. It joins the params digest only once set,
+  // so earlier digests are unchanged.
+  bool part_claim_uniqueness = 18;
+  // The enrolled Raft voters (sorted by voter_id; ids and keys unique). Each
+  // voter_id is the voter's Raft server id and each entry's consent_sig is
+  // that key's own signature over the entry. The set may change from update to
+  // update; once anchor_finality is committed every update must carry a
+  // non-empty set. Absent from the params digest while empty.
+  repeated VoterEntry voters = 19;
+  // The anchor finality quorum. Once committed, a block's anchor finality and
+  // last-mergeable flags latch only with signed attestations
+  // (RecordAnchorFinalityAttestationCmd) from at least quorum distinct
+  // enrolled voters, judged under this policy against this chain and
+  // registry contract; RecordAnchorFinalityCmd then only records the anchor
+  // ref. The first update that sets it needs voters in the same update and
+  // promotion_finality_gate committed or set in the same update; afterwards
+  // every update carries it, quorum stays a majority of voters, and every
+  // other field is immutable. It changes Apply and adds Raft tag 43, so every
+  // voter must run a binary that knows both first. Absent from the params
+  // digest while unset.
+  AnchorFinalityParams anchor_finality = 20;
+}
+
+// VoterEntry is one enrolled Raft voter. consent_sig is lowercase hex of the
+// ed25519 signature, by ed25519_pubkey, over the voter message hash of kind
+// "consent" with body {voter_id, ed25519_pubkey} in the network's message
+// context: proof that the key's holder agreed to this enrolment.
+message VoterEntry {
+  string voter_id = 1;
+  bytes ed25519_pubkey = 2;
+  string consent_sig = 3;
+}
+
+// AnchorFinalityParams is the anchor finality quorum and the policy every
+// voter judges by. finality_mode is "finalized" or "safe" (the L2 block tag
+// must have reached the anchor's entry block) or "confirmations" (the entry
+// block has finality_confirmations confirmations, which must be positive).
+// Last-mergeable additionally needs last_mergeable_confirmations more
+// confirmations in "confirmations" mode, or that many confirmations in total
+// in the tag modes. registry_contract is the anchor registry, lowercase 0x +
+// 40 hex, on the chain l2_chain_id (positive). quorum is a majority of the
+// enrolled voters: len(voters) / 2 < quorum <= len(voters).
+message AnchorFinalityParams {
+  uint32 quorum = 1;
+  string finality_mode = 2;
+  uint64 finality_confirmations = 3;
+  uint64 last_mergeable_confirmations = 4;
+  uint64 l2_chain_id = 5;
+  string registry_contract = 6;
 }
 
 // UpdateConsensusParamsCmd is both the administration request and the
@@ -192,6 +260,10 @@ message ProtocolInfo {
   // "track_manifests_v1"); a static local property, read by arbiter-admin's
   // activation gates on every voter.
   repeated string features = 4;
+  // The ed25519 public key this voter signs voter messages with, empty when
+  // none is configured; read by the anchor finality activation gate, which
+  // requires it to equal the key the voter's VoterEntry enrols.
+  bytes voter_ed25519_pubkey = 5;
 }
 
 // ConsensusParamsState is a leader-barrier view used to prepare the next
