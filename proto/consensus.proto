@@ -621,3 +621,36 @@ service ConsensusAdmin {
   // the checkpoints switch is on" before it. Ack means committed success.
   rpc MarkMemberLagging (MarkMemberLaggingCmd) returns (Ack) {}
 }
+
+// GetConsensusHistoryRequest asks for the committed consensus updates that
+// move the parameters from from_epoch on: the answer's first update, if any,
+// has expected_epoch == from_epoch.
+message GetConsensusHistoryRequest {
+  uint64 from_epoch = 1;
+}
+
+// ConsensusHistory is the serving voter's applied history of signed consensus
+// updates. It lets a data-plane client (an SNode) follow the authority set as
+// a light client: starting from a configured trust anchor, it verifies each
+// update against the set in force before it, so nothing in this answer has to
+// be trusted on its own. updates are contiguous and ascending by
+// expected_epoch, and the last one moves the parameters to current_epoch.
+// A from_epoch above current_epoch answers no updates, not an error, so the
+// client can tell a lagging voter from a rollback by comparing current_epoch.
+message ConsensusHistory {
+  string network_id = 1;
+  string genesis_snapshot_id = 2;
+  uint64 current_epoch = 3;
+  // The bootstrap authority set (the epoch-0 trust root), for diagnostics.
+  repeated string bootstrap_authority_addresses = 4;
+  // Each committed update exactly as it was signed and applied.
+  repeated UpdateConsensusParamsCmd updates = 5;
+}
+
+// ConsensusHistory is a data-plane read served on the data-plane listener,
+// not on ConsensusAdmin. Any voter answers from its local applied state with
+// no leader barrier: freshness is the caller's concern, and the caller
+// verifies every signature itself.
+service ConsensusHistoryService {
+  rpc GetConsensusHistory (GetConsensusHistoryRequest) returns (ConsensusHistory) {}
+}
