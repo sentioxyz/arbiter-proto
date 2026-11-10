@@ -90,11 +90,17 @@ func anchorFinalityMessageFiles() map[string]protoreflect.FileDescriptor {
 // TestAnchorFinalityFieldLedgers pins every new message field by field and
 // runs the every-field wire round trip of TestStage3FieldLedgers on it.
 func TestAnchorFinalityFieldLedgers(t *testing.T) {
-	files := anchorFinalityMessageFiles()
-	if len(files) != len(anchorFinalityMessageFields) {
-		t.Fatalf("%d messages have a home file, %d have a ledger", len(files), len(anchorFinalityMessageFields))
+	assertMessageFieldLedgers(t, anchorFinalityMessageFiles(), anchorFinalityMessageFields)
+}
+
+// assertMessageFieldLedgers pins every field of each ledger message (the i-th
+// token is field number i+1) and runs an every-field wire round trip.
+func assertMessageFieldLedgers(t *testing.T, files map[string]protoreflect.FileDescriptor, ledger map[string]string) {
+	t.Helper()
+	if len(files) != len(ledger) {
+		t.Fatalf("%d messages have a home file, %d have a ledger", len(files), len(ledger))
 	}
-	for name, spec := range anchorFinalityMessageFields {
+	for name, spec := range ledger {
 		t.Run(name, func(t *testing.T) {
 			md := files[name].Messages().ByName(protoreflect.Name(name))
 			if md == nil {

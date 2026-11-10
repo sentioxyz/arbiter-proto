@@ -64,6 +64,10 @@ message ConsensusMutableParams {
   // sets it (effective k is then 1), afterwards carried non-zero by every
   // update.
   uint32 authority_threshold = 16;
+  // The membership lease in L2 blocks: 0 until one authority-signed update
+  // after the table registry activation sets it, then carried non-zero by
+  // every update.
+  uint64 membership_lease_l2_blocks = 17;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -209,6 +213,26 @@ message ConsensusParamsUpdate {
   // It joins the params digest only once set, so earlier digests are
   // unchanged.
   uint32 authority_threshold = 21;
+  // The membership lease, in L2 blocks of the committed table registry
+  // cursor. 0 means no lease: an Active node stays Active until it
+  // re-registers or is evicted, as before the field existed. Once committed
+  // non-zero, every Active node renews its lease with RenewNodeLeaseCmd (Raft
+  // tag 44), and an Active node whose last renewal or MarkActive is at least
+  // this many L2 blocks behind the committed cursor becomes Syncing in the
+  // Apply that advances the cursor: the transition a re-registration without
+  // MarkActive makes (not eviction), so its bound statements keep their
+  // source and it returns with MarkActive at its current registration_seq.
+  // The update that sets it restarts every Active node's lease at the
+  // committed cursor. Expiry advances only with the cursor, so it stops while
+  // the registry watcher stops (fail-safe: nothing expires). The lease must be
+  // far longer than the nodes' renewal interval expressed in L2 blocks; the
+  // canonical normalizer refuses a lease below a fixed floor. It needs the
+  // table registry (earlier or in the same update); once set every update
+  // must carry a non-zero value. It changes Apply and adds Raft tag 44, so
+  // every voter must run a binary that knows both, and every data-plane node
+  // one that renews, before an update sets it. It joins the params digest
+  // only once set, so earlier digests are unchanged.
+  uint64 membership_lease_l2_blocks = 22;
 }
 
 // VoterEntry is one enrolled Raft voter. consent_sig is lowercase hex of the

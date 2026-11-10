@@ -199,8 +199,12 @@ type ConsensusMutableParams struct {
 	// sets it (effective k is then 1), afterwards carried non-zero by every
 	// update.
 	AuthorityThreshold uint32 `protobuf:"varint,16,opt,name=authority_threshold,json=authorityThreshold,proto3" json:"authority_threshold,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// The membership lease in L2 blocks: 0 until one authority-signed update
+	// after the table registry activation sets it, then carried non-zero by
+	// every update.
+	MembershipLeaseL2Blocks uint64 `protobuf:"varint,17,opt,name=membership_lease_l2_blocks,json=membershipLeaseL2Blocks,proto3" json:"membership_lease_l2_blocks,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *ConsensusMutableParams) Reset() {
@@ -341,6 +345,13 @@ func (x *ConsensusMutableParams) GetAnchorFinality() *AnchorFinalityParams {
 func (x *ConsensusMutableParams) GetAuthorityThreshold() uint32 {
 	if x != nil {
 		return x.AuthorityThreshold
+	}
+	return 0
+}
+
+func (x *ConsensusMutableParams) GetMembershipLeaseL2Blocks() uint64 {
+	if x != nil {
+		return x.MembershipLeaseL2Blocks
 	}
 	return 0
 }
@@ -489,8 +500,28 @@ type ConsensusParamsUpdate struct {
 	// It joins the params digest only once set, so earlier digests are
 	// unchanged.
 	AuthorityThreshold uint32 `protobuf:"varint,21,opt,name=authority_threshold,json=authorityThreshold,proto3" json:"authority_threshold,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// The membership lease, in L2 blocks of the committed table registry
+	// cursor. 0 means no lease: an Active node stays Active until it
+	// re-registers or is evicted, as before the field existed. Once committed
+	// non-zero, every Active node renews its lease with RenewNodeLeaseCmd (Raft
+	// tag 44), and an Active node whose last renewal or MarkActive is at least
+	// this many L2 blocks behind the committed cursor becomes Syncing in the
+	// Apply that advances the cursor: the transition a re-registration without
+	// MarkActive makes (not eviction), so its bound statements keep their
+	// source and it returns with MarkActive at its current registration_seq.
+	// The update that sets it restarts every Active node's lease at the
+	// committed cursor. Expiry advances only with the cursor, so it stops while
+	// the registry watcher stops (fail-safe: nothing expires). The lease must be
+	// far longer than the nodes' renewal interval expressed in L2 blocks; the
+	// canonical normalizer refuses a lease below a fixed floor. It needs the
+	// table registry (earlier or in the same update); once set every update
+	// must carry a non-zero value. It changes Apply and adds Raft tag 44, so
+	// every voter must run a binary that knows both, and every data-plane node
+	// one that renews, before an update sets it. It joins the params digest
+	// only once set, so earlier digests are unchanged.
+	MembershipLeaseL2Blocks uint64 `protobuf:"varint,22,opt,name=membership_lease_l2_blocks,json=membershipLeaseL2Blocks,proto3" json:"membership_lease_l2_blocks,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *ConsensusParamsUpdate) Reset() {
@@ -666,6 +697,13 @@ func (x *ConsensusParamsUpdate) GetAnchorFinality() *AnchorFinalityParams {
 func (x *ConsensusParamsUpdate) GetAuthorityThreshold() uint32 {
 	if x != nil {
 		return x.AuthorityThreshold
+	}
+	return 0
+}
+
+func (x *ConsensusParamsUpdate) GetMembershipLeaseL2Blocks() uint64 {
+	if x != nil {
+		return x.MembershipLeaseL2Blocks
 	}
 	return 0
 }
@@ -3095,7 +3133,7 @@ var File_consensus_proto protoreflect.FileDescriptor
 
 const file_consensus_proto_rawDesc = "" +
 	"\n" +
-	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\x88\a\n" +
+	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xc5\a\n" +
 	"\x16ConsensusMutableParams\x12/\n" +
 	"\x13authority_addresses\x18\x01 \x03(\tR\x12authorityAddresses\x12\x1f\n" +
 	"\vmax_writers\x18\x02 \x01(\x04R\n" +
@@ -3115,7 +3153,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\x15part_claim_uniqueness\x18\r \x01(\bR\x13partClaimUniqueness\x12+\n" +
 	"\x06voters\x18\x0e \x03(\v2\x13.arbiter.VoterEntryR\x06voters\x12F\n" +
 	"\x0fanchor_finality\x18\x0f \x01(\v2\x1d.arbiter.AnchorFinalityParamsR\x0eanchorFinality\x12/\n" +
-	"\x13authority_threshold\x18\x10 \x01(\rR\x12authorityThreshold\"\xe9\b\n" +
+	"\x13authority_threshold\x18\x10 \x01(\rR\x12authorityThreshold\x12;\n" +
+	"\x1amembership_lease_l2_blocks\x18\x11 \x01(\x04R\x17membershipLeaseL2Blocks\"\xa6\t\n" +
 	"\x15ConsensusParamsUpdate\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12.\n" +
@@ -3141,7 +3180,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\x15part_claim_uniqueness\x18\x12 \x01(\bR\x13partClaimUniqueness\x12+\n" +
 	"\x06voters\x18\x13 \x03(\v2\x13.arbiter.VoterEntryR\x06voters\x12F\n" +
 	"\x0fanchor_finality\x18\x14 \x01(\v2\x1d.arbiter.AnchorFinalityParamsR\x0eanchorFinality\x12/\n" +
-	"\x13authority_threshold\x18\x15 \x01(\rR\x12authorityThreshold\"o\n" +
+	"\x13authority_threshold\x18\x15 \x01(\rR\x12authorityThreshold\x12;\n" +
+	"\x1amembership_lease_l2_blocks\x18\x16 \x01(\x04R\x17membershipLeaseL2Blocks\"o\n" +
 	"\n" +
 	"VoterEntry\x12\x19\n" +
 	"\bvoter_id\x18\x01 \x01(\tR\avoterId\x12%\n" +

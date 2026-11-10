@@ -242,7 +242,19 @@ message RaftCommand {
     // proposed only after the anchor_finality parameter is committed, because
     // a voter whose decoder lacks this tag refuses the command.
     RecordAnchorFinalityAttestationCmd record_anchor_finality_attestation = 43;
+    // Membership lease: one node's signed lease renewal, proposed only after
+    // the membership_lease_l2_blocks parameter is committed, because a voter
+    // whose decoder lacks this tag refuses the command.
+    RenewNodeLeaseCmd renew_node_lease = 44;
   }
+}
+
+// RenewNodeLeaseCmd records one node's lease renewal; Apply verifies the
+// node's signature, its current registration_seq and a lease_seq above the
+// last applied one, and restarts the node's lease at the committed table
+// registry cursor block.
+message RenewNodeLeaseCmd {
+  NodeLeaseRenewal renewal = 1;
 }
 
 // RecordAnchorFinalityAttestationCmd records one voter's attestation; Apply

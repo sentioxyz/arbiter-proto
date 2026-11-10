@@ -563,6 +563,30 @@ message NodeRef {
   string ed25519_signature = 4;
 }
 
+// NodeLeaseRenewal renews one Active node's membership lease. It is the
+// Membership.RenewNodeLease request and, wrapped in RenewNodeLeaseCmd, the
+// Raft command (tag 44). Proposed only after membership_lease_l2_blocks is
+// committed, and only for a node whose committed status is Active.
+message NodeLeaseRenewal {
+  string node_id = 1;
+  // Must equal the last registration_seq applied for node_id, binding the
+  // renewal to that registration.
+  uint64 registration_seq = 2;
+  // Strictly increasing within one registration (the first renewal after a
+  // RegisterNode may use any value above 0): a replayed or reordered renewal
+  // at or below the node's last applied lease_seq is refused, so a recorded
+  // renewal cannot keep a crashed node Active. A new registration resets it.
+  uint64 lease_seq = 3;
+  // SNODE: ES256K compact JWS by the signer of the si_indexers entry whose
+  // snode_node_id is node_id, purpose "arbiter-snode-message-v1", kind
+  // "lease_renewal", body {node_id, registration_seq, lease_seq}, bound to the
+  // network id and genesis snapshot id.
+  string signer_jws = 4;
+  // VERIFIER: hex ed25519 signature by the verifiers-entry key over the
+  // "lease_renewal" verifier-message hash of the same body and context.
+  string ed25519_signature = 5;
+}
+
 // Ack acknowledges an idempotent write; duplicates ack identically.
 message Ack {}
 
@@ -990,6 +1014,16 @@ service Membership {
   // deterministic selection pools (§4.1, §7.4). After the signed-claims
   // activation it names the node's current registration_seq and is signed.
   rpc MarkActive (NodeRef) returns (Ack) {}
+  // RenewNodeLease renews the caller's membership lease (Raft tag 44). Once
+  // membership_lease_l2_blocks is committed, an Active node whose last
+  // renewal (or MarkActive) is that many L2 blocks behind the committed table
+  // registry cursor becomes Syncing, as if it had deactivated. Leader-only.
+  // Refused with INVALID_ARGUMENT, not FAILED_PRECONDITION (which data-plane
+  // clients read as "not the leader" and retry), before the lease parameter
+  // is committed and for a node that is not Active; a running node answers
+  // the latter with MarkActive at its current registration_seq. Ack means
+  // committed.
+  rpc RenewNodeLease (NodeLeaseRenewal) returns (Ack) {}
 }
 
 // Signed with purpose housegate-snapshot-query-control-v1.

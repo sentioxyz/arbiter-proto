@@ -282,12 +282,12 @@ func TestStage3MessagesAreNotRaftReachable(t *testing.T) {
 		t.Fatal("PrepareConsensusUpdateRequest walk does not reach its draft and mode")
 	}
 	cmd := raft.Oneofs().ByName("cmd")
-	if cmd == nil || raft.Fields().Len() != 42 || cmd.Fields().Len() != 42 {
-		t.Fatalf("RaftCommand has %d fields, want its 42 oneof tags", raft.Fields().Len())
+	if cmd == nil || raft.Fields().Len() != 43 || cmd.Fields().Len() != 43 {
+		t.Fatalf("RaftCommand has %d fields, want its 43 oneof tags", raft.Fields().Len())
 	}
-	for n := protoreflect.FieldNumber(1); n <= 43; n++ {
+	for n := protoreflect.FieldNumber(1); n <= 44; n++ {
 		if f := raft.Fields().ByNumber(n); (f == nil) != (n == 29) {
-			t.Fatalf("RaftCommand tag %d = %v; want tags 1-28 and 30-43 only", n, f)
+			t.Fatalf("RaftCommand tag %d = %v; want tags 1-28 and 30-44 only", n, f)
 		}
 	}
 	update := (&pb.UpdateConsensusParamsCmd{}).ProtoReflect().Descriptor().Fields()
