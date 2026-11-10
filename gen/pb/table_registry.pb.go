@@ -1958,7 +1958,16 @@ func (x *TableIncarnation) GetPurgeMembers() []string {
 }
 
 // TableRegistrySnapshot is the whole committed registry at one version.
-// incarnations are in seq order (seq = index + 1).
+// incarnations are in seq order (seq = index + 1), except in a delta
+// (delta_base_version set), which only a WatchTableRegistry stream opened
+// with accept_delta sends.
+//
+// The arbiter serves registry history compacted (internal design doc
+// 2026-09-23-dynamic-si-table-set-design §5): a PURGED incarnation carries no
+// schema_json, schema_ref, created, deleted or purged_by, and a REFUSED one
+// no schema_json. Its identity (seq, key, origin, status, owner, schema
+// version and hash, block seqs, scoped_keeper_path, purge_members) is always
+// served.
 type TableRegistrySnapshot struct {
 	state        protoimpl.MessageState `protogen:"open.v1"`
 	Params       *TableRegistryParams   `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
@@ -2002,9 +2011,23 @@ type TableRegistrySnapshot struct {
 	// The committed stage-3 parameter, so data-plane nodes learn the switches
 	// through the registry follower (plan S3-E1 K64); absent before the v21
 	// activation. Every committed change bumps version.
-	Stage3        *Stage3Params `protobuf:"bytes,12,opt,name=stage3,proto3" json:"stage3,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Stage3 *Stage3Params `protobuf:"bytes,12,opt,name=stage3,proto3" json:"stage3,omitempty"`
+	// Set only on a WatchTableRegistry stream opened with accept_delta: the
+	// version of the previous message on the same stream, which this one
+	// updates. A delta carries every field in full except incarnations, which
+	// lists, in seq order, only the incarnations that differ from that previous
+	// message, every new one included. The receiver replaces its incarnation of
+	// each listed seq or appends it (incarnations are never removed), and then
+	// holds incarnation_count incarnations numbered 1..incarnation_count. A
+	// receiver that does not hold delta_base_version (it refused a message)
+	// reopens the stream with since_version set to the version it holds, whose
+	// first message is never a delta. Zero on every full snapshot, including
+	// every GetTableRegistry answer and the first message of every stream.
+	DeltaBaseVersion uint64 `protobuf:"varint,13,opt,name=delta_base_version,json=deltaBaseVersion,proto3" json:"delta_base_version,omitempty"`
+	// The total number of incarnations at version; set on a delta.
+	IncarnationCount uint64 `protobuf:"varint,14,opt,name=incarnation_count,json=incarnationCount,proto3" json:"incarnation_count,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *TableRegistrySnapshot) Reset() {
@@ -2119,6 +2142,20 @@ func (x *TableRegistrySnapshot) GetStage3() *Stage3Params {
 		return x.Stage3
 	}
 	return nil
+}
+
+func (x *TableRegistrySnapshot) GetDeltaBaseVersion() uint64 {
+	if x != nil {
+		return x.DeltaBaseVersion
+	}
+	return 0
+}
+
+func (x *TableRegistrySnapshot) GetIncarnationCount() uint64 {
+	if x != nil {
+		return x.IncarnationCount
+	}
+	return 0
 }
 
 // PurgeNodeSet is the committed set of data-plane nodes whose
@@ -2622,7 +2659,15 @@ type WatchTableRegistryRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The stream sends a snapshot whenever the registry version exceeds the
 	// last version sent, starting from since_version (0 = send the current one).
-	SinceVersion  uint64 `protobuf:"varint,1,opt,name=since_version,json=sinceVersion,proto3" json:"since_version,omitempty"`
+	// A version that changed nothing but the cursor may be held back for a
+	// server-configured heartbeat (five minutes by default) and then sent.
+	SinceVersion uint64 `protobuf:"varint,1,opt,name=since_version,json=sinceVersion,proto3" json:"since_version,omitempty"`
+	// Asks for deltas (TableRegistrySnapshot.delta_base_version): after the
+	// stream's first message, each message lists only the incarnations that
+	// changed since the previous one. An arbiter that predates the field
+	// ignores it and sends full snapshots, so a receiver that sets it must
+	// still accept a full snapshot (delta_base_version zero) at any time.
+	AcceptDelta   bool `protobuf:"varint,2,opt,name=accept_delta,json=acceptDelta,proto3" json:"accept_delta,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2662,6 +2707,13 @@ func (x *WatchTableRegistryRequest) GetSinceVersion() uint64 {
 		return x.SinceVersion
 	}
 	return 0
+}
+
+func (x *WatchTableRegistryRequest) GetAcceptDelta() bool {
+	if x != nil {
+		return x.AcceptDelta
+	}
+	return false
 }
 
 var File_table_registry_proto protoreflect.FileDescriptor
@@ -2821,7 +2873,7 @@ const file_table_registry_proto_rawDesc = "" +
 	"\x10owner_indexer_id\x18\x12 \x01(\x04H\x00R\x0eownerIndexerId\x88\x01\x01\x12,\n" +
 	"\x12scoped_keeper_path\x18\x13 \x01(\bR\x10scopedKeeperPath\x12#\n" +
 	"\rpurge_members\x18\x14 \x03(\tR\fpurgeMembersB\x13\n" +
-	"\x11_owner_indexer_id\"\xfb\x04\n" +
+	"\x11_owner_indexer_id\"\xd6\x05\n" +
 	"\x15TableRegistrySnapshot\x124\n" +
 	"\x06params\x18\x01 \x01(\v2\x1c.arbiter.TableRegistryParamsR\x06params\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\x04R\aversion\x12\x16\n" +
@@ -2836,7 +2888,9 @@ const file_table_registry_proto_rawDesc = "" +
 	"\x06groups\x18\n" +
 	" \x03(\v2\x16.arbiter.DatabaseGroupR\x06groups\x12R\n" +
 	"\x16member_checkpoint_seqs\x18\v \x03(\v2\x1c.arbiter.MemberCheckpointSeqR\x14memberCheckpointSeqs\x12-\n" +
-	"\x06stage3\x18\f \x01(\v2\x15.arbiter.Stage3ParamsR\x06stage3\")\n" +
+	"\x06stage3\x18\f \x01(\v2\x15.arbiter.Stage3ParamsR\x06stage3\x12,\n" +
+	"\x12delta_base_version\x18\r \x01(\x04R\x10deltaBaseVersion\x12+\n" +
+	"\x11incarnation_count\x18\x0e \x01(\x04R\x10incarnationCount\")\n" +
 	"\fPurgeNodeSet\x12\x19\n" +
 	"\bnode_ids\x18\x01 \x03(\tR\anodeIds\"\x8a\x01\n" +
 	"\x16MemberCheckpointRecord\x129\n" +
@@ -2882,9 +2936,10 @@ const file_table_registry_proto_rawDesc = "" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12(\n" +
 	"\x10owner_indexer_id\x18\x02 \x01(\x04R\x0eownerIndexerId\x12%\n" +
 	"\x0echeckpoint_seq\x18\x03 \x01(\x04R\rcheckpointSeq\x12%\n" +
-	"\x0ereplica_signer\x18\x04 \x01(\tR\rreplicaSigner\"@\n" +
+	"\x0ereplica_signer\x18\x04 \x01(\tR\rreplicaSigner\"c\n" +
 	"\x19WatchTableRegistryRequest\x12#\n" +
-	"\rsince_version\x18\x01 \x01(\x04R\fsinceVersion*\x89\x01\n" +
+	"\rsince_version\x18\x01 \x01(\x04R\fsinceVersion\x12!\n" +
+	"\faccept_delta\x18\x02 \x01(\bR\vacceptDelta*\x89\x01\n" +
 	"\x11TableRetireReason\x12#\n" +
 	"\x1fTABLE_RETIRE_REASON_UNSPECIFIED\x10\x00\x12%\n" +
 	"!TABLE_RETIRE_REASON_TABLE_DELETED\x10\x01\x12(\n" +
