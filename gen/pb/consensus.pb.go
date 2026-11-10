@@ -203,8 +203,12 @@ type ConsensusMutableParams struct {
 	// after the table registry activation sets it, then carried non-zero by
 	// every update.
 	MembershipLeaseL2Blocks uint64 `protobuf:"varint,17,opt,name=membership_lease_l2_blocks,json=membershipLeaseL2Blocks,proto3" json:"membership_lease_l2_blocks,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	// The promotion acknowledgement delta snapshot: false until one
+	// authority-signed update after manifest_delta_snapshot sets it, then
+	// carried by every update and never lowered.
+	PromotionAckDeltaSnapshot bool `protobuf:"varint,18,opt,name=promotion_ack_delta_snapshot,json=promotionAckDeltaSnapshot,proto3" json:"promotion_ack_delta_snapshot,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
 }
 
 func (x *ConsensusMutableParams) Reset() {
@@ -354,6 +358,13 @@ func (x *ConsensusMutableParams) GetMembershipLeaseL2Blocks() uint64 {
 		return x.MembershipLeaseL2Blocks
 	}
 	return 0
+}
+
+func (x *ConsensusMutableParams) GetPromotionAckDeltaSnapshot() bool {
+	if x != nil {
+		return x.PromotionAckDeltaSnapshot
+	}
+	return false
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -520,8 +531,18 @@ type ConsensusParamsUpdate struct {
 	// one that renews, before an update sets it. It joins the params digest
 	// only once set, so earlier digests are unchanged.
 	MembershipLeaseL2Blocks uint64 `protobuf:"varint,22,opt,name=membership_lease_l2_blocks,json=membershipLeaseL2Blocks,proto3" json:"membership_lease_l2_blocks,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	// The promotion acknowledgement delta snapshot: raise-only; once set every
+	// update must carry it, and it needs manifest_delta_snapshot (earlier or in
+	// the same update). From its commit on, snapshots are written as v23, which
+	// stores the complete safe-partition inventory of every acknowledged
+	// promotion as a delta against the previous acknowledgement of its
+	// partition. It changes no Apply rule, but an older binary cannot read v23,
+	// so every voter must run a binary that knows the field before an update
+	// sets it. It joins the params digest only once set, so earlier digests are
+	// unchanged.
+	PromotionAckDeltaSnapshot bool `protobuf:"varint,23,opt,name=promotion_ack_delta_snapshot,json=promotionAckDeltaSnapshot,proto3" json:"promotion_ack_delta_snapshot,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
 }
 
 func (x *ConsensusParamsUpdate) Reset() {
@@ -706,6 +727,13 @@ func (x *ConsensusParamsUpdate) GetMembershipLeaseL2Blocks() uint64 {
 		return x.MembershipLeaseL2Blocks
 	}
 	return 0
+}
+
+func (x *ConsensusParamsUpdate) GetPromotionAckDeltaSnapshot() bool {
+	if x != nil {
+		return x.PromotionAckDeltaSnapshot
+	}
+	return false
 }
 
 // VoterEntry is one enrolled Raft voter. consent_sig is lowercase hex of the
@@ -3133,7 +3161,7 @@ var File_consensus_proto protoreflect.FileDescriptor
 
 const file_consensus_proto_rawDesc = "" +
 	"\n" +
-	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xc5\a\n" +
+	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\x86\b\n" +
 	"\x16ConsensusMutableParams\x12/\n" +
 	"\x13authority_addresses\x18\x01 \x03(\tR\x12authorityAddresses\x12\x1f\n" +
 	"\vmax_writers\x18\x02 \x01(\x04R\n" +
@@ -3154,7 +3182,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\x06voters\x18\x0e \x03(\v2\x13.arbiter.VoterEntryR\x06voters\x12F\n" +
 	"\x0fanchor_finality\x18\x0f \x01(\v2\x1d.arbiter.AnchorFinalityParamsR\x0eanchorFinality\x12/\n" +
 	"\x13authority_threshold\x18\x10 \x01(\rR\x12authorityThreshold\x12;\n" +
-	"\x1amembership_lease_l2_blocks\x18\x11 \x01(\x04R\x17membershipLeaseL2Blocks\"\xa6\t\n" +
+	"\x1amembership_lease_l2_blocks\x18\x11 \x01(\x04R\x17membershipLeaseL2Blocks\x12?\n" +
+	"\x1cpromotion_ack_delta_snapshot\x18\x12 \x01(\bR\x19promotionAckDeltaSnapshot\"\xe7\t\n" +
 	"\x15ConsensusParamsUpdate\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12.\n" +
@@ -3181,7 +3210,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\x06voters\x18\x13 \x03(\v2\x13.arbiter.VoterEntryR\x06voters\x12F\n" +
 	"\x0fanchor_finality\x18\x14 \x01(\v2\x1d.arbiter.AnchorFinalityParamsR\x0eanchorFinality\x12/\n" +
 	"\x13authority_threshold\x18\x15 \x01(\rR\x12authorityThreshold\x12;\n" +
-	"\x1amembership_lease_l2_blocks\x18\x16 \x01(\x04R\x17membershipLeaseL2Blocks\"o\n" +
+	"\x1amembership_lease_l2_blocks\x18\x16 \x01(\x04R\x17membershipLeaseL2Blocks\x12?\n" +
+	"\x1cpromotion_ack_delta_snapshot\x18\x17 \x01(\bR\x19promotionAckDeltaSnapshot\"o\n" +
 	"\n" +
 	"VoterEntry\x12\x19\n" +
 	"\bvoter_id\x18\x01 \x01(\tR\avoterId\x12%\n" +

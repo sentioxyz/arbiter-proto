@@ -54,9 +54,10 @@ func TestAuthorityThresholdFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.Uint32Kind || f.IsList() || f.HasOptionalKeyword() || f.ContainingOneof() != nil {
 				t.Fatalf("field = %v, want plain uint32 number %d", f, tc.number)
 			}
-			// membership_lease_l2_blocks is the only field appended after it.
-			if got := d.Fields().Len(); got != int(tc.number)+1 {
-				t.Fatalf("field count = %d, want %d (only membership_lease_l2_blocks follows authority_threshold)", got, tc.number+1)
+			// membership_lease_l2_blocks and promotion_ack_delta_snapshot are
+			// the only fields appended after it.
+			if got := d.Fields().Len(); got != int(tc.number)+2 {
+				t.Fatalf("field count = %d, want %d (only membership_lease_l2_blocks and promotion_ack_delta_snapshot follow authority_threshold)", got, tc.number+2)
 			}
 		})
 	}

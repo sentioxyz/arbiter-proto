@@ -23,6 +23,7 @@ var membershipLeaseFields = map[string]*descriptorpb.FieldDescriptorProto{
 // field, so the older baseline comparisons see the message as it was before.
 func stripMembershipLeaseField(t *testing.T, d *descriptorpb.DescriptorProto) {
 	t.Helper()
+	stripPromotionAckDeltaSnapshotField(t, d)
 	want, ok := membershipLeaseFields[d.GetName()]
 	if !ok {
 		return
@@ -67,8 +68,9 @@ func TestMembershipLeaseFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.Uint64Kind || f.IsList() || f.HasOptionalKeyword() || f.ContainingOneof() != nil {
 				t.Fatalf("field = %v, want plain uint64 number %d", f, tc.number)
 			}
-			if got := d.Fields().Len(); got != int(tc.number) {
-				t.Fatalf("field count = %d, want %d (membership_lease_l2_blocks is the last field)", got, tc.number)
+			// promotion_ack_delta_snapshot is the only field appended after it.
+			if got := d.Fields().Len(); got != int(tc.number)+1 {
+				t.Fatalf("field count = %d, want %d (only promotion_ack_delta_snapshot follows membership_lease_l2_blocks)", got, tc.number+1)
 			}
 		})
 	}
