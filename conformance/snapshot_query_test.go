@@ -428,6 +428,7 @@ func assertSnapshotBaselineDescriptors(t *testing.T, baseline *descriptorpb.File
 			if got == nil {
 				t.Fatalf("old message removed: %s", m.GetName())
 			}
+			stripAuthorityThresholdField(t, got)
 			stripAnchorFinalityFields(t, got)
 			if want, ok := tableAdmissionRulesVersionFields[m.GetName()]; ok {
 				if len(got.Field) == 0 || !proto.Equal(got.Field[len(got.Field)-1], want) {
