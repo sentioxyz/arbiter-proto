@@ -872,3 +872,116 @@ var ConsensusAdmin_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "consensus.proto",
 }
+
+const (
+	ConsensusHistoryService_GetConsensusHistory_FullMethodName = "/arbiter.ConsensusHistoryService/GetConsensusHistory"
+)
+
+// ConsensusHistoryServiceClient is the client API for ConsensusHistoryService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// ConsensusHistory is a data-plane read served on the data-plane listener,
+// not on ConsensusAdmin. Any voter answers from its local applied state with
+// no leader barrier: freshness is the caller's concern, and the caller
+// verifies every signature itself.
+type ConsensusHistoryServiceClient interface {
+	GetConsensusHistory(ctx context.Context, in *GetConsensusHistoryRequest, opts ...grpc.CallOption) (*ConsensusHistory, error)
+}
+
+type consensusHistoryServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewConsensusHistoryServiceClient(cc grpc.ClientConnInterface) ConsensusHistoryServiceClient {
+	return &consensusHistoryServiceClient{cc}
+}
+
+func (c *consensusHistoryServiceClient) GetConsensusHistory(ctx context.Context, in *GetConsensusHistoryRequest, opts ...grpc.CallOption) (*ConsensusHistory, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConsensusHistory)
+	err := c.cc.Invoke(ctx, ConsensusHistoryService_GetConsensusHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ConsensusHistoryServiceServer is the server API for ConsensusHistoryService service.
+// All implementations must embed UnimplementedConsensusHistoryServiceServer
+// for forward compatibility.
+//
+// ConsensusHistory is a data-plane read served on the data-plane listener,
+// not on ConsensusAdmin. Any voter answers from its local applied state with
+// no leader barrier: freshness is the caller's concern, and the caller
+// verifies every signature itself.
+type ConsensusHistoryServiceServer interface {
+	GetConsensusHistory(context.Context, *GetConsensusHistoryRequest) (*ConsensusHistory, error)
+	mustEmbedUnimplementedConsensusHistoryServiceServer()
+}
+
+// UnimplementedConsensusHistoryServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedConsensusHistoryServiceServer struct{}
+
+func (UnimplementedConsensusHistoryServiceServer) GetConsensusHistory(context.Context, *GetConsensusHistoryRequest) (*ConsensusHistory, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetConsensusHistory not implemented")
+}
+func (UnimplementedConsensusHistoryServiceServer) mustEmbedUnimplementedConsensusHistoryServiceServer() {
+}
+func (UnimplementedConsensusHistoryServiceServer) testEmbeddedByValue() {}
+
+// UnsafeConsensusHistoryServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ConsensusHistoryServiceServer will
+// result in compilation errors.
+type UnsafeConsensusHistoryServiceServer interface {
+	mustEmbedUnimplementedConsensusHistoryServiceServer()
+}
+
+func RegisterConsensusHistoryServiceServer(s grpc.ServiceRegistrar, srv ConsensusHistoryServiceServer) {
+	// If the following call pancis, it indicates UnimplementedConsensusHistoryServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&ConsensusHistoryService_ServiceDesc, srv)
+}
+
+func _ConsensusHistoryService_GetConsensusHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetConsensusHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusHistoryServiceServer).GetConsensusHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusHistoryService_GetConsensusHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusHistoryServiceServer).GetConsensusHistory(ctx, req.(*GetConsensusHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// ConsensusHistoryService_ServiceDesc is the grpc.ServiceDesc for ConsensusHistoryService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ConsensusHistoryService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "arbiter.ConsensusHistoryService",
+	HandlerType: (*ConsensusHistoryServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetConsensusHistory",
+			Handler:    _ConsensusHistoryService_GetConsensusHistory_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "consensus.proto",
+}

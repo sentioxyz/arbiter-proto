@@ -2671,6 +2671,139 @@ func (x *Stage3StateView) GetSwitches() []*Stage3SwitchCutover {
 	return nil
 }
 
+// GetConsensusHistoryRequest asks for the committed consensus updates that
+// move the parameters from from_epoch on: the answer's first update, if any,
+// has expected_epoch == from_epoch.
+type GetConsensusHistoryRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FromEpoch     uint64                 `protobuf:"varint,1,opt,name=from_epoch,json=fromEpoch,proto3" json:"from_epoch,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetConsensusHistoryRequest) Reset() {
+	*x = GetConsensusHistoryRequest{}
+	mi := &file_consensus_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetConsensusHistoryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetConsensusHistoryRequest) ProtoMessage() {}
+
+func (x *GetConsensusHistoryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_consensus_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetConsensusHistoryRequest.ProtoReflect.Descriptor instead.
+func (*GetConsensusHistoryRequest) Descriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *GetConsensusHistoryRequest) GetFromEpoch() uint64 {
+	if x != nil {
+		return x.FromEpoch
+	}
+	return 0
+}
+
+// ConsensusHistory is the serving voter's applied history of signed consensus
+// updates. It lets a data-plane client (an SNode) follow the authority set as
+// a light client: starting from a configured trust anchor, it verifies each
+// update against the set in force before it, so nothing in this answer has to
+// be trusted on its own. updates are contiguous and ascending by
+// expected_epoch, and the last one moves the parameters to current_epoch.
+// A from_epoch above current_epoch answers no updates, not an error, so the
+// client can tell a lagging voter from a rollback by comparing current_epoch.
+type ConsensusHistory struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	NetworkId         string                 `protobuf:"bytes,1,opt,name=network_id,json=networkId,proto3" json:"network_id,omitempty"`
+	GenesisSnapshotId string                 `protobuf:"bytes,2,opt,name=genesis_snapshot_id,json=genesisSnapshotId,proto3" json:"genesis_snapshot_id,omitempty"`
+	CurrentEpoch      uint64                 `protobuf:"varint,3,opt,name=current_epoch,json=currentEpoch,proto3" json:"current_epoch,omitempty"`
+	// The bootstrap authority set (the epoch-0 trust root), for diagnostics.
+	BootstrapAuthorityAddresses []string `protobuf:"bytes,4,rep,name=bootstrap_authority_addresses,json=bootstrapAuthorityAddresses,proto3" json:"bootstrap_authority_addresses,omitempty"`
+	// Each committed update exactly as it was signed and applied.
+	Updates       []*UpdateConsensusParamsCmd `protobuf:"bytes,5,rep,name=updates,proto3" json:"updates,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConsensusHistory) Reset() {
+	*x = ConsensusHistory{}
+	mi := &file_consensus_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConsensusHistory) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConsensusHistory) ProtoMessage() {}
+
+func (x *ConsensusHistory) ProtoReflect() protoreflect.Message {
+	mi := &file_consensus_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConsensusHistory.ProtoReflect.Descriptor instead.
+func (*ConsensusHistory) Descriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *ConsensusHistory) GetNetworkId() string {
+	if x != nil {
+		return x.NetworkId
+	}
+	return ""
+}
+
+func (x *ConsensusHistory) GetGenesisSnapshotId() string {
+	if x != nil {
+		return x.GenesisSnapshotId
+	}
+	return ""
+}
+
+func (x *ConsensusHistory) GetCurrentEpoch() uint64 {
+	if x != nil {
+		return x.CurrentEpoch
+	}
+	return 0
+}
+
+func (x *ConsensusHistory) GetBootstrapAuthorityAddresses() []string {
+	if x != nil {
+		return x.BootstrapAuthorityAddresses
+	}
+	return nil
+}
+
+func (x *ConsensusHistory) GetUpdates() []*UpdateConsensusParamsCmd {
+	if x != nil {
+		return x.Updates
+	}
+	return nil
+}
+
 var File_consensus_proto protoreflect.FileDescriptor
 
 const file_consensus_proto_rawDesc = "" +
@@ -2889,7 +3022,17 @@ const file_consensus_proto_rawDesc = "" +
 	"\x10activation_epoch\x18\x01 \x01(\x04R\x0factivationEpoch\x120\n" +
 	"\x14activation_block_seq\x18\x02 \x01(\x04R\x12activationBlockSeq\x128\n" +
 	"\x18activation_promotion_seq\x18\x03 \x01(\x04R\x16activationPromotionSeq\x128\n" +
-	"\bswitches\x18\x04 \x03(\v2\x1c.arbiter.Stage3SwitchCutoverR\bswitches*y\n" +
+	"\bswitches\x18\x04 \x03(\v2\x1c.arbiter.Stage3SwitchCutoverR\bswitches\";\n" +
+	"\x1aGetConsensusHistoryRequest\x12\x1d\n" +
+	"\n" +
+	"from_epoch\x18\x01 \x01(\x04R\tfromEpoch\"\x87\x02\n" +
+	"\x10ConsensusHistory\x12\x1d\n" +
+	"\n" +
+	"network_id\x18\x01 \x01(\tR\tnetworkId\x12.\n" +
+	"\x13genesis_snapshot_id\x18\x02 \x01(\tR\x11genesisSnapshotId\x12#\n" +
+	"\rcurrent_epoch\x18\x03 \x01(\x04R\fcurrentEpoch\x12B\n" +
+	"\x1dbootstrap_authority_addresses\x18\x04 \x03(\tR\x1bbootstrapAuthorityAddresses\x12;\n" +
+	"\aupdates\x18\x05 \x03(\v2!.arbiter.UpdateConsensusParamsCmdR\aupdates*y\n" +
 	"\x11ConsensusHoldMode\x12#\n" +
 	"\x1fCONSENSUS_HOLD_MODE_UNSPECIFIED\x10\x00\x12 \n" +
 	"\x1cCONSENSUS_HOLD_MODE_ISSUANCE\x10\x01\x12\x1d\n" +
@@ -2920,7 +3063,9 @@ const file_consensus_proto_rawDesc = "" +
 	"\vSettleTrack\x12\x1b.arbiter.SettleTrackRequest\x1a\x14.arbiter.TrackSettle\"\x00\x12A\n" +
 	"\x0eGetTrackSettle\x12\x17.arbiter.TrackSettleRef\x1a\x14.arbiter.TrackSettle\"\x00\x12<\n" +
 	"\x0eRebalanceGroup\x12\x1a.arbiter.RebalanceGroupCmd\x1a\f.arbiter.Ack\"\x00\x12B\n" +
-	"\x11MarkMemberLagging\x12\x1d.arbiter.MarkMemberLaggingCmd\x1a\f.arbiter.Ack\"\x00B.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
+	"\x11MarkMemberLagging\x12\x1d.arbiter.MarkMemberLaggingCmd\x1a\f.arbiter.Ack\"\x002r\n" +
+	"\x17ConsensusHistoryService\x12W\n" +
+	"\x13GetConsensusHistory\x12#.arbiter.GetConsensusHistoryRequest\x1a\x19.arbiter.ConsensusHistory\"\x00B.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
 
 var (
 	file_consensus_proto_rawDescOnce sync.Once
@@ -2935,7 +3080,7 @@ func file_consensus_proto_rawDescGZIP() []byte {
 }
 
 var file_consensus_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_consensus_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_consensus_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
 var file_consensus_proto_goTypes = []any{
 	(ConsensusHoldMode)(0),                        // 0: arbiter.ConsensusHoldMode
 	(TrackSettleState)(0),                         // 1: arbiter.TrackSettleState
@@ -2967,86 +3112,91 @@ var file_consensus_proto_goTypes = []any{
 	(*MarkMemberLaggingCmd)(nil),                  // 27: arbiter.MarkMemberLaggingCmd
 	(*Stage3SwitchCutover)(nil),                   // 28: arbiter.Stage3SwitchCutover
 	(*Stage3StateView)(nil),                       // 29: arbiter.Stage3StateView
-	(*TableRegistryParams)(nil),                   // 30: arbiter.TableRegistryParams
-	(*ClientLaneParams)(nil),                      // 31: arbiter.ClientLaneParams
-	(*SIIndexerEntry)(nil),                        // 32: arbiter.SIIndexerEntry
-	(*Stage3Params)(nil),                          // 33: arbiter.Stage3Params
-	(*SnapshotQueryAbortRecord)(nil),              // 34: arbiter.SnapshotQueryAbortRecord
-	(*ActiveQueryPolicy)(nil),                     // 35: arbiter.ActiveQueryPolicy
-	(*TrackFrontier)(nil),                         // 36: arbiter.TrackFrontier
-	(*emptypb.Empty)(nil),                         // 37: google.protobuf.Empty
-	(*Ack)(nil),                                   // 38: arbiter.Ack
-	(*SnapshotQueryStatus)(nil),                   // 39: arbiter.SnapshotQueryStatus
+	(*GetConsensusHistoryRequest)(nil),            // 30: arbiter.GetConsensusHistoryRequest
+	(*ConsensusHistory)(nil),                      // 31: arbiter.ConsensusHistory
+	(*TableRegistryParams)(nil),                   // 32: arbiter.TableRegistryParams
+	(*ClientLaneParams)(nil),                      // 33: arbiter.ClientLaneParams
+	(*SIIndexerEntry)(nil),                        // 34: arbiter.SIIndexerEntry
+	(*Stage3Params)(nil),                          // 35: arbiter.Stage3Params
+	(*SnapshotQueryAbortRecord)(nil),              // 36: arbiter.SnapshotQueryAbortRecord
+	(*ActiveQueryPolicy)(nil),                     // 37: arbiter.ActiveQueryPolicy
+	(*TrackFrontier)(nil),                         // 38: arbiter.TrackFrontier
+	(*emptypb.Empty)(nil),                         // 39: google.protobuf.Empty
+	(*Ack)(nil),                                   // 40: arbiter.Ack
+	(*SnapshotQueryStatus)(nil),                   // 41: arbiter.SnapshotQueryStatus
 }
 var file_consensus_proto_depIdxs = []int32{
-	30, // 0: arbiter.ConsensusMutableParams.table_registry:type_name -> arbiter.TableRegistryParams
-	31, // 1: arbiter.ConsensusMutableParams.client_lanes:type_name -> arbiter.ClientLaneParams
-	32, // 2: arbiter.ConsensusMutableParams.si_indexers:type_name -> arbiter.SIIndexerEntry
+	32, // 0: arbiter.ConsensusMutableParams.table_registry:type_name -> arbiter.TableRegistryParams
+	33, // 1: arbiter.ConsensusMutableParams.client_lanes:type_name -> arbiter.ClientLaneParams
+	34, // 2: arbiter.ConsensusMutableParams.si_indexers:type_name -> arbiter.SIIndexerEntry
 	12, // 3: arbiter.ConsensusMutableParams.verifiers:type_name -> arbiter.VerifierEntry
-	33, // 4: arbiter.ConsensusMutableParams.stage3:type_name -> arbiter.Stage3Params
-	30, // 5: arbiter.ConsensusParamsUpdate.table_registry:type_name -> arbiter.TableRegistryParams
-	31, // 6: arbiter.ConsensusParamsUpdate.client_lanes:type_name -> arbiter.ClientLaneParams
-	32, // 7: arbiter.ConsensusParamsUpdate.si_indexers:type_name -> arbiter.SIIndexerEntry
+	35, // 4: arbiter.ConsensusMutableParams.stage3:type_name -> arbiter.Stage3Params
+	32, // 5: arbiter.ConsensusParamsUpdate.table_registry:type_name -> arbiter.TableRegistryParams
+	33, // 6: arbiter.ConsensusParamsUpdate.client_lanes:type_name -> arbiter.ClientLaneParams
+	34, // 7: arbiter.ConsensusParamsUpdate.si_indexers:type_name -> arbiter.SIIndexerEntry
 	12, // 8: arbiter.ConsensusParamsUpdate.verifiers:type_name -> arbiter.VerifierEntry
-	33, // 9: arbiter.ConsensusParamsUpdate.stage3:type_name -> arbiter.Stage3Params
+	35, // 9: arbiter.ConsensusParamsUpdate.stage3:type_name -> arbiter.Stage3Params
 	3,  // 10: arbiter.UpdateConsensusParamsCmd.update:type_name -> arbiter.ConsensusParamsUpdate
-	34, // 11: arbiter.AbortSnapshotQueryRequest.record:type_name -> arbiter.SnapshotQueryAbortRecord
-	35, // 12: arbiter.ActivateQueryProfileRequest.activation:type_name -> arbiter.ActiveQueryPolicy
+	36, // 11: arbiter.AbortSnapshotQueryRequest.record:type_name -> arbiter.SnapshotQueryAbortRecord
+	37, // 12: arbiter.ActivateQueryProfileRequest.activation:type_name -> arbiter.ActiveQueryPolicy
 	2,  // 13: arbiter.ConsensusParamsState.bootstrap:type_name -> arbiter.ConsensusMutableParams
 	2,  // 14: arbiter.ConsensusParamsState.current:type_name -> arbiter.ConsensusMutableParams
 	29, // 15: arbiter.ConsensusParamsState.stage3_state:type_name -> arbiter.Stage3StateView
 	10, // 16: arbiter.NodeFeatures.entries:type_name -> arbiter.NodeFeatureEntry
-	36, // 17: arbiter.IndexerTrackView.initial:type_name -> arbiter.TrackFrontier
-	36, // 18: arbiter.IndexerTrackView.published:type_name -> arbiter.TrackFrontier
+	38, // 17: arbiter.IndexerTrackView.initial:type_name -> arbiter.TrackFrontier
+	38, // 18: arbiter.IndexerTrackView.published:type_name -> arbiter.TrackFrontier
 	16, // 19: arbiter.TrackStateView.indexers:type_name -> arbiter.IndexerTrackView
 	0,  // 20: arbiter.PrepareConsensusUpdateRequest.mode:type_name -> arbiter.ConsensusHoldMode
 	4,  // 21: arbiter.PrepareConsensusUpdateRequest.draft:type_name -> arbiter.UpdateConsensusParamsCmd
 	0,  // 22: arbiter.ConsensusHold.mode:type_name -> arbiter.ConsensusHoldMode
 	20, // 23: arbiter.ConsensusHold.tracks:type_name -> arbiter.TrackDrain
 	1,  // 24: arbiter.TrackSettle.state:type_name -> arbiter.TrackSettleState
-	36, // 25: arbiter.MarkMemberLaggingCmd.observed_entry:type_name -> arbiter.TrackFrontier
+	38, // 25: arbiter.MarkMemberLaggingCmd.observed_entry:type_name -> arbiter.TrackFrontier
 	28, // 26: arbiter.Stage3StateView.switches:type_name -> arbiter.Stage3SwitchCutover
-	37, // 27: arbiter.ConsensusAdmin.GetProtocolInfo:input_type -> google.protobuf.Empty
-	37, // 28: arbiter.ConsensusAdmin.GetConsensusParams:input_type -> google.protobuf.Empty
-	4,  // 29: arbiter.ConsensusAdmin.UpdateConsensusParams:input_type -> arbiter.UpdateConsensusParamsCmd
-	5,  // 30: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:input_type -> arbiter.GetSnapshotQueryAbortCandidateRequest
-	6,  // 31: arbiter.ConsensusAdmin.AbortSnapshotQuery:input_type -> arbiter.AbortSnapshotQueryRequest
-	7,  // 32: arbiter.ConsensusAdmin.ActivateQueryProfile:input_type -> arbiter.ActivateQueryProfileRequest
-	37, // 33: arbiter.ConsensusAdmin.GetNodeFeatures:input_type -> google.protobuf.Empty
-	13, // 34: arbiter.ConsensusAdmin.EvictNode:input_type -> arbiter.EvictNodeRequest
-	14, // 35: arbiter.ConsensusAdmin.QuarantineIndexer:input_type -> arbiter.QuarantineIndexerCmd
-	15, // 36: arbiter.ConsensusAdmin.ReleaseIndexer:input_type -> arbiter.ReleaseIndexerCmd
-	37, // 37: arbiter.ConsensusAdmin.GetTrackState:input_type -> google.protobuf.Empty
-	18, // 38: arbiter.ConsensusAdmin.PrepareConsensusUpdate:input_type -> arbiter.PrepareConsensusUpdateRequest
-	19, // 39: arbiter.ConsensusAdmin.GetConsensusHold:input_type -> arbiter.ConsensusHoldRef
-	19, // 40: arbiter.ConsensusAdmin.ReleaseConsensusHold:input_type -> arbiter.ConsensusHoldRef
-	22, // 41: arbiter.ConsensusAdmin.SettleTrack:input_type -> arbiter.SettleTrackRequest
-	23, // 42: arbiter.ConsensusAdmin.GetTrackSettle:input_type -> arbiter.TrackSettleRef
-	25, // 43: arbiter.ConsensusAdmin.RebalanceGroup:input_type -> arbiter.RebalanceGroupCmd
-	27, // 44: arbiter.ConsensusAdmin.MarkMemberLagging:input_type -> arbiter.MarkMemberLaggingCmd
-	8,  // 45: arbiter.ConsensusAdmin.GetProtocolInfo:output_type -> arbiter.ProtocolInfo
-	9,  // 46: arbiter.ConsensusAdmin.GetConsensusParams:output_type -> arbiter.ConsensusParamsState
-	38, // 47: arbiter.ConsensusAdmin.UpdateConsensusParams:output_type -> arbiter.Ack
-	34, // 48: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:output_type -> arbiter.SnapshotQueryAbortRecord
-	39, // 49: arbiter.ConsensusAdmin.AbortSnapshotQuery:output_type -> arbiter.SnapshotQueryStatus
-	38, // 50: arbiter.ConsensusAdmin.ActivateQueryProfile:output_type -> arbiter.Ack
-	11, // 51: arbiter.ConsensusAdmin.GetNodeFeatures:output_type -> arbiter.NodeFeatures
-	38, // 52: arbiter.ConsensusAdmin.EvictNode:output_type -> arbiter.Ack
-	38, // 53: arbiter.ConsensusAdmin.QuarantineIndexer:output_type -> arbiter.Ack
-	38, // 54: arbiter.ConsensusAdmin.ReleaseIndexer:output_type -> arbiter.Ack
-	17, // 55: arbiter.ConsensusAdmin.GetTrackState:output_type -> arbiter.TrackStateView
-	21, // 56: arbiter.ConsensusAdmin.PrepareConsensusUpdate:output_type -> arbiter.ConsensusHold
-	21, // 57: arbiter.ConsensusAdmin.GetConsensusHold:output_type -> arbiter.ConsensusHold
-	38, // 58: arbiter.ConsensusAdmin.ReleaseConsensusHold:output_type -> arbiter.Ack
-	24, // 59: arbiter.ConsensusAdmin.SettleTrack:output_type -> arbiter.TrackSettle
-	24, // 60: arbiter.ConsensusAdmin.GetTrackSettle:output_type -> arbiter.TrackSettle
-	38, // 61: arbiter.ConsensusAdmin.RebalanceGroup:output_type -> arbiter.Ack
-	38, // 62: arbiter.ConsensusAdmin.MarkMemberLagging:output_type -> arbiter.Ack
-	45, // [45:63] is the sub-list for method output_type
-	27, // [27:45] is the sub-list for method input_type
-	27, // [27:27] is the sub-list for extension type_name
-	27, // [27:27] is the sub-list for extension extendee
-	0,  // [0:27] is the sub-list for field type_name
+	4,  // 27: arbiter.ConsensusHistory.updates:type_name -> arbiter.UpdateConsensusParamsCmd
+	39, // 28: arbiter.ConsensusAdmin.GetProtocolInfo:input_type -> google.protobuf.Empty
+	39, // 29: arbiter.ConsensusAdmin.GetConsensusParams:input_type -> google.protobuf.Empty
+	4,  // 30: arbiter.ConsensusAdmin.UpdateConsensusParams:input_type -> arbiter.UpdateConsensusParamsCmd
+	5,  // 31: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:input_type -> arbiter.GetSnapshotQueryAbortCandidateRequest
+	6,  // 32: arbiter.ConsensusAdmin.AbortSnapshotQuery:input_type -> arbiter.AbortSnapshotQueryRequest
+	7,  // 33: arbiter.ConsensusAdmin.ActivateQueryProfile:input_type -> arbiter.ActivateQueryProfileRequest
+	39, // 34: arbiter.ConsensusAdmin.GetNodeFeatures:input_type -> google.protobuf.Empty
+	13, // 35: arbiter.ConsensusAdmin.EvictNode:input_type -> arbiter.EvictNodeRequest
+	14, // 36: arbiter.ConsensusAdmin.QuarantineIndexer:input_type -> arbiter.QuarantineIndexerCmd
+	15, // 37: arbiter.ConsensusAdmin.ReleaseIndexer:input_type -> arbiter.ReleaseIndexerCmd
+	39, // 38: arbiter.ConsensusAdmin.GetTrackState:input_type -> google.protobuf.Empty
+	18, // 39: arbiter.ConsensusAdmin.PrepareConsensusUpdate:input_type -> arbiter.PrepareConsensusUpdateRequest
+	19, // 40: arbiter.ConsensusAdmin.GetConsensusHold:input_type -> arbiter.ConsensusHoldRef
+	19, // 41: arbiter.ConsensusAdmin.ReleaseConsensusHold:input_type -> arbiter.ConsensusHoldRef
+	22, // 42: arbiter.ConsensusAdmin.SettleTrack:input_type -> arbiter.SettleTrackRequest
+	23, // 43: arbiter.ConsensusAdmin.GetTrackSettle:input_type -> arbiter.TrackSettleRef
+	25, // 44: arbiter.ConsensusAdmin.RebalanceGroup:input_type -> arbiter.RebalanceGroupCmd
+	27, // 45: arbiter.ConsensusAdmin.MarkMemberLagging:input_type -> arbiter.MarkMemberLaggingCmd
+	30, // 46: arbiter.ConsensusHistoryService.GetConsensusHistory:input_type -> arbiter.GetConsensusHistoryRequest
+	8,  // 47: arbiter.ConsensusAdmin.GetProtocolInfo:output_type -> arbiter.ProtocolInfo
+	9,  // 48: arbiter.ConsensusAdmin.GetConsensusParams:output_type -> arbiter.ConsensusParamsState
+	40, // 49: arbiter.ConsensusAdmin.UpdateConsensusParams:output_type -> arbiter.Ack
+	36, // 50: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:output_type -> arbiter.SnapshotQueryAbortRecord
+	41, // 51: arbiter.ConsensusAdmin.AbortSnapshotQuery:output_type -> arbiter.SnapshotQueryStatus
+	40, // 52: arbiter.ConsensusAdmin.ActivateQueryProfile:output_type -> arbiter.Ack
+	11, // 53: arbiter.ConsensusAdmin.GetNodeFeatures:output_type -> arbiter.NodeFeatures
+	40, // 54: arbiter.ConsensusAdmin.EvictNode:output_type -> arbiter.Ack
+	40, // 55: arbiter.ConsensusAdmin.QuarantineIndexer:output_type -> arbiter.Ack
+	40, // 56: arbiter.ConsensusAdmin.ReleaseIndexer:output_type -> arbiter.Ack
+	17, // 57: arbiter.ConsensusAdmin.GetTrackState:output_type -> arbiter.TrackStateView
+	21, // 58: arbiter.ConsensusAdmin.PrepareConsensusUpdate:output_type -> arbiter.ConsensusHold
+	21, // 59: arbiter.ConsensusAdmin.GetConsensusHold:output_type -> arbiter.ConsensusHold
+	40, // 60: arbiter.ConsensusAdmin.ReleaseConsensusHold:output_type -> arbiter.Ack
+	24, // 61: arbiter.ConsensusAdmin.SettleTrack:output_type -> arbiter.TrackSettle
+	24, // 62: arbiter.ConsensusAdmin.GetTrackSettle:output_type -> arbiter.TrackSettle
+	40, // 63: arbiter.ConsensusAdmin.RebalanceGroup:output_type -> arbiter.Ack
+	40, // 64: arbiter.ConsensusAdmin.MarkMemberLagging:output_type -> arbiter.Ack
+	31, // 65: arbiter.ConsensusHistoryService.GetConsensusHistory:output_type -> arbiter.ConsensusHistory
+	47, // [47:66] is the sub-list for method output_type
+	28, // [28:47] is the sub-list for method input_type
+	28, // [28:28] is the sub-list for extension type_name
+	28, // [28:28] is the sub-list for extension extendee
+	0,  // [0:28] is the sub-list for field type_name
 }
 
 func init() { file_consensus_proto_init() }
@@ -3064,9 +3214,9 @@ func file_consensus_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_consensus_proto_rawDesc), len(file_consensus_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   28,
+			NumMessages:   30,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_consensus_proto_goTypes,
 		DependencyIndexes: file_consensus_proto_depIdxs,
