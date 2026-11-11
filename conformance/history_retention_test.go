@@ -34,6 +34,7 @@ var historyRetentionFields = map[string][]*descriptorpb.FieldDescriptorProto{
 // baseline comparisons see the message as it was before.
 func stripHistoryRetentionFields(t *testing.T, d *descriptorpb.DescriptorProto) {
 	t.Helper()
+	stripAuthorityChangeDelayFields(t, d)
 	want, ok := historyRetentionFields[d.GetName()]
 	if !ok {
 		return
@@ -88,8 +89,10 @@ func TestHistoryRetentionFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.Uint64Kind || f.IsList() || f.HasOptionalKeyword() || f.ContainingOneof() != nil {
 				t.Fatalf("field = %v, want plain uint64 number %d", f, tc.number)
 			}
-			if got := d.Fields().Len(); got != int(tc.number) {
-				t.Fatalf("field count = %d, want %d (history_retain_blocks is the last field)", got, tc.number)
+			// The two authority change delay fields are the only ones
+			// appended after it.
+			if got := d.Fields().Len(); got != int(tc.number)+2 {
+				t.Fatalf("field count = %d, want %d (only the authority change delay fields follow history_retain_blocks)", got, tc.number+2)
 			}
 		})
 	}

@@ -145,7 +145,7 @@ func TestStage3ConsensusFieldNumbers(t *testing.T) {
 		})
 	}
 	for msg, want := range map[proto.Message]int{
-		&pb.VerifierEntry{}: 11, &pb.ConsensusMutableParams{}: 22, &pb.ConsensusParamsUpdate{}: 27, &pb.ConsensusParamsState{}: 12,
+		&pb.VerifierEntry{}: 11, &pb.ConsensusMutableParams{}: 24, &pb.ConsensusParamsUpdate{}: 29, &pb.ConsensusParamsState{}: 12,
 		&pb.TableIncarnation{}: 20, &pb.TableRegistrySnapshot{}: 15, &pb.L3BlockTrack{}: 2, &pb.BlockVerification{}: 23,
 	} {
 		if got := msg.ProtoReflect().Descriptor().Fields().Len(); got != want {

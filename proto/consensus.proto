@@ -87,6 +87,11 @@ message ConsensusMutableParams {
   // History pruning: 0 until one authority-signed update after
   // custody_frontier sets it, then carried by every update and never lowered.
   uint64 history_retain_blocks = 22;
+  // The authority change delay in L2 blocks: 0 until one authority-signed
+  // update sets it, then carried non-zero by every update.
+  uint64 authority_change_delay_l2_blocks = 23;
+  // The proposed authority change waiting for its delay, absent when none.
+  PendingAuthorityChange pending_authority_change = 24;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -318,6 +323,31 @@ message ConsensusParamsUpdate {
   // the command before an update sets it. It joins the params digest only
   // once set, so earlier digests are unchanged.
   uint64 history_retain_blocks = 27;
+  // The authority change delay D, in L2 blocks of the committed
+  // table-registry cursor (not seconds: scale it to the L2's block time; on a
+  // 2 s chain 43200 blocks is about one day). 0 means never set: authority
+  // changes take effect in the update that makes them, as before the field
+  // existed. Once set, authority_addresses, authority_threshold and this
+  // field itself change only by executing a pending_authority_change whose
+  // not_before_l2_block the cursor has reached; operations_authority_addresses
+  // and every other field still change at once. Its first setting needs the
+  // table registry and an authority_threshold of at least 2 (committed or in
+  // the same update), and every value is at least the floor (3600 blocks).
+  // Afterwards every update carries it. It is never set at genesis. It
+  // changes Apply, so every voter, and every SNode that follows the committed
+  // authority set, must run a binary that knows it before an update sets it.
+  // Absent from the params digest while 0, so earlier digests are unchanged.
+  uint64 authority_change_delay_l2_blocks = 28;
+  // The pending authority change: proposed by an update that sets it (with
+  // the authority fields unchanged and not_before_l2_block at least D blocks
+  // after the committed cursor), carried unchanged by every later update,
+  // and cleared either by the update that executes it (whose authority
+  // fields equal its target, once the cursor reached not_before_l2_block) or
+  // by one that cancels it. Proposing, cancelling and executing are
+  // ordinary consensus updates, each authorized by authority_threshold
+  // signatures of the authority set in force. At most one is pending. Absent
+  // from the params digest while unset.
+  PendingAuthorityChange pending_authority_change = 29;
 }
 
 // VoterEntry is one enrolled Raft voter. consent_sig is lowercase hex of the
@@ -339,6 +369,17 @@ message VoterEntry {
 // in the tag modes. registry_contract is the anchor registry, lowercase 0x +
 // 40 hex, on the chain l2_chain_id (positive). quorum is a majority of the
 // enrolled voters: len(voters) / 2 < quorum <= len(voters).
+// PendingAuthorityChange is a proposed change of the delayed authority
+// fields (ConsensusParamsUpdate.pending_authority_change): the complete
+// target authority set, threshold and delay, and the earliest committed
+// table-registry cursor block at which an update may execute it.
+message PendingAuthorityChange {
+  repeated string authority_addresses = 1;
+  uint32 authority_threshold = 2;
+  uint64 authority_change_delay_l2_blocks = 3;
+  uint64 not_before_l2_block = 4;
+}
+
 message AnchorFinalityParams {
   uint32 quorum = 1;
   string finality_mode = 2;

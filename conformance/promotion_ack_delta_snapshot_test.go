@@ -59,8 +59,8 @@ func TestPromotionAckDeltaSnapshotFieldNumbers(t *testing.T) {
 			}
 			// snapshot_query_tracks, custody_frontier and
 			// operations_authority_addresses are the only fields appended after it.
-			if got := d.Fields().Len(); got != int(tc.number)+4 {
-				t.Fatalf("field count = %d, want %d (only snapshot_query_tracks, custody_frontier and operations_authority_addresses and history_retain_blocks follow promotion_ack_delta_snapshot)", got, tc.number+4)
+			if got := d.Fields().Len(); got != int(tc.number)+6 {
+				t.Fatalf("field count = %d, want %d (only snapshot_query_tracks, custody_frontier and operations_authority_addresses and history_retain_blocks and the authority change delay fields follow promotion_ack_delta_snapshot)", got, tc.number+6)
 			}
 		})
 	}
