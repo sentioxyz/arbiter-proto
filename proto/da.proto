@@ -545,9 +545,10 @@ enum ReleaseCode {
   // The pin is gone (or never existed — release is idempotent).
   RELEASE_CODE_OK = 1;
   // authority_jws verification is enabled and failed (missing, malformed,
-  // wrong purpose/domain, recovered address not on the allowlist, or a
-  // stale release_seq at or below the authority's persisted watermark —
-  // the anti-replay check).
+  // wrong purpose/domain, recovered address not on the allowlist, iat
+  // outside the store's skew window, a missing release_seq, or a stale
+  // release_seq at or below the key's persisted watermark — the
+  // anti-replay check).
   RELEASE_CODE_UNAUTHORIZED = 2;
 }
 
@@ -559,21 +560,48 @@ enum ReleaseCode {
 message ReleasePinsRequest {
   PinKey key = 1;
   // Authority slot on the destructive RPC (the PromotionCommand.authority_jws
-  // precedent, §8.1): the Arbiter authority's secp256k1 JWS (compact form)
-  // whose payload carries purpose "arbiter-payload-release", a
-  // CanonicalDigest of the key under domain "arbiter-payload-release-v1",
-  // AND a strictly monotonic release_seq. The store authorizes by address
-  // recovery against its authority allowlist and persists, per authority
-  // address, the highest accepted release_seq as a watermark (the §8.3 /
-  // §10.3 stale-command anchors): a JWS whose release_seq is not above the
-  // watermark is rejected UNAUTHORIZED — re-presenting the byte-identical
-  // last-accepted JWS is the one idempotent-retry exception and returns OK
-  // without effect. The seq is required because PinKey is a STABLE
-  // coordinate: a failed-over leader re-asserts the same key, so without it
-  // one historic release JWS would stay valid against every future
-  // re-assertion of that pin (fatal for ARCHIVE legal holds). v1 MAY run
-  // channel-trust with this empty — enforcement is store configuration, so
-  // P5+ hardening is config, not protocol.
+  // precedent, §8.1): the Arbiter authority's secp256k1 JWS (compact form,
+  // alg ES256K) whose JSON payload carries "purpose" =
+  // "arbiter-payload-release", "cmd_hash" ("0x…"), "iat" (unix seconds),
+  // "release_seq" (uint64) and optionally "network_id",
+  // "genesis_snapshot_id" and "authority_epoch", where cmd_hash is the CanonicalDigest, under domain
+  // "arbiter-payload-release-v1", of {"holder_id", "purpose" (the PinPurpose
+  // enum NUMBER), "scope_key"} in exactly that field order. The store
+  // authorizes by address recovery against its authority allowlist and
+  // refuses an iat outside its clock-skew window.
+  //
+  // ANTI-REPLAY WATERMARK, PER KEY. The store persists, in the pin record of
+  // this key, the highest release_seq it accepted for the key and a hash of
+  // the token that carried it. Re-pinning a released key keeps both. When
+  // enforcement is on, release_seq is REQUIRED and MUST be strictly above
+  // the key's watermark, otherwise the release is UNAUTHORIZED; the one
+  // idempotent-retry exception is re-presenting the byte-identical token
+  // last accepted for this key, which returns OK without effect. Releasing
+  // an unknown key records the watermark too, so a token for a key that was
+  // never pinned cannot be replayed after a later pin. The seq is required
+  // because PinKey is a STABLE coordinate: a failed-over leader re-asserts
+  // the same key, so without it one historic release JWS would stay valid
+  // against every future re-assertion of that pin (fatal for ARCHIVE legal
+  // holds).
+  //
+  // The watermark is per key, not per authority, so releases of different
+  // keys never contend on one stored object. The cost: a token that was
+  // signed but never presented stays usable until the same key's next
+  // accepted release or until its iat leaves the store's skew window,
+  // whichever comes first (a per-authority watermark would also void it on
+  // the next release of ANY key). Inside that bounded window a holder of an
+  // undelivered token can release that one key early. The custody-chain
+  // rule keeps SEQUENCED and REPLAY releases harmless (their successor hold
+  // is already durable when the token is signed); for AUDIT and ARCHIVE
+  // releases the skew window is the bound, so stores keep it short.
+  //
+  // Seq source (informative): the Arbiter leader signs release_seq =
+  // raft_term << 32 | counter, where counter restarts at 1 per term, so a
+  // later leader always signs above every earlier one. Any other signer
+  // only needs seqs strictly increasing per key.
+  //
+  // v1 MAY run channel-trust with this empty — enforcement is store
+  // configuration, so P5+ hardening is config, not protocol.
   string authority_jws = 15;
 }
 
