@@ -481,6 +481,13 @@ message ProtocolInfo {
   // operations authority activation gate, which requires every voter's
   // address to be in the operations set the activating update names.
   string authority_signer_address = 6;
+  // The index of the last Raft log entry this node has applied, read when the
+  // probe is answered. arbiter-admin raft add waits for a joining voter's
+  // applied index to reach the configuration entry that added it.
+  uint64 raft_applied_index = 7;
+  // The network id of the genesis this node runs (genesis.network_id). The
+  // leader's ChangeRaftMembership refuses to add a node of another network.
+  string network_id = 8;
 }
 
 // ConsensusParamsState is a leader-barrier view used to prepare the next
@@ -574,6 +581,83 @@ message EvictNodeRequest {
   uint64 expected_registration_seq = 2;
   string reason = 3;
   string authority_jws = 4;
+}
+
+// RaftMembershipOp is the Raft configuration change a ChangeRaftMembership
+// request asks for.
+enum RaftMembershipOp {
+  RAFT_MEMBERSHIP_OP_UNSPECIFIED = 0;
+  // Add server_id at raft_address as a voter.
+  RAFT_MEMBERSHIP_OP_ADD_VOTER = 1;
+  // Remove server_id from the Raft configuration.
+  RAFT_MEMBERSHIP_OP_REMOVE_SERVER = 2;
+}
+
+// RaftMembershipChange is the signed body of a Raft membership change. The
+// authority token is an ES256K JWS (or a multi-signature token of the
+// governance threshold) with purpose "arbiter-raft-membership-v1" over the
+// canonical digest of {op, server_id, raft_address}, bound to the network id,
+// genesis snapshot id and authority epoch, so any consensus update voids it.
+// raft_address is set for ADD_VOTER only.
+message RaftMembershipChange {
+  RaftMembershipOp op = 1;
+  string server_id = 2;
+  string raft_address = 3;
+}
+
+// ChangeRaftMembershipRequest asks the leader to change the Raft voter set by
+// one server (arbiter#172). authority_jws authorizes change under the
+// governance set and threshold. prev_config_index and allow_below_three are
+// not signed: prev_config_index, when non-zero, must equal the index of the
+// leader's current Raft configuration (compare and swap, so a retry after an
+// unknown outcome needs no new signature); allow_below_three lets a removal
+// leave fewer than three voters while the anchor finality quorum is active.
+message ChangeRaftMembershipRequest {
+  RaftMembershipChange change = 1;
+  string authority_jws = 2;
+  uint64 prev_config_index = 3;
+  bool allow_below_three = 4;
+}
+
+// ChangeRaftMembershipReply reports the committed configuration index. When
+// already_applied is true the configuration already had the requested shape
+// and nothing was appended.
+message ChangeRaftMembershipReply {
+  uint64 config_index = 1;
+  bool already_applied = 2;
+}
+
+// RaftServerView is one server of the Raft configuration.
+message RaftServerView {
+  string id = 1;
+  string address = 2;
+  bool voter = 3;
+}
+
+// RaftVoterSetState relates the Raft voters to the enrolled voters of the
+// anchor finality quorum.
+enum RaftVoterSetState {
+  RAFT_VOTER_SET_STATE_UNSPECIFIED = 0;
+  // The anchor finality quorum is not active; nothing binds the two sets.
+  RAFT_VOTER_SET_STATE_INACTIVE = 1;
+  // The Raft voters are exactly the enrolled voters.
+  RAFT_VOTER_SET_STATE_CONSISTENT = 2;
+  // One enrolled voter is outside Raft and every Raft voter is enrolled: a
+  // membership change paired with a voters update is half done.
+  RAFT_VOTER_SET_STATE_TRANSITION = 3;
+  // Anything else: the configuration changed outside the paired flow.
+  RAFT_VOTER_SET_STATE_DRIFT = 4;
+}
+
+// RaftConfigurationView is the leader's committed Raft configuration (read
+// after a barrier) next to the committed enrolled voters.
+message RaftConfigurationView {
+  repeated RaftServerView servers = 1;
+  uint64 config_index = 2;
+  repeated string enrolled_voter_ids = 3;
+  RaftVoterSetState state = 4;
+  string leader_id = 5;
+  uint64 authority_epoch = 6;
 }
 
 // QuarantineIndexerCmd is both the ConsensusAdmin request and the Raft
@@ -922,6 +1006,17 @@ service ConsensusAdmin {
   // Raft tag 42. FAILED_PRECONDITION "marking a member lagging is refused until
   // the checkpoints switch is on" before it. Ack means committed success.
   rpc MarkMemberLagging (MarkMemberLaggingCmd) returns (Ack) {}
+  // Leader-only read with a barrier: the committed Raft configuration and the
+  // enrolled voters (arbiter#172).
+  rpc GetRaftConfiguration (google.protobuf.Empty) returns (RaftConfigurationView) {}
+  // Leader-only, explicitly enabled (consensus_updates_enabled),
+  // governance-authenticated: adds or removes one Raft server. While the
+  // anchor finality quorum is active the result must keep every Raft voter
+  // enrolled with at most one enrolled voter outside Raft. Nothing is
+  // proposed to the FSM; the change is a Raft configuration entry. Removing
+  // the leader itself transfers leadership first and answers UNAVAILABLE with
+  // the NotLeader hint, so the caller retries on the new leader.
+  rpc ChangeRaftMembership (ChangeRaftMembershipRequest) returns (ChangeRaftMembershipReply) {}
 }
 
 // GetConsensusHistoryRequest asks for the committed consensus updates that

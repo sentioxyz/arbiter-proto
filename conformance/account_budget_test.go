@@ -30,6 +30,7 @@ var accountBudgetFields = map[string][]*descriptorpb.FieldDescriptorProto{
 // baseline comparisons see the message as it was before.
 func stripAccountBudgetFields(t *testing.T, d *descriptorpb.DescriptorProto) {
 	t.Helper()
+	stripRaftMembershipFields(t, d)
 	want, ok := accountBudgetFields[d.GetName()]
 	if !ok {
 		return
