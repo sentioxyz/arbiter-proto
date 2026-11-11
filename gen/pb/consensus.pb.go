@@ -1293,8 +1293,16 @@ type ConsensusParamsState struct {
 	// change after genesis; servers before these fields leave them empty.
 	SchemaSnapshotId  string `protobuf:"bytes,10,opt,name=schema_snapshot_id,json=schemaSnapshotId,proto3" json:"schema_snapshot_id,omitempty"`
 	ExecutorProfileId string `protobuf:"bytes,11,opt,name=executor_profile_id,json=executorProfileId,proto3" json:"executor_profile_id,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// How many (table, partition, part hash) keys two or more statements hold
+	// unpromoted, the same count as the arbiter_shared_unpromoted_part_hashes
+	// gauge. Each one is a promotion that covers more statements than the one
+	// that offered it. arbiter-admin refuses to set part_claim_uniqueness while
+	// it is above 0: the gate stops new shared claims and releases a pair whose
+	// rejected partition is cleaned after it, but a pair cleaned before it keeps
+	// pinning the earlier block. Absent from a server that predates the field.
+	SharedUnpromotedPartHashes *uint64 `protobuf:"varint,12,opt,name=shared_unpromoted_part_hashes,json=sharedUnpromotedPartHashes,proto3,oneof" json:"shared_unpromoted_part_hashes,omitempty"`
+	unknownFields              protoimpl.UnknownFields
+	sizeCache                  protoimpl.SizeCache
 }
 
 func (x *ConsensusParamsState) Reset() {
@@ -1402,6 +1410,13 @@ func (x *ConsensusParamsState) GetExecutorProfileId() string {
 		return x.ExecutorProfileId
 	}
 	return ""
+}
+
+func (x *ConsensusParamsState) GetSharedUnpromotedPartHashes() uint64 {
+	if x != nil && x.SharedUnpromotedPartHashes != nil {
+		return *x.SharedUnpromotedPartHashes
+	}
+	return 0
 }
 
 // NodeFeatureEntry joins one non-evicted verifier or SNode registration with
@@ -3329,7 +3344,7 @@ const file_consensus_proto_rawDesc = "" +
 	"\x10protocol_version\x18\x02 \x01(\rR\x0fprotocolVersion\x12'\n" +
 	"\x0fupdates_enabled\x18\x03 \x01(\bR\x0eupdatesEnabled\x12\x1a\n" +
 	"\bfeatures\x18\x04 \x03(\tR\bfeatures\x120\n" +
-	"\x14voter_ed25519_pubkey\x18\x05 \x01(\fR\x12voterEd25519Pubkey\"\x85\x04\n" +
+	"\x14voter_ed25519_pubkey\x18\x05 \x01(\fR\x12voterEd25519Pubkey\"\xef\x04\n" +
 	"\x14ConsensusParamsState\x12)\n" +
 	"\x10protocol_version\x18\x01 \x01(\rR\x0fprotocolVersion\x12\x1d\n" +
 	"\n" +
@@ -3343,7 +3358,9 @@ const file_consensus_proto_rawDesc = "" +
 	"\fstage3_state\x18\t \x01(\v2\x18.arbiter.Stage3StateViewR\vstage3State\x12,\n" +
 	"\x12schema_snapshot_id\x18\n" +
 	" \x01(\tR\x10schemaSnapshotId\x12.\n" +
-	"\x13executor_profile_id\x18\v \x01(\tR\x11executorProfileId\"p\n" +
+	"\x13executor_profile_id\x18\v \x01(\tR\x11executorProfileId\x12F\n" +
+	"\x1dshared_unpromoted_part_hashes\x18\f \x01(\x04H\x00R\x1asharedUnpromotedPartHashes\x88\x01\x01B \n" +
+	"\x1e_shared_unpromoted_part_hashes\"p\n" +
 	"\x10NodeFeatureEntry\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x1a\n" +
 	"\bfeatures\x18\x02 \x03(\tR\bfeatures\x12'\n" +
@@ -3677,6 +3694,7 @@ func file_consensus_proto_init() {
 	file_arbiter_proto_init()
 	file_replay_proto_init()
 	file_table_registry_proto_init()
+	file_consensus_proto_msgTypes[9].OneofWrappers = []any{}
 	file_consensus_proto_msgTypes[12].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
