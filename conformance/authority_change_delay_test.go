@@ -82,8 +82,8 @@ func TestAuthorityChangeDelayFieldNumbers(t *testing.T) {
 			if pending == nil || pending.Number() != tc.pending || pending.Kind() != protoreflect.MessageKind || pending.IsList() || pending.Message().Name() != "PendingAuthorityChange" || pending.ContainingOneof() != nil {
 				t.Fatalf("pending field = %v, want PendingAuthorityChange number %d", pending, tc.pending)
 			}
-			if got := d.Fields().Len(); got != int(tc.pending)+1 {
-				t.Fatalf("field count = %d, want %d (only account_budget and account_budget follows pending_authority_change)", got, tc.pending+1)
+			if got := d.Fields().Len(); got != int(tc.pending)+2 {
+				t.Fatalf("field count = %d, want %d (only account_budget and pending_voter_change follow pending_authority_change)", got, tc.pending+2)
 			}
 		})
 	}

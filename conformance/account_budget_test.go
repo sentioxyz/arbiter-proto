@@ -30,6 +30,7 @@ var accountBudgetFields = map[string][]*descriptorpb.FieldDescriptorProto{
 // baseline comparisons see the message as it was before.
 func stripAccountBudgetFields(t *testing.T, d *descriptorpb.DescriptorProto) {
 	t.Helper()
+	stripVoterChangeDelayFields(t, d)
 	stripRaftMembershipFields(t, d)
 	want, ok := accountBudgetFields[d.GetName()]
 	if !ok {
@@ -76,8 +77,8 @@ func TestAccountBudgetFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.MessageKind || f.IsList() || f.Message().Name() != "AccountBudgetParams" || f.ContainingOneof() != nil {
 				t.Fatalf("account_budget field = %v, want AccountBudgetParams number %d", f, tc.number)
 			}
-			if got := d.Fields().Len(); got != int(tc.number) {
-				t.Fatalf("field count = %d, want %d (account_budget is the last field)", got, tc.number)
+			if got := d.Fields().Len(); got != int(tc.number)+1 {
+				t.Fatalf("field count = %d, want %d (only pending_voter_change follows account_budget)", got, tc.number+1)
 			}
 		})
 	}

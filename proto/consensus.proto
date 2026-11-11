@@ -95,6 +95,8 @@ message ConsensusMutableParams {
   // The per-account and network-wide write budget: absent until one
   // authority-signed update sets it, then carried by every update.
   AccountBudgetParams account_budget = 25;
+  // The pending voter change; see ConsensusParamsUpdate.pending_voter_change.
+  PendingVoterChange pending_voter_change = 26;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -360,6 +362,26 @@ message ConsensusParamsUpdate {
   // sets it. Absent from the params digest while unset, so earlier digests
   // are unchanged.
   AccountBudgetParams account_budget = 30;
+  // A proposed addition to voters and/or lowering of anchor_finality.quorum
+  // (PendingVoterChange). Absent means none is pending. It may be set only
+  // while authority_change_delay_l2_blocks and anchor_finality are committed
+  // (and present in the update). Once both are committed, an update may add
+  // a voter (a new voter_id, or a new ed25519_pubkey for an enrolled id) or
+  // lower the quorum only by executing a matured pending change: its voters
+  // are exactly the voters in force with the additions applied, its quorum
+  // is the pending target (or, with target 0, unchanged or raised), it
+  // removes nobody, and it clears this field; the committed table-registry
+  // cursor must have reached not_before_l2_block. A proposal sets it while
+  // none is pending, adds nobody and does not lower the quorum itself, and
+  // names a not_before_l2_block at least the delay in force past the
+  // committed cursor. While pending, every other update carries it
+  // unchanged; an update that clears it without executing cancels it.
+  // Removals and quorum raises take effect at once. Each step is an ordinary
+  // consensus update, authorized by the governance threshold in force. It
+  // changes Apply, so every voter must run a binary that knows it before the
+  // delay is activated. Absent from the params digest while unset, so
+  // earlier digests are unchanged.
+  PendingVoterChange pending_voter_change = 31;
 }
 
 // VoterEntry is one enrolled Raft voter. consent_sig is lowercase hex of the
@@ -372,15 +394,21 @@ message VoterEntry {
   string consent_sig = 3;
 }
 
-// AnchorFinalityParams is the anchor finality quorum and the policy every
-// voter judges by. finality_mode is "finalized" or "safe" (the L2 block tag
-// must have reached the anchor's entry block) or "confirmations" (the entry
-// block has finality_confirmations confirmations, which must be positive).
-// Last-mergeable additionally needs last_mergeable_confirmations more
-// confirmations in "confirmations" mode, or that many confirmations in total
-// in the tag modes. registry_contract is the anchor registry, lowercase 0x +
-// 40 hex, on the chain l2_chain_id (positive). quorum is a majority of the
-// enrolled voters: len(voters) / 2 < quorum <= len(voters).
+// PendingVoterChange is a proposed change of the delayed voter fields
+// (ConsensusParamsUpdate.pending_voter_change). additions are enrolments in
+// the VoterEntry form (sorted by voter_id, ids unique, each consent_sig
+// valid): a voter_id not enrolled in force, or an enrolled voter_id with a
+// different ed25519_pubkey (a key rotation). anchor_finality_quorum is the
+// lowered quorum the execution sets; 0 leaves the quorum to the execution
+// (unchanged or raised). At least one of the two is set.
+// not_before_l2_block is the earliest committed table-registry cursor block
+// at which an update may execute it.
+message PendingVoterChange {
+  repeated VoterEntry additions = 1;
+  uint32 anchor_finality_quorum = 2;
+  uint64 not_before_l2_block = 3;
+}
+
 // PendingAuthorityChange is a proposed change of the delayed authority
 // fields (ConsensusParamsUpdate.pending_authority_change): the complete
 // target authority set, threshold and delay, and the earliest committed
@@ -419,6 +447,15 @@ message AccountBudgetParams {
   bool enforce = 6;
 }
 
+// AnchorFinalityParams is the anchor finality quorum and the policy every
+// voter judges by. finality_mode is "finalized" or "safe" (the L2 block tag
+// must have reached the anchor's entry block) or "confirmations" (the entry
+// block has finality_confirmations confirmations, which must be positive).
+// Last-mergeable additionally needs last_mergeable_confirmations more
+// confirmations in "confirmations" mode, or that many confirmations in total
+// in the tag modes. registry_contract is the anchor registry, lowercase 0x +
+// 40 hex, on the chain l2_chain_id (positive). quorum is a majority of the
+// enrolled voters: len(voters) / 2 < quorum <= len(voters).
 message AnchorFinalityParams {
   uint32 quorum = 1;
   string finality_mode = 2;
