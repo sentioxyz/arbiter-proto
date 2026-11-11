@@ -1049,6 +1049,11 @@ message AcquireSnapshotQueryRequest {
   string statement_id = 4;
   string request_id = 5;
   string control_jws = 6;
+  // The canonical table id of the query's target, signed by a v2 control
+  // token (housegate-snapshot-query-control-v2). Empty, and signed as v1, on a
+  // network without tracks; required while snapshot_query_tracks is set,
+  // where the target's owner track is the only track the query fences.
+  string target_table_id = 7;
 }
 
 // Authenticates lookup by request identity, optionally binding a known grant.
@@ -1062,6 +1067,11 @@ message GetSnapshotQueryReservationRequest {
   string control_jws = 6;
   string reservation_id = 7;
   uint64 fencing_generation = 8;
+  // The canonical table id of the query's target, signed by a v2 control
+  // token (housegate-snapshot-query-control-v2). Empty, and signed as v1, on a
+  // network without tracks; required while snapshot_query_tracks is set,
+  // where the target's owner track is the only track the query fences.
+  string target_table_id = 9;
 }
 
 // Conditional cancellation: zero ID/generation cancels only an absent request.
@@ -1076,6 +1086,11 @@ message ReleaseSnapshotQueryRequest {
   string control_jws = 6;
   string reservation_id = 7;
   uint64 fencing_generation = 8;
+  // The canonical table id of the query's target, signed by a v2 control
+  // token (housegate-snapshot-query-control-v2). Empty, and signed as v1, on a
+  // network without tracks; required while snapshot_query_tracks is set,
+  // where the target's owner track is the only track the query fences.
+  string target_table_id = 9;
 }
 
 // The authenticated account/statement/root lookup is scoped to network/shard.

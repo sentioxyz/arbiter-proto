@@ -72,6 +72,10 @@ message ConsensusMutableParams {
   // authority-signed update after manifest_delta_snapshot sets it, then
   // carried by every update and never lowered.
   bool promotion_ack_delta_snapshot = 18;
+  // The track-aware snapshot-query lane: false until one authority-signed
+  // update after the tracks activation and promotion_ack_delta_snapshot sets
+  // it, then carried by every update and never lowered.
+  bool snapshot_query_tracks = 19;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -247,6 +251,18 @@ message ConsensusParamsUpdate {
   // sets it. It joins the params digest only once set, so earlier digests are
   // unchanged.
   bool promotion_ack_delta_snapshot = 23;
+  // The track-aware snapshot-query lane (internal design doc
+  // 2026-11-11-track-aware-snapshot-query-design): raise-only; once set every
+  // update must carry it. It needs tracks_enabled committed by an earlier
+  // update and promotion_ack_delta_snapshot (earlier or in the same update).
+  // While it is set BeginSnapshotQuery is accepted on a network with tracks:
+  // the query belongs to the owner track of its target table, only that
+  // track's admission is fenced, and control tokens use purpose
+  // housegate-snapshot-query-control-v2 with target_table_id. From its commit
+  // on, snapshots are written as v24, so every voter must run a binary that
+  // knows the field before an update sets it. It joins the params digest only
+  // once set, so earlier digests are unchanged.
+  bool snapshot_query_tracks = 24;
 }
 
 // VoterEntry is one enrolled Raft voter. consent_sig is lowercase hex of the

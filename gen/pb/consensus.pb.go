@@ -207,8 +207,12 @@ type ConsensusMutableParams struct {
 	// authority-signed update after manifest_delta_snapshot sets it, then
 	// carried by every update and never lowered.
 	PromotionAckDeltaSnapshot bool `protobuf:"varint,18,opt,name=promotion_ack_delta_snapshot,json=promotionAckDeltaSnapshot,proto3" json:"promotion_ack_delta_snapshot,omitempty"`
-	unknownFields             protoimpl.UnknownFields
-	sizeCache                 protoimpl.SizeCache
+	// The track-aware snapshot-query lane: false until one authority-signed
+	// update after the tracks activation and promotion_ack_delta_snapshot sets
+	// it, then carried by every update and never lowered.
+	SnapshotQueryTracks bool `protobuf:"varint,19,opt,name=snapshot_query_tracks,json=snapshotQueryTracks,proto3" json:"snapshot_query_tracks,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *ConsensusMutableParams) Reset() {
@@ -363,6 +367,13 @@ func (x *ConsensusMutableParams) GetMembershipLeaseL2Blocks() uint64 {
 func (x *ConsensusMutableParams) GetPromotionAckDeltaSnapshot() bool {
 	if x != nil {
 		return x.PromotionAckDeltaSnapshot
+	}
+	return false
+}
+
+func (x *ConsensusMutableParams) GetSnapshotQueryTracks() bool {
+	if x != nil {
+		return x.SnapshotQueryTracks
 	}
 	return false
 }
@@ -541,8 +552,20 @@ type ConsensusParamsUpdate struct {
 	// sets it. It joins the params digest only once set, so earlier digests are
 	// unchanged.
 	PromotionAckDeltaSnapshot bool `protobuf:"varint,23,opt,name=promotion_ack_delta_snapshot,json=promotionAckDeltaSnapshot,proto3" json:"promotion_ack_delta_snapshot,omitempty"`
-	unknownFields             protoimpl.UnknownFields
-	sizeCache                 protoimpl.SizeCache
+	// The track-aware snapshot-query lane (internal design doc
+	// 2026-11-11-track-aware-snapshot-query-design): raise-only; once set every
+	// update must carry it. It needs tracks_enabled committed by an earlier
+	// update and promotion_ack_delta_snapshot (earlier or in the same update).
+	// While it is set BeginSnapshotQuery is accepted on a network with tracks:
+	// the query belongs to the owner track of its target table, only that
+	// track's admission is fenced, and control tokens use purpose
+	// housegate-snapshot-query-control-v2 with target_table_id. From its commit
+	// on, snapshots are written as v24, so every voter must run a binary that
+	// knows the field before an update sets it. It joins the params digest only
+	// once set, so earlier digests are unchanged.
+	SnapshotQueryTracks bool `protobuf:"varint,24,opt,name=snapshot_query_tracks,json=snapshotQueryTracks,proto3" json:"snapshot_query_tracks,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *ConsensusParamsUpdate) Reset() {
@@ -732,6 +755,13 @@ func (x *ConsensusParamsUpdate) GetMembershipLeaseL2Blocks() uint64 {
 func (x *ConsensusParamsUpdate) GetPromotionAckDeltaSnapshot() bool {
 	if x != nil {
 		return x.PromotionAckDeltaSnapshot
+	}
+	return false
+}
+
+func (x *ConsensusParamsUpdate) GetSnapshotQueryTracks() bool {
+	if x != nil {
+		return x.SnapshotQueryTracks
 	}
 	return false
 }
@@ -3180,7 +3210,7 @@ var File_consensus_proto protoreflect.FileDescriptor
 
 const file_consensus_proto_rawDesc = "" +
 	"\n" +
-	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\x86\b\n" +
+	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xba\b\n" +
 	"\x16ConsensusMutableParams\x12/\n" +
 	"\x13authority_addresses\x18\x01 \x03(\tR\x12authorityAddresses\x12\x1f\n" +
 	"\vmax_writers\x18\x02 \x01(\x04R\n" +
@@ -3202,7 +3232,9 @@ const file_consensus_proto_rawDesc = "" +
 	"\x0fanchor_finality\x18\x0f \x01(\v2\x1d.arbiter.AnchorFinalityParamsR\x0eanchorFinality\x12/\n" +
 	"\x13authority_threshold\x18\x10 \x01(\rR\x12authorityThreshold\x12;\n" +
 	"\x1amembership_lease_l2_blocks\x18\x11 \x01(\x04R\x17membershipLeaseL2Blocks\x12?\n" +
-	"\x1cpromotion_ack_delta_snapshot\x18\x12 \x01(\bR\x19promotionAckDeltaSnapshot\"\xe7\t\n" +
+	"\x1cpromotion_ack_delta_snapshot\x18\x12 \x01(\bR\x19promotionAckDeltaSnapshot\x122\n" +
+	"\x15snapshot_query_tracks\x18\x13 \x01(\bR\x13snapshotQueryTracks\"\x9b\n" +
+	"\n" +
 	"\x15ConsensusParamsUpdate\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12.\n" +
@@ -3230,7 +3262,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\x0fanchor_finality\x18\x14 \x01(\v2\x1d.arbiter.AnchorFinalityParamsR\x0eanchorFinality\x12/\n" +
 	"\x13authority_threshold\x18\x15 \x01(\rR\x12authorityThreshold\x12;\n" +
 	"\x1amembership_lease_l2_blocks\x18\x16 \x01(\x04R\x17membershipLeaseL2Blocks\x12?\n" +
-	"\x1cpromotion_ack_delta_snapshot\x18\x17 \x01(\bR\x19promotionAckDeltaSnapshot\"o\n" +
+	"\x1cpromotion_ack_delta_snapshot\x18\x17 \x01(\bR\x19promotionAckDeltaSnapshot\x122\n" +
+	"\x15snapshot_query_tracks\x18\x18 \x01(\bR\x13snapshotQueryTracks\"o\n" +
 	"\n" +
 	"VoterEntry\x12\x19\n" +
 	"\bvoter_id\x18\x01 \x01(\tR\avoterId\x12%\n" +
