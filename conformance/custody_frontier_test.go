@@ -90,8 +90,8 @@ func TestCustodyFrontierFieldNumbers(t *testing.T) {
 			}
 			// operations_authority_addresses and history_retain_blocks are the only
 			// fields appended after it.
-			if got := d.Fields().Len(); got != int(tc.number)+5 {
-				t.Fatalf("field count = %d, want %d (only operations_authority_addresses and history_retain_blocks and the authority change delay fields and account_budget follow custody_frontier)", got, tc.number+5)
+			if got := d.Fields().Len(); got != int(tc.number)+6 {
+				t.Fatalf("field count = %d, want %d (only operations_authority_addresses and history_retain_blocks and the authority change delay fields and account_budget and pending_voter_change follow custody_frontier)", got, tc.number+6)
 			}
 		})
 	}
