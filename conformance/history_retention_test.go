@@ -91,8 +91,8 @@ func TestHistoryRetentionFieldNumbers(t *testing.T) {
 			}
 			// The two authority change delay fields are the only ones
 			// appended after it.
-			if got := d.Fields().Len(); got != int(tc.number)+2 {
-				t.Fatalf("field count = %d, want %d (only the authority change delay fields follow history_retain_blocks)", got, tc.number+2)
+			if got := d.Fields().Len(); got != int(tc.number)+3 {
+				t.Fatalf("field count = %d, want %d (only the authority change delay fields and account_budget follow history_retain_blocks)", got, tc.number+3)
 			}
 		})
 	}

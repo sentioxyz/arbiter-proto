@@ -92,6 +92,9 @@ message ConsensusMutableParams {
   uint64 authority_change_delay_l2_blocks = 23;
   // The proposed authority change waiting for its delay, absent when none.
   PendingAuthorityChange pending_authority_change = 24;
+  // The per-account and network-wide write budget: absent until one
+  // authority-signed update sets it, then carried by every update.
+  AccountBudgetParams account_budget = 25;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -348,6 +351,15 @@ message ConsensusParamsUpdate {
   // signatures of the authority set in force. At most one is pending. Absent
   // from the params digest while unset.
   PendingAuthorityChange pending_authority_change = 29;
+  // The write budget of signed statements (AccountBudgetParams). Absent means
+  // never set: admission has no budget, as before the field existed. Its
+  // first setting needs the table registry and si_indexers (committed or in
+  // the same update); afterwards every update carries it (its values may
+  // change, it cannot be removed). It is never set at genesis. It changes
+  // Apply, so every voter must run a binary that knows it before an update
+  // sets it. Absent from the params digest while unset, so earlier digests
+  // are unchanged.
+  AccountBudgetParams account_budget = 30;
 }
 
 // VoterEntry is one enrolled Raft voter. consent_sig is lowercase hex of the
@@ -378,6 +390,33 @@ message PendingAuthorityChange {
   uint32 authority_threshold = 2;
   uint64 authority_change_delay_l2_blocks = 3;
   uint64 not_before_l2_block = 4;
+}
+
+// AccountBudgetParams bounds the signed statements admitted to the shared
+// log, measured on the committed table-registry cursor (L2 blocks), never a
+// wall clock. Each bucket is a leaky bucket: it holds at most the max_* value
+// and refills max_* / window_l2_blocks per L2 block the cursor advances, so
+// at most max_* is admitted over any window_l2_blocks span after a full
+// bucket. A statement costs 1 statement and its payload_length bytes. The
+// signer's bucket (client_account, every client lane together) is checked
+// first, then the network-wide total; a statement that exceeds either is
+// refused with ACCOUNT_BUDGET_EXCEEDED while enforce is set, and counted only
+// while it is not (observe mode: every admission still charges the buckets).
+// An empty bucket always admits one statement, whatever its size, so no
+// statement is refused forever; the overdraft is repaid before the next. The
+// buckets refill only when the cursor moves, so a stalled table-registry
+// watcher refills nothing: a signer or the network already at its budget
+// stays refused until the cursor moves again (fail-closed), everyone else is
+// unaffected. Bounds: window_l2_blocks in [1, 1000000]; max_statements and
+// max_bytes positive; max_statements_total >= max_statements; max_bytes_total
+// >= max_bytes; every max_* at most 2^40.
+message AccountBudgetParams {
+  uint64 window_l2_blocks = 1;
+  uint64 max_statements = 2;
+  uint64 max_bytes = 3;
+  uint64 max_statements_total = 4;
+  uint64 max_bytes_total = 5;
+  bool enforce = 6;
 }
 
 message AnchorFinalityParams {
