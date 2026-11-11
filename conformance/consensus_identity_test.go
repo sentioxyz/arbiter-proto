@@ -23,10 +23,12 @@ var consensusIdentityFields = map[string][]*descriptorpb.FieldDescriptorProto{
 
 // stripConsensusIdentityFields removes the trailing identity fields after
 // asserting they are exactly the pinned ones, so the older baseline
-// comparisons see the message as it was before. They are the newest addition,
-// so every other strip runs after this one.
+// comparisons see the message as it was before. Only the shared-hash count
+// (stripSharedPartHashesField) is newer, so it is stripped first and every
+// other strip runs after this one.
 func stripConsensusIdentityFields(t *testing.T, d *descriptorpb.DescriptorProto) {
 	t.Helper()
+	stripSharedPartHashesField(t, d)
 	want, ok := consensusIdentityFields[d.GetName()]
 	if !ok {
 		return

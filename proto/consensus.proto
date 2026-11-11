@@ -378,6 +378,14 @@ message ConsensusParamsState {
   // change after genesis; servers before these fields leave them empty.
   string schema_snapshot_id = 10;
   string executor_profile_id = 11;
+  // How many (table, partition, part hash) keys two or more statements hold
+  // unpromoted, the same count as the arbiter_shared_unpromoted_part_hashes
+  // gauge. Each one is a promotion that covers more statements than the one
+  // that offered it. arbiter-admin refuses to set part_claim_uniqueness while
+  // it is above 0: the gate stops new shared claims and releases a pair whose
+  // rejected partition is cleaned after it, but a pair cleaned before it keeps
+  // pinning the earlier block. Absent from a server that predates the field.
+  optional uint64 shared_unpromoted_part_hashes = 12;
 }
 
 // NodeFeatureEntry joins one non-evicted verifier or SNode registration with
