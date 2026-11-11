@@ -561,11 +561,10 @@ message ReleasePinsRequest {
   PinKey key = 1;
   // Authority slot on the destructive RPC (the PromotionCommand.authority_jws
   // precedent, §8.1): the Arbiter authority's secp256k1 JWS (compact form,
-  // alg ES256K) whose JSON payload is
-  //   {"purpose":"arbiter-payload-release","cmd_hash":"0x…","iat":<unix s>,
-  //    "release_seq":<uint64>, optional "network_id", "genesis_snapshot_id",
-  //    "authority_epoch"}
-  // where cmd_hash is the CanonicalDigest, under domain
+  // alg ES256K) whose JSON payload carries "purpose" =
+  // "arbiter-payload-release", "cmd_hash" ("0x…"), "iat" (unix seconds),
+  // "release_seq" (uint64) and optionally "network_id",
+  // "genesis_snapshot_id" and "authority_epoch", where cmd_hash is the CanonicalDigest, under domain
   // "arbiter-payload-release-v1", of {"holder_id", "purpose" (the PinPurpose
   // enum NUMBER), "scope_key"} in exactly that field order. The store
   // authorizes by address recovery against its authority allowlist and
