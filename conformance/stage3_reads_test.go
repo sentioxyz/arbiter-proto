@@ -227,8 +227,8 @@ func TestStage3RPCSignatures(t *testing.T) {
 		service protoreflect.Name
 		want    int
 	}{
-		{pb.File_arbiter_proto, "SafeState", 11}, // GetHistoryCheckpoints (history_retention_test.go) is the eleventh
-		{pb.File_consensus_proto, "ConsensusAdmin", 18},
+		{pb.File_arbiter_proto, "SafeState", 11},        // GetHistoryCheckpoints (history_retention_test.go) is the eleventh
+		{pb.File_consensus_proto, "ConsensusAdmin", 20}, // GetRaftConfiguration and ChangeRaftMembership (raft_membership_test.go) are the last two
 	} {
 		if n := tc.file.Services().ByName(tc.service).Methods().Len(); n != tc.want {
 			t.Fatalf("%s has %d methods, want %d", tc.service, n, tc.want)

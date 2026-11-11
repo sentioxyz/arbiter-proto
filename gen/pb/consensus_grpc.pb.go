@@ -42,6 +42,8 @@ const (
 	ConsensusAdmin_GetTrackSettle_FullMethodName                 = "/arbiter.ConsensusAdmin/GetTrackSettle"
 	ConsensusAdmin_RebalanceGroup_FullMethodName                 = "/arbiter.ConsensusAdmin/RebalanceGroup"
 	ConsensusAdmin_MarkMemberLagging_FullMethodName              = "/arbiter.ConsensusAdmin/MarkMemberLagging"
+	ConsensusAdmin_GetRaftConfiguration_FullMethodName           = "/arbiter.ConsensusAdmin/GetRaftConfiguration"
+	ConsensusAdmin_ChangeRaftMembership_FullMethodName           = "/arbiter.ConsensusAdmin/ChangeRaftMembership"
 )
 
 // ConsensusAdminClient is the client API for ConsensusAdmin service.
@@ -117,6 +119,17 @@ type ConsensusAdminClient interface {
 	// Raft tag 42. FAILED_PRECONDITION "marking a member lagging is refused until
 	// the checkpoints switch is on" before it. Ack means committed success.
 	MarkMemberLagging(ctx context.Context, in *MarkMemberLaggingCmd, opts ...grpc.CallOption) (*Ack, error)
+	// Leader-only read with a barrier: the committed Raft configuration and the
+	// enrolled voters (arbiter#172).
+	GetRaftConfiguration(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*RaftConfigurationView, error)
+	// Leader-only, explicitly enabled (consensus_updates_enabled),
+	// governance-authenticated: adds or removes one Raft server. While the
+	// anchor finality quorum is active the result must keep every Raft voter
+	// enrolled with at most one enrolled voter outside Raft. Nothing is
+	// proposed to the FSM; the change is a Raft configuration entry. Removing
+	// the leader itself transfers leadership first and answers UNAVAILABLE with
+	// the NotLeader hint, so the caller retries on the new leader.
+	ChangeRaftMembership(ctx context.Context, in *ChangeRaftMembershipRequest, opts ...grpc.CallOption) (*ChangeRaftMembershipReply, error)
 }
 
 type consensusAdminClient struct {
@@ -307,6 +320,26 @@ func (c *consensusAdminClient) MarkMemberLagging(ctx context.Context, in *MarkMe
 	return out, nil
 }
 
+func (c *consensusAdminClient) GetRaftConfiguration(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*RaftConfigurationView, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RaftConfigurationView)
+	err := c.cc.Invoke(ctx, ConsensusAdmin_GetRaftConfiguration_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consensusAdminClient) ChangeRaftMembership(ctx context.Context, in *ChangeRaftMembershipRequest, opts ...grpc.CallOption) (*ChangeRaftMembershipReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ChangeRaftMembershipReply)
+	err := c.cc.Invoke(ctx, ConsensusAdmin_ChangeRaftMembership_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsensusAdminServer is the server API for ConsensusAdmin service.
 // All implementations must embed UnimplementedConsensusAdminServer
 // for forward compatibility.
@@ -380,6 +413,17 @@ type ConsensusAdminServer interface {
 	// Raft tag 42. FAILED_PRECONDITION "marking a member lagging is refused until
 	// the checkpoints switch is on" before it. Ack means committed success.
 	MarkMemberLagging(context.Context, *MarkMemberLaggingCmd) (*Ack, error)
+	// Leader-only read with a barrier: the committed Raft configuration and the
+	// enrolled voters (arbiter#172).
+	GetRaftConfiguration(context.Context, *emptypb.Empty) (*RaftConfigurationView, error)
+	// Leader-only, explicitly enabled (consensus_updates_enabled),
+	// governance-authenticated: adds or removes one Raft server. While the
+	// anchor finality quorum is active the result must keep every Raft voter
+	// enrolled with at most one enrolled voter outside Raft. Nothing is
+	// proposed to the FSM; the change is a Raft configuration entry. Removing
+	// the leader itself transfers leadership first and answers UNAVAILABLE with
+	// the NotLeader hint, so the caller retries on the new leader.
+	ChangeRaftMembership(context.Context, *ChangeRaftMembershipRequest) (*ChangeRaftMembershipReply, error)
 	mustEmbedUnimplementedConsensusAdminServer()
 }
 
@@ -443,6 +487,12 @@ func (UnimplementedConsensusAdminServer) RebalanceGroup(context.Context, *Rebala
 }
 func (UnimplementedConsensusAdminServer) MarkMemberLagging(context.Context, *MarkMemberLaggingCmd) (*Ack, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MarkMemberLagging not implemented")
+}
+func (UnimplementedConsensusAdminServer) GetRaftConfiguration(context.Context, *emptypb.Empty) (*RaftConfigurationView, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRaftConfiguration not implemented")
+}
+func (UnimplementedConsensusAdminServer) ChangeRaftMembership(context.Context, *ChangeRaftMembershipRequest) (*ChangeRaftMembershipReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChangeRaftMembership not implemented")
 }
 func (UnimplementedConsensusAdminServer) mustEmbedUnimplementedConsensusAdminServer() {}
 func (UnimplementedConsensusAdminServer) testEmbeddedByValue()                        {}
@@ -789,6 +839,42 @@ func _ConsensusAdmin_MarkMemberLagging_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConsensusAdmin_GetRaftConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusAdminServer).GetRaftConfiguration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusAdmin_GetRaftConfiguration_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusAdminServer).GetRaftConfiguration(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConsensusAdmin_ChangeRaftMembership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeRaftMembershipRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusAdminServer).ChangeRaftMembership(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusAdmin_ChangeRaftMembership_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusAdminServer).ChangeRaftMembership(ctx, req.(*ChangeRaftMembershipRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConsensusAdmin_ServiceDesc is the grpc.ServiceDesc for ConsensusAdmin service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -867,6 +953,14 @@ var ConsensusAdmin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "MarkMemberLagging",
 			Handler:    _ConsensusAdmin_MarkMemberLagging_Handler,
+		},
+		{
+			MethodName: "GetRaftConfiguration",
+			Handler:    _ConsensusAdmin_GetRaftConfiguration_Handler,
+		},
+		{
+			MethodName: "ChangeRaftMembership",
+			Handler:    _ConsensusAdmin_ChangeRaftMembership_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -68,7 +68,7 @@ func TestOperationsAuthorityFieldNumbers(t *testing.T) {
 			}
 			// history_retain_blocks and the read flags of history pruning are
 			// the only fields appended after it.
-			if got := d.Fields().Len(); got != int(tc.number)+len(historyRetentionFields[string(d.Name())])+len(authorityChangeDelayFields[string(d.Name())])+len(accountBudgetFields[string(d.Name())]) {
+			if got := d.Fields().Len(); got != int(tc.number)+len(historyRetentionFields[string(d.Name())])+len(authorityChangeDelayFields[string(d.Name())])+len(accountBudgetFields[string(d.Name())])+len(raftMembershipFields[string(d.Name())]) {
 				t.Fatalf("field count = %d, want %d plus the history pruning fields", got, tc.number)
 			}
 		})

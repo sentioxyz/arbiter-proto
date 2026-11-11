@@ -26,6 +26,121 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// RaftMembershipOp is the Raft configuration change a ChangeRaftMembership
+// request asks for.
+type RaftMembershipOp int32
+
+const (
+	RaftMembershipOp_RAFT_MEMBERSHIP_OP_UNSPECIFIED RaftMembershipOp = 0
+	// Add server_id at raft_address as a voter.
+	RaftMembershipOp_RAFT_MEMBERSHIP_OP_ADD_VOTER RaftMembershipOp = 1
+	// Remove server_id from the Raft configuration.
+	RaftMembershipOp_RAFT_MEMBERSHIP_OP_REMOVE_SERVER RaftMembershipOp = 2
+)
+
+// Enum value maps for RaftMembershipOp.
+var (
+	RaftMembershipOp_name = map[int32]string{
+		0: "RAFT_MEMBERSHIP_OP_UNSPECIFIED",
+		1: "RAFT_MEMBERSHIP_OP_ADD_VOTER",
+		2: "RAFT_MEMBERSHIP_OP_REMOVE_SERVER",
+	}
+	RaftMembershipOp_value = map[string]int32{
+		"RAFT_MEMBERSHIP_OP_UNSPECIFIED":   0,
+		"RAFT_MEMBERSHIP_OP_ADD_VOTER":     1,
+		"RAFT_MEMBERSHIP_OP_REMOVE_SERVER": 2,
+	}
+)
+
+func (x RaftMembershipOp) Enum() *RaftMembershipOp {
+	p := new(RaftMembershipOp)
+	*p = x
+	return p
+}
+
+func (x RaftMembershipOp) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RaftMembershipOp) Descriptor() protoreflect.EnumDescriptor {
+	return file_consensus_proto_enumTypes[0].Descriptor()
+}
+
+func (RaftMembershipOp) Type() protoreflect.EnumType {
+	return &file_consensus_proto_enumTypes[0]
+}
+
+func (x RaftMembershipOp) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RaftMembershipOp.Descriptor instead.
+func (RaftMembershipOp) EnumDescriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{0}
+}
+
+// RaftVoterSetState relates the Raft voters to the enrolled voters of the
+// anchor finality quorum.
+type RaftVoterSetState int32
+
+const (
+	RaftVoterSetState_RAFT_VOTER_SET_STATE_UNSPECIFIED RaftVoterSetState = 0
+	// The anchor finality quorum is not active; nothing binds the two sets.
+	RaftVoterSetState_RAFT_VOTER_SET_STATE_INACTIVE RaftVoterSetState = 1
+	// The Raft voters are exactly the enrolled voters.
+	RaftVoterSetState_RAFT_VOTER_SET_STATE_CONSISTENT RaftVoterSetState = 2
+	// One enrolled voter is outside Raft and every Raft voter is enrolled: a
+	// membership change paired with a voters update is half done.
+	RaftVoterSetState_RAFT_VOTER_SET_STATE_TRANSITION RaftVoterSetState = 3
+	// Anything else: the configuration changed outside the paired flow.
+	RaftVoterSetState_RAFT_VOTER_SET_STATE_DRIFT RaftVoterSetState = 4
+)
+
+// Enum value maps for RaftVoterSetState.
+var (
+	RaftVoterSetState_name = map[int32]string{
+		0: "RAFT_VOTER_SET_STATE_UNSPECIFIED",
+		1: "RAFT_VOTER_SET_STATE_INACTIVE",
+		2: "RAFT_VOTER_SET_STATE_CONSISTENT",
+		3: "RAFT_VOTER_SET_STATE_TRANSITION",
+		4: "RAFT_VOTER_SET_STATE_DRIFT",
+	}
+	RaftVoterSetState_value = map[string]int32{
+		"RAFT_VOTER_SET_STATE_UNSPECIFIED": 0,
+		"RAFT_VOTER_SET_STATE_INACTIVE":    1,
+		"RAFT_VOTER_SET_STATE_CONSISTENT":  2,
+		"RAFT_VOTER_SET_STATE_TRANSITION":  3,
+		"RAFT_VOTER_SET_STATE_DRIFT":       4,
+	}
+)
+
+func (x RaftVoterSetState) Enum() *RaftVoterSetState {
+	p := new(RaftVoterSetState)
+	*p = x
+	return p
+}
+
+func (x RaftVoterSetState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RaftVoterSetState) Descriptor() protoreflect.EnumDescriptor {
+	return file_consensus_proto_enumTypes[1].Descriptor()
+}
+
+func (RaftVoterSetState) Type() protoreflect.EnumType {
+	return &file_consensus_proto_enumTypes[1]
+}
+
+func (x RaftVoterSetState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RaftVoterSetState.Descriptor instead.
+func (RaftVoterSetState) EnumDescriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{1}
+}
+
 // ConsensusHoldMode selects what a consensus hold freezes (housegate spec
 // 2026-10-14 §10.1-§10.2). A hold is leader-local and never replicated: it
 // lives on the leader that granted it, in the Raft term it was granted in,
@@ -71,11 +186,11 @@ func (x ConsensusHoldMode) String() string {
 }
 
 func (ConsensusHoldMode) Descriptor() protoreflect.EnumDescriptor {
-	return file_consensus_proto_enumTypes[0].Descriptor()
+	return file_consensus_proto_enumTypes[2].Descriptor()
 }
 
 func (ConsensusHoldMode) Type() protoreflect.EnumType {
-	return &file_consensus_proto_enumTypes[0]
+	return &file_consensus_proto_enumTypes[2]
 }
 
 func (x ConsensusHoldMode) Number() protoreflect.EnumNumber {
@@ -84,7 +199,7 @@ func (x ConsensusHoldMode) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ConsensusHoldMode.Descriptor instead.
 func (ConsensusHoldMode) EnumDescriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{0}
+	return file_consensus_proto_rawDescGZIP(), []int{2}
 }
 
 type TrackSettleState int32
@@ -129,11 +244,11 @@ func (x TrackSettleState) String() string {
 }
 
 func (TrackSettleState) Descriptor() protoreflect.EnumDescriptor {
-	return file_consensus_proto_enumTypes[1].Descriptor()
+	return file_consensus_proto_enumTypes[3].Descriptor()
 }
 
 func (TrackSettleState) Type() protoreflect.EnumType {
-	return &file_consensus_proto_enumTypes[1]
+	return &file_consensus_proto_enumTypes[3]
 }
 
 func (x TrackSettleState) Number() protoreflect.EnumNumber {
@@ -142,7 +257,7 @@ func (x TrackSettleState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use TrackSettleState.Descriptor instead.
 func (TrackSettleState) EnumDescriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{1}
+	return file_consensus_proto_rawDescGZIP(), []int{3}
 }
 
 // ConsensusMutableParams is a complete authority set and writer limit, not
@@ -1534,8 +1649,15 @@ type ProtocolInfo struct {
 	// operations authority activation gate, which requires every voter's
 	// address to be in the operations set the activating update names.
 	AuthoritySignerAddress string `protobuf:"bytes,6,opt,name=authority_signer_address,json=authoritySignerAddress,proto3" json:"authority_signer_address,omitempty"`
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	// The index of the last Raft log entry this node has applied, read when the
+	// probe is answered. arbiter-admin raft add waits for a joining voter's
+	// applied index to reach the configuration entry that added it.
+	RaftAppliedIndex uint64 `protobuf:"varint,7,opt,name=raft_applied_index,json=raftAppliedIndex,proto3" json:"raft_applied_index,omitempty"`
+	// The network id of the genesis this node runs (genesis.network_id). The
+	// leader's ChangeRaftMembership refuses to add a node of another network.
+	NetworkId     string `protobuf:"bytes,8,opt,name=network_id,json=networkId,proto3" json:"network_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ProtocolInfo) Reset() {
@@ -1606,6 +1728,20 @@ func (x *ProtocolInfo) GetVoterEd25519Pubkey() []byte {
 func (x *ProtocolInfo) GetAuthoritySignerAddress() string {
 	if x != nil {
 		return x.AuthoritySignerAddress
+	}
+	return ""
+}
+
+func (x *ProtocolInfo) GetRaftAppliedIndex() uint64 {
+	if x != nil {
+		return x.RaftAppliedIndex
+	}
+	return 0
+}
+
+func (x *ProtocolInfo) GetNetworkId() string {
+	if x != nil {
+		return x.NetworkId
 	}
 	return ""
 }
@@ -2092,6 +2228,349 @@ func (x *EvictNodeRequest) GetAuthorityJws() string {
 	return ""
 }
 
+// RaftMembershipChange is the signed body of a Raft membership change. The
+// authority token is an ES256K JWS (or a multi-signature token of the
+// governance threshold) with purpose "arbiter-raft-membership-v1" over the
+// canonical digest of {op, server_id, raft_address}, bound to the network id,
+// genesis snapshot id and authority epoch, so any consensus update voids it.
+// raft_address is set for ADD_VOTER only.
+type RaftMembershipChange struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Op            RaftMembershipOp       `protobuf:"varint,1,opt,name=op,proto3,enum=arbiter.RaftMembershipOp" json:"op,omitempty"`
+	ServerId      string                 `protobuf:"bytes,2,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
+	RaftAddress   string                 `protobuf:"bytes,3,opt,name=raft_address,json=raftAddress,proto3" json:"raft_address,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RaftMembershipChange) Reset() {
+	*x = RaftMembershipChange{}
+	mi := &file_consensus_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RaftMembershipChange) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RaftMembershipChange) ProtoMessage() {}
+
+func (x *RaftMembershipChange) ProtoReflect() protoreflect.Message {
+	mi := &file_consensus_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RaftMembershipChange.ProtoReflect.Descriptor instead.
+func (*RaftMembershipChange) Descriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *RaftMembershipChange) GetOp() RaftMembershipOp {
+	if x != nil {
+		return x.Op
+	}
+	return RaftMembershipOp_RAFT_MEMBERSHIP_OP_UNSPECIFIED
+}
+
+func (x *RaftMembershipChange) GetServerId() string {
+	if x != nil {
+		return x.ServerId
+	}
+	return ""
+}
+
+func (x *RaftMembershipChange) GetRaftAddress() string {
+	if x != nil {
+		return x.RaftAddress
+	}
+	return ""
+}
+
+// ChangeRaftMembershipRequest asks the leader to change the Raft voter set by
+// one server (arbiter#172). authority_jws authorizes change under the
+// governance set and threshold. prev_config_index and allow_below_three are
+// not signed: prev_config_index, when non-zero, must equal the index of the
+// leader's current Raft configuration (compare and swap, so a retry after an
+// unknown outcome needs no new signature); allow_below_three lets a removal
+// leave fewer than three voters while the anchor finality quorum is active.
+type ChangeRaftMembershipRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Change          *RaftMembershipChange  `protobuf:"bytes,1,opt,name=change,proto3" json:"change,omitempty"`
+	AuthorityJws    string                 `protobuf:"bytes,2,opt,name=authority_jws,json=authorityJws,proto3" json:"authority_jws,omitempty"`
+	PrevConfigIndex uint64                 `protobuf:"varint,3,opt,name=prev_config_index,json=prevConfigIndex,proto3" json:"prev_config_index,omitempty"`
+	AllowBelowThree bool                   `protobuf:"varint,4,opt,name=allow_below_three,json=allowBelowThree,proto3" json:"allow_below_three,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ChangeRaftMembershipRequest) Reset() {
+	*x = ChangeRaftMembershipRequest{}
+	mi := &file_consensus_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangeRaftMembershipRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeRaftMembershipRequest) ProtoMessage() {}
+
+func (x *ChangeRaftMembershipRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_consensus_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeRaftMembershipRequest.ProtoReflect.Descriptor instead.
+func (*ChangeRaftMembershipRequest) Descriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ChangeRaftMembershipRequest) GetChange() *RaftMembershipChange {
+	if x != nil {
+		return x.Change
+	}
+	return nil
+}
+
+func (x *ChangeRaftMembershipRequest) GetAuthorityJws() string {
+	if x != nil {
+		return x.AuthorityJws
+	}
+	return ""
+}
+
+func (x *ChangeRaftMembershipRequest) GetPrevConfigIndex() uint64 {
+	if x != nil {
+		return x.PrevConfigIndex
+	}
+	return 0
+}
+
+func (x *ChangeRaftMembershipRequest) GetAllowBelowThree() bool {
+	if x != nil {
+		return x.AllowBelowThree
+	}
+	return false
+}
+
+// ChangeRaftMembershipReply reports the committed configuration index. When
+// already_applied is true the configuration already had the requested shape
+// and nothing was appended.
+type ChangeRaftMembershipReply struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ConfigIndex    uint64                 `protobuf:"varint,1,opt,name=config_index,json=configIndex,proto3" json:"config_index,omitempty"`
+	AlreadyApplied bool                   `protobuf:"varint,2,opt,name=already_applied,json=alreadyApplied,proto3" json:"already_applied,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ChangeRaftMembershipReply) Reset() {
+	*x = ChangeRaftMembershipReply{}
+	mi := &file_consensus_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangeRaftMembershipReply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeRaftMembershipReply) ProtoMessage() {}
+
+func (x *ChangeRaftMembershipReply) ProtoReflect() protoreflect.Message {
+	mi := &file_consensus_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeRaftMembershipReply.ProtoReflect.Descriptor instead.
+func (*ChangeRaftMembershipReply) Descriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ChangeRaftMembershipReply) GetConfigIndex() uint64 {
+	if x != nil {
+		return x.ConfigIndex
+	}
+	return 0
+}
+
+func (x *ChangeRaftMembershipReply) GetAlreadyApplied() bool {
+	if x != nil {
+		return x.AlreadyApplied
+	}
+	return false
+}
+
+// RaftServerView is one server of the Raft configuration.
+type RaftServerView struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Address       string                 `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
+	Voter         bool                   `protobuf:"varint,3,opt,name=voter,proto3" json:"voter,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RaftServerView) Reset() {
+	*x = RaftServerView{}
+	mi := &file_consensus_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RaftServerView) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RaftServerView) ProtoMessage() {}
+
+func (x *RaftServerView) ProtoReflect() protoreflect.Message {
+	mi := &file_consensus_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RaftServerView.ProtoReflect.Descriptor instead.
+func (*RaftServerView) Descriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *RaftServerView) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *RaftServerView) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+func (x *RaftServerView) GetVoter() bool {
+	if x != nil {
+		return x.Voter
+	}
+	return false
+}
+
+// RaftConfigurationView is the leader's committed Raft configuration (read
+// after a barrier) next to the committed enrolled voters.
+type RaftConfigurationView struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Servers          []*RaftServerView      `protobuf:"bytes,1,rep,name=servers,proto3" json:"servers,omitempty"`
+	ConfigIndex      uint64                 `protobuf:"varint,2,opt,name=config_index,json=configIndex,proto3" json:"config_index,omitempty"`
+	EnrolledVoterIds []string               `protobuf:"bytes,3,rep,name=enrolled_voter_ids,json=enrolledVoterIds,proto3" json:"enrolled_voter_ids,omitempty"`
+	State            RaftVoterSetState      `protobuf:"varint,4,opt,name=state,proto3,enum=arbiter.RaftVoterSetState" json:"state,omitempty"`
+	LeaderId         string                 `protobuf:"bytes,5,opt,name=leader_id,json=leaderId,proto3" json:"leader_id,omitempty"`
+	AuthorityEpoch   uint64                 `protobuf:"varint,6,opt,name=authority_epoch,json=authorityEpoch,proto3" json:"authority_epoch,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *RaftConfigurationView) Reset() {
+	*x = RaftConfigurationView{}
+	mi := &file_consensus_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RaftConfigurationView) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RaftConfigurationView) ProtoMessage() {}
+
+func (x *RaftConfigurationView) ProtoReflect() protoreflect.Message {
+	mi := &file_consensus_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RaftConfigurationView.ProtoReflect.Descriptor instead.
+func (*RaftConfigurationView) Descriptor() ([]byte, []int) {
+	return file_consensus_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *RaftConfigurationView) GetServers() []*RaftServerView {
+	if x != nil {
+		return x.Servers
+	}
+	return nil
+}
+
+func (x *RaftConfigurationView) GetConfigIndex() uint64 {
+	if x != nil {
+		return x.ConfigIndex
+	}
+	return 0
+}
+
+func (x *RaftConfigurationView) GetEnrolledVoterIds() []string {
+	if x != nil {
+		return x.EnrolledVoterIds
+	}
+	return nil
+}
+
+func (x *RaftConfigurationView) GetState() RaftVoterSetState {
+	if x != nil {
+		return x.State
+	}
+	return RaftVoterSetState_RAFT_VOTER_SET_STATE_UNSPECIFIED
+}
+
+func (x *RaftConfigurationView) GetLeaderId() string {
+	if x != nil {
+		return x.LeaderId
+	}
+	return ""
+}
+
+func (x *RaftConfigurationView) GetAuthorityEpoch() uint64 {
+	if x != nil {
+		return x.AuthorityEpoch
+	}
+	return 0
+}
+
 // QuarantineIndexerCmd is both the ConsensusAdmin request and the Raft
 // command (the UpdateConsensusParamsCmd precedent). authority_jws is an
 // ES256K JWS by a current authority address with purpose
@@ -2114,7 +2593,7 @@ type QuarantineIndexerCmd struct {
 
 func (x *QuarantineIndexerCmd) Reset() {
 	*x = QuarantineIndexerCmd{}
-	mi := &file_consensus_proto_msgTypes[16]
+	mi := &file_consensus_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2126,7 +2605,7 @@ func (x *QuarantineIndexerCmd) String() string {
 func (*QuarantineIndexerCmd) ProtoMessage() {}
 
 func (x *QuarantineIndexerCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[16]
+	mi := &file_consensus_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2139,7 +2618,7 @@ func (x *QuarantineIndexerCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QuarantineIndexerCmd.ProtoReflect.Descriptor instead.
 func (*QuarantineIndexerCmd) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{16}
+	return file_consensus_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *QuarantineIndexerCmd) GetIndexerId() uint64 {
@@ -2190,7 +2669,7 @@ type ReleaseIndexerCmd struct {
 
 func (x *ReleaseIndexerCmd) Reset() {
 	*x = ReleaseIndexerCmd{}
-	mi := &file_consensus_proto_msgTypes[17]
+	mi := &file_consensus_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2202,7 +2681,7 @@ func (x *ReleaseIndexerCmd) String() string {
 func (*ReleaseIndexerCmd) ProtoMessage() {}
 
 func (x *ReleaseIndexerCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[17]
+	mi := &file_consensus_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2215,7 +2694,7 @@ func (x *ReleaseIndexerCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReleaseIndexerCmd.ProtoReflect.Descriptor instead.
 func (*ReleaseIndexerCmd) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{17}
+	return file_consensus_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ReleaseIndexerCmd) GetIndexerId() uint64 {
@@ -2282,7 +2761,7 @@ type IndexerTrackView struct {
 
 func (x *IndexerTrackView) Reset() {
 	*x = IndexerTrackView{}
-	mi := &file_consensus_proto_msgTypes[18]
+	mi := &file_consensus_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2294,7 +2773,7 @@ func (x *IndexerTrackView) String() string {
 func (*IndexerTrackView) ProtoMessage() {}
 
 func (x *IndexerTrackView) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[18]
+	mi := &file_consensus_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2307,7 +2786,7 @@ func (x *IndexerTrackView) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IndexerTrackView.ProtoReflect.Descriptor instead.
 func (*IndexerTrackView) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{18}
+	return file_consensus_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *IndexerTrackView) GetIndexerId() uint64 {
@@ -2393,7 +2872,7 @@ type TrackStateView struct {
 
 func (x *TrackStateView) Reset() {
 	*x = TrackStateView{}
-	mi := &file_consensus_proto_msgTypes[19]
+	mi := &file_consensus_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2405,7 +2884,7 @@ func (x *TrackStateView) String() string {
 func (*TrackStateView) ProtoMessage() {}
 
 func (x *TrackStateView) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[19]
+	mi := &file_consensus_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2418,7 +2897,7 @@ func (x *TrackStateView) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrackStateView.ProtoReflect.Descriptor instead.
 func (*TrackStateView) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{19}
+	return file_consensus_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *TrackStateView) GetTracksEnabled() bool {
@@ -2487,7 +2966,7 @@ type PrepareConsensusUpdateRequest struct {
 
 func (x *PrepareConsensusUpdateRequest) Reset() {
 	*x = PrepareConsensusUpdateRequest{}
-	mi := &file_consensus_proto_msgTypes[20]
+	mi := &file_consensus_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2499,7 +2978,7 @@ func (x *PrepareConsensusUpdateRequest) String() string {
 func (*PrepareConsensusUpdateRequest) ProtoMessage() {}
 
 func (x *PrepareConsensusUpdateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[20]
+	mi := &file_consensus_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2512,7 +2991,7 @@ func (x *PrepareConsensusUpdateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PrepareConsensusUpdateRequest.ProtoReflect.Descriptor instead.
 func (*PrepareConsensusUpdateRequest) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{20}
+	return file_consensus_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *PrepareConsensusUpdateRequest) GetMode() ConsensusHoldMode {
@@ -2550,7 +3029,7 @@ type ConsensusHoldRef struct {
 
 func (x *ConsensusHoldRef) Reset() {
 	*x = ConsensusHoldRef{}
-	mi := &file_consensus_proto_msgTypes[21]
+	mi := &file_consensus_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2562,7 +3041,7 @@ func (x *ConsensusHoldRef) String() string {
 func (*ConsensusHoldRef) ProtoMessage() {}
 
 func (x *ConsensusHoldRef) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[21]
+	mi := &file_consensus_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2575,7 +3054,7 @@ func (x *ConsensusHoldRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConsensusHoldRef.ProtoReflect.Descriptor instead.
 func (*ConsensusHoldRef) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{21}
+	return file_consensus_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ConsensusHoldRef) GetHoldId() string {
@@ -2608,7 +3087,7 @@ type TrackDrain struct {
 
 func (x *TrackDrain) Reset() {
 	*x = TrackDrain{}
-	mi := &file_consensus_proto_msgTypes[22]
+	mi := &file_consensus_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2620,7 +3099,7 @@ func (x *TrackDrain) String() string {
 func (*TrackDrain) ProtoMessage() {}
 
 func (x *TrackDrain) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[22]
+	mi := &file_consensus_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2633,7 +3112,7 @@ func (x *TrackDrain) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrackDrain.ProtoReflect.Descriptor instead.
 func (*TrackDrain) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{22}
+	return file_consensus_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *TrackDrain) GetIndexerId() uint64 {
@@ -2710,7 +3189,7 @@ type ConsensusHold struct {
 
 func (x *ConsensusHold) Reset() {
 	*x = ConsensusHold{}
-	mi := &file_consensus_proto_msgTypes[23]
+	mi := &file_consensus_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2722,7 +3201,7 @@ func (x *ConsensusHold) String() string {
 func (*ConsensusHold) ProtoMessage() {}
 
 func (x *ConsensusHold) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[23]
+	mi := &file_consensus_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2735,7 +3214,7 @@ func (x *ConsensusHold) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConsensusHold.ProtoReflect.Descriptor instead.
 func (*ConsensusHold) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{23}
+	return file_consensus_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ConsensusHold) GetHoldId() string {
@@ -2835,7 +3314,7 @@ type SettleTrackRequest struct {
 
 func (x *SettleTrackRequest) Reset() {
 	*x = SettleTrackRequest{}
-	mi := &file_consensus_proto_msgTypes[24]
+	mi := &file_consensus_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2847,7 +3326,7 @@ func (x *SettleTrackRequest) String() string {
 func (*SettleTrackRequest) ProtoMessage() {}
 
 func (x *SettleTrackRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[24]
+	mi := &file_consensus_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2860,7 +3339,7 @@ func (x *SettleTrackRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SettleTrackRequest.ProtoReflect.Descriptor instead.
 func (*SettleTrackRequest) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{24}
+	return file_consensus_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *SettleTrackRequest) GetIndexerId() uint64 {
@@ -2907,7 +3386,7 @@ type TrackSettleRef struct {
 
 func (x *TrackSettleRef) Reset() {
 	*x = TrackSettleRef{}
-	mi := &file_consensus_proto_msgTypes[25]
+	mi := &file_consensus_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2919,7 +3398,7 @@ func (x *TrackSettleRef) String() string {
 func (*TrackSettleRef) ProtoMessage() {}
 
 func (x *TrackSettleRef) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[25]
+	mi := &file_consensus_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2932,7 +3411,7 @@ func (x *TrackSettleRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrackSettleRef.ProtoReflect.Descriptor instead.
 func (*TrackSettleRef) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{25}
+	return file_consensus_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *TrackSettleRef) GetIndexerId() uint64 {
@@ -2961,7 +3440,7 @@ type TrackSettle struct {
 
 func (x *TrackSettle) Reset() {
 	*x = TrackSettle{}
-	mi := &file_consensus_proto_msgTypes[26]
+	mi := &file_consensus_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2973,7 +3452,7 @@ func (x *TrackSettle) String() string {
 func (*TrackSettle) ProtoMessage() {}
 
 func (x *TrackSettle) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[26]
+	mi := &file_consensus_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2986,7 +3465,7 @@ func (x *TrackSettle) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrackSettle.ProtoReflect.Descriptor instead.
 func (*TrackSettle) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{26}
+	return file_consensus_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *TrackSettle) GetIndexerId() uint64 {
@@ -3088,7 +3567,7 @@ type RebalanceGroupCmd struct {
 
 func (x *RebalanceGroupCmd) Reset() {
 	*x = RebalanceGroupCmd{}
-	mi := &file_consensus_proto_msgTypes[27]
+	mi := &file_consensus_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3100,7 +3579,7 @@ func (x *RebalanceGroupCmd) String() string {
 func (*RebalanceGroupCmd) ProtoMessage() {}
 
 func (x *RebalanceGroupCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[27]
+	mi := &file_consensus_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3113,7 +3592,7 @@ func (x *RebalanceGroupCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RebalanceGroupCmd.ProtoReflect.Descriptor instead.
 func (*RebalanceGroupCmd) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{27}
+	return file_consensus_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *RebalanceGroupCmd) GetOwnerIndexerId() uint64 {
@@ -3183,7 +3662,7 @@ type ReselectVerifiersCmd struct {
 
 func (x *ReselectVerifiersCmd) Reset() {
 	*x = ReselectVerifiersCmd{}
-	mi := &file_consensus_proto_msgTypes[28]
+	mi := &file_consensus_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3195,7 +3674,7 @@ func (x *ReselectVerifiersCmd) String() string {
 func (*ReselectVerifiersCmd) ProtoMessage() {}
 
 func (x *ReselectVerifiersCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[28]
+	mi := &file_consensus_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3208,7 +3687,7 @@ func (x *ReselectVerifiersCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReselectVerifiersCmd.ProtoReflect.Descriptor instead.
 func (*ReselectVerifiersCmd) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{28}
+	return file_consensus_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *ReselectVerifiersCmd) GetL3BlockSeq() uint64 {
@@ -3249,7 +3728,7 @@ type MarkMemberLaggingCmd struct {
 
 func (x *MarkMemberLaggingCmd) Reset() {
 	*x = MarkMemberLaggingCmd{}
-	mi := &file_consensus_proto_msgTypes[29]
+	mi := &file_consensus_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3261,7 +3740,7 @@ func (x *MarkMemberLaggingCmd) String() string {
 func (*MarkMemberLaggingCmd) ProtoMessage() {}
 
 func (x *MarkMemberLaggingCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[29]
+	mi := &file_consensus_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3274,7 +3753,7 @@ func (x *MarkMemberLaggingCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MarkMemberLaggingCmd.ProtoReflect.Descriptor instead.
 func (*MarkMemberLaggingCmd) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{29}
+	return file_consensus_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *MarkMemberLaggingCmd) GetNodeId() string {
@@ -3328,7 +3807,7 @@ type Stage3SwitchCutover struct {
 
 func (x *Stage3SwitchCutover) Reset() {
 	*x = Stage3SwitchCutover{}
-	mi := &file_consensus_proto_msgTypes[30]
+	mi := &file_consensus_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3340,7 +3819,7 @@ func (x *Stage3SwitchCutover) String() string {
 func (*Stage3SwitchCutover) ProtoMessage() {}
 
 func (x *Stage3SwitchCutover) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[30]
+	mi := &file_consensus_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3353,7 +3832,7 @@ func (x *Stage3SwitchCutover) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Stage3SwitchCutover.ProtoReflect.Descriptor instead.
 func (*Stage3SwitchCutover) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{30}
+	return file_consensus_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *Stage3SwitchCutover) GetSwitchName() string {
@@ -3399,7 +3878,7 @@ type Stage3StateView struct {
 
 func (x *Stage3StateView) Reset() {
 	*x = Stage3StateView{}
-	mi := &file_consensus_proto_msgTypes[31]
+	mi := &file_consensus_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3411,7 +3890,7 @@ func (x *Stage3StateView) String() string {
 func (*Stage3StateView) ProtoMessage() {}
 
 func (x *Stage3StateView) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[31]
+	mi := &file_consensus_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3424,7 +3903,7 @@ func (x *Stage3StateView) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Stage3StateView.ProtoReflect.Descriptor instead.
 func (*Stage3StateView) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{31}
+	return file_consensus_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *Stage3StateView) GetActivationEpoch() uint64 {
@@ -3467,7 +3946,7 @@ type GetConsensusHistoryRequest struct {
 
 func (x *GetConsensusHistoryRequest) Reset() {
 	*x = GetConsensusHistoryRequest{}
-	mi := &file_consensus_proto_msgTypes[32]
+	mi := &file_consensus_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3479,7 +3958,7 @@ func (x *GetConsensusHistoryRequest) String() string {
 func (*GetConsensusHistoryRequest) ProtoMessage() {}
 
 func (x *GetConsensusHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[32]
+	mi := &file_consensus_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3492,7 +3971,7 @@ func (x *GetConsensusHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetConsensusHistoryRequest.ProtoReflect.Descriptor instead.
 func (*GetConsensusHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{32}
+	return file_consensus_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *GetConsensusHistoryRequest) GetFromEpoch() uint64 {
@@ -3525,7 +4004,7 @@ type ConsensusHistory struct {
 
 func (x *ConsensusHistory) Reset() {
 	*x = ConsensusHistory{}
-	mi := &file_consensus_proto_msgTypes[33]
+	mi := &file_consensus_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3537,7 +4016,7 @@ func (x *ConsensusHistory) String() string {
 func (*ConsensusHistory) ProtoMessage() {}
 
 func (x *ConsensusHistory) ProtoReflect() protoreflect.Message {
-	mi := &file_consensus_proto_msgTypes[33]
+	mi := &file_consensus_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3550,7 +4029,7 @@ func (x *ConsensusHistory) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConsensusHistory.ProtoReflect.Descriptor instead.
 func (*ConsensusHistory) Descriptor() ([]byte, []int) {
-	return file_consensus_proto_rawDescGZIP(), []int{33}
+	return file_consensus_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ConsensusHistory) GetNetworkId() string {
@@ -3698,14 +4177,17 @@ const file_consensus_proto_rawDesc = "" +
 	"\n" +
 	"activation\x18\x01 \x01(\v2\x1a.arbiter.ActiveQueryPolicyR\n" +
 	"activation\x12#\n" +
-	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"\x83\x02\n" +
+	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"\xd0\x02\n" +
 	"\fProtocolInfo\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12)\n" +
 	"\x10protocol_version\x18\x02 \x01(\rR\x0fprotocolVersion\x12'\n" +
 	"\x0fupdates_enabled\x18\x03 \x01(\bR\x0eupdatesEnabled\x12\x1a\n" +
 	"\bfeatures\x18\x04 \x03(\tR\bfeatures\x120\n" +
 	"\x14voter_ed25519_pubkey\x18\x05 \x01(\fR\x12voterEd25519Pubkey\x128\n" +
-	"\x18authority_signer_address\x18\x06 \x01(\tR\x16authoritySignerAddress\"\xef\x04\n" +
+	"\x18authority_signer_address\x18\x06 \x01(\tR\x16authoritySignerAddress\x12,\n" +
+	"\x12raft_applied_index\x18\a \x01(\x04R\x10raftAppliedIndex\x12\x1d\n" +
+	"\n" +
+	"network_id\x18\b \x01(\tR\tnetworkId\"\xef\x04\n" +
 	"\x14ConsensusParamsState\x12)\n" +
 	"\x10protocol_version\x18\x01 \x01(\rR\x0fprotocolVersion\x12\x1d\n" +
 	"\n" +
@@ -3749,7 +4231,30 @@ const file_consensus_proto_rawDesc = "" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12:\n" +
 	"\x19expected_registration_seq\x18\x02 \x01(\x04R\x17expectedRegistrationSeq\x12\x16\n" +
 	"\x06reason\x18\x03 \x01(\tR\x06reason\x12#\n" +
-	"\rauthority_jws\x18\x04 \x01(\tR\fauthorityJws\"\xa3\x01\n" +
+	"\rauthority_jws\x18\x04 \x01(\tR\fauthorityJws\"\x81\x01\n" +
+	"\x14RaftMembershipChange\x12)\n" +
+	"\x02op\x18\x01 \x01(\x0e2\x19.arbiter.RaftMembershipOpR\x02op\x12\x1b\n" +
+	"\tserver_id\x18\x02 \x01(\tR\bserverId\x12!\n" +
+	"\fraft_address\x18\x03 \x01(\tR\vraftAddress\"\xd1\x01\n" +
+	"\x1bChangeRaftMembershipRequest\x125\n" +
+	"\x06change\x18\x01 \x01(\v2\x1d.arbiter.RaftMembershipChangeR\x06change\x12#\n" +
+	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\x12*\n" +
+	"\x11prev_config_index\x18\x03 \x01(\x04R\x0fprevConfigIndex\x12*\n" +
+	"\x11allow_below_three\x18\x04 \x01(\bR\x0fallowBelowThree\"g\n" +
+	"\x19ChangeRaftMembershipReply\x12!\n" +
+	"\fconfig_index\x18\x01 \x01(\x04R\vconfigIndex\x12'\n" +
+	"\x0falready_applied\x18\x02 \x01(\bR\x0ealreadyApplied\"P\n" +
+	"\x0eRaftServerView\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
+	"\aaddress\x18\x02 \x01(\tR\aaddress\x12\x14\n" +
+	"\x05voter\x18\x03 \x01(\bR\x05voter\"\x93\x02\n" +
+	"\x15RaftConfigurationView\x121\n" +
+	"\aservers\x18\x01 \x03(\v2\x17.arbiter.RaftServerViewR\aservers\x12!\n" +
+	"\fconfig_index\x18\x02 \x01(\x04R\vconfigIndex\x12,\n" +
+	"\x12enrolled_voter_ids\x18\x03 \x03(\tR\x10enrolledVoterIds\x120\n" +
+	"\x05state\x18\x04 \x01(\x0e2\x1a.arbiter.RaftVoterSetStateR\x05state\x12\x1b\n" +
+	"\tleader_id\x18\x05 \x01(\tR\bleaderId\x12'\n" +
+	"\x0fauthority_epoch\x18\x06 \x01(\x04R\x0eauthorityEpoch\"\xa3\x01\n" +
 	"\x14QuarantineIndexerCmd\x12\x1d\n" +
 	"\n" +
 	"indexer_id\x18\x01 \x01(\x04R\tindexerId\x12/\n" +
@@ -3874,7 +4379,17 @@ const file_consensus_proto_rawDesc = "" +
 	"\x13genesis_snapshot_id\x18\x02 \x01(\tR\x11genesisSnapshotId\x12#\n" +
 	"\rcurrent_epoch\x18\x03 \x01(\x04R\fcurrentEpoch\x12B\n" +
 	"\x1dbootstrap_authority_addresses\x18\x04 \x03(\tR\x1bbootstrapAuthorityAddresses\x12;\n" +
-	"\aupdates\x18\x05 \x03(\v2!.arbiter.UpdateConsensusParamsCmdR\aupdates*y\n" +
+	"\aupdates\x18\x05 \x03(\v2!.arbiter.UpdateConsensusParamsCmdR\aupdates*~\n" +
+	"\x10RaftMembershipOp\x12\"\n" +
+	"\x1eRAFT_MEMBERSHIP_OP_UNSPECIFIED\x10\x00\x12 \n" +
+	"\x1cRAFT_MEMBERSHIP_OP_ADD_VOTER\x10\x01\x12$\n" +
+	" RAFT_MEMBERSHIP_OP_REMOVE_SERVER\x10\x02*\xc6\x01\n" +
+	"\x11RaftVoterSetState\x12$\n" +
+	" RAFT_VOTER_SET_STATE_UNSPECIFIED\x10\x00\x12!\n" +
+	"\x1dRAFT_VOTER_SET_STATE_INACTIVE\x10\x01\x12#\n" +
+	"\x1fRAFT_VOTER_SET_STATE_CONSISTENT\x10\x02\x12#\n" +
+	"\x1fRAFT_VOTER_SET_STATE_TRANSITION\x10\x03\x12\x1e\n" +
+	"\x1aRAFT_VOTER_SET_STATE_DRIFT\x10\x04*y\n" +
 	"\x11ConsensusHoldMode\x12#\n" +
 	"\x1fCONSENSUS_HOLD_MODE_UNSPECIFIED\x10\x00\x12 \n" +
 	"\x1cCONSENSUS_HOLD_MODE_ISSUANCE\x10\x01\x12\x1d\n" +
@@ -3885,8 +4400,7 @@ const file_consensus_proto_rawDesc = "" +
 	"\x1aTRACK_SETTLE_STATE_SETTLED\x10\x02\x12\x1f\n" +
 	"\x1bTRACK_SETTLE_STATE_RELEASED\x10\x03\x12\x1e\n" +
 	"\x1aTRACK_SETTLE_STATE_EXPIRED\x10\x04\x12&\n" +
-	"\"TRACK_SETTLE_STATE_LEADERSHIP_LOST\x10\x052\xc1\n" +
-	"\n" +
+	"\"TRACK_SETTLE_STATE_LEADERSHIP_LOST\x10\x052\xf7\v\n" +
 	"\x0eConsensusAdmin\x12B\n" +
 	"\x0fGetProtocolInfo\x12\x16.google.protobuf.Empty\x1a\x15.arbiter.ProtocolInfo\"\x00\x12M\n" +
 	"\x12GetConsensusParams\x12\x16.google.protobuf.Empty\x1a\x1d.arbiter.ConsensusParamsState\"\x00\x12J\n" +
@@ -3905,7 +4419,9 @@ const file_consensus_proto_rawDesc = "" +
 	"\vSettleTrack\x12\x1b.arbiter.SettleTrackRequest\x1a\x14.arbiter.TrackSettle\"\x00\x12A\n" +
 	"\x0eGetTrackSettle\x12\x17.arbiter.TrackSettleRef\x1a\x14.arbiter.TrackSettle\"\x00\x12<\n" +
 	"\x0eRebalanceGroup\x12\x1a.arbiter.RebalanceGroupCmd\x1a\f.arbiter.Ack\"\x00\x12B\n" +
-	"\x11MarkMemberLagging\x12\x1d.arbiter.MarkMemberLaggingCmd\x1a\f.arbiter.Ack\"\x002r\n" +
+	"\x11MarkMemberLagging\x12\x1d.arbiter.MarkMemberLaggingCmd\x1a\f.arbiter.Ack\"\x00\x12P\n" +
+	"\x14GetRaftConfiguration\x12\x16.google.protobuf.Empty\x1a\x1e.arbiter.RaftConfigurationView\"\x00\x12b\n" +
+	"\x14ChangeRaftMembership\x12$.arbiter.ChangeRaftMembershipRequest\x1a\".arbiter.ChangeRaftMembershipReply\"\x002r\n" +
 	"\x17ConsensusHistoryService\x12W\n" +
 	"\x13GetConsensusHistory\x12#.arbiter.GetConsensusHistoryRequest\x1a\x19.arbiter.ConsensusHistory\"\x00B.Z,github.com/sentioxyz/arbiter-proto/gen/pb;pbb\x06proto3"
 
@@ -3921,136 +4437,151 @@ func file_consensus_proto_rawDescGZIP() []byte {
 	return file_consensus_proto_rawDescData
 }
 
-var file_consensus_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_consensus_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
+var file_consensus_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_consensus_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
 var file_consensus_proto_goTypes = []any{
-	(ConsensusHoldMode)(0),                        // 0: arbiter.ConsensusHoldMode
-	(TrackSettleState)(0),                         // 1: arbiter.TrackSettleState
-	(*ConsensusMutableParams)(nil),                // 2: arbiter.ConsensusMutableParams
-	(*ConsensusParamsUpdate)(nil),                 // 3: arbiter.ConsensusParamsUpdate
-	(*VoterEntry)(nil),                            // 4: arbiter.VoterEntry
-	(*PendingAuthorityChange)(nil),                // 5: arbiter.PendingAuthorityChange
-	(*AccountBudgetParams)(nil),                   // 6: arbiter.AccountBudgetParams
-	(*AnchorFinalityParams)(nil),                  // 7: arbiter.AnchorFinalityParams
-	(*UpdateConsensusParamsCmd)(nil),              // 8: arbiter.UpdateConsensusParamsCmd
-	(*GetSnapshotQueryAbortCandidateRequest)(nil), // 9: arbiter.GetSnapshotQueryAbortCandidateRequest
-	(*AbortSnapshotQueryRequest)(nil),             // 10: arbiter.AbortSnapshotQueryRequest
-	(*ActivateQueryProfileRequest)(nil),           // 11: arbiter.ActivateQueryProfileRequest
-	(*ProtocolInfo)(nil),                          // 12: arbiter.ProtocolInfo
-	(*ConsensusParamsState)(nil),                  // 13: arbiter.ConsensusParamsState
-	(*NodeFeatureEntry)(nil),                      // 14: arbiter.NodeFeatureEntry
-	(*NodeFeatures)(nil),                          // 15: arbiter.NodeFeatures
-	(*VerifierEntry)(nil),                         // 16: arbiter.VerifierEntry
-	(*EvictNodeRequest)(nil),                      // 17: arbiter.EvictNodeRequest
-	(*QuarantineIndexerCmd)(nil),                  // 18: arbiter.QuarantineIndexerCmd
-	(*ReleaseIndexerCmd)(nil),                     // 19: arbiter.ReleaseIndexerCmd
-	(*IndexerTrackView)(nil),                      // 20: arbiter.IndexerTrackView
-	(*TrackStateView)(nil),                        // 21: arbiter.TrackStateView
-	(*PrepareConsensusUpdateRequest)(nil),         // 22: arbiter.PrepareConsensusUpdateRequest
-	(*ConsensusHoldRef)(nil),                      // 23: arbiter.ConsensusHoldRef
-	(*TrackDrain)(nil),                            // 24: arbiter.TrackDrain
-	(*ConsensusHold)(nil),                         // 25: arbiter.ConsensusHold
-	(*SettleTrackRequest)(nil),                    // 26: arbiter.SettleTrackRequest
-	(*TrackSettleRef)(nil),                        // 27: arbiter.TrackSettleRef
-	(*TrackSettle)(nil),                           // 28: arbiter.TrackSettle
-	(*RebalanceGroupCmd)(nil),                     // 29: arbiter.RebalanceGroupCmd
-	(*ReselectVerifiersCmd)(nil),                  // 30: arbiter.ReselectVerifiersCmd
-	(*MarkMemberLaggingCmd)(nil),                  // 31: arbiter.MarkMemberLaggingCmd
-	(*Stage3SwitchCutover)(nil),                   // 32: arbiter.Stage3SwitchCutover
-	(*Stage3StateView)(nil),                       // 33: arbiter.Stage3StateView
-	(*GetConsensusHistoryRequest)(nil),            // 34: arbiter.GetConsensusHistoryRequest
-	(*ConsensusHistory)(nil),                      // 35: arbiter.ConsensusHistory
-	(*TableRegistryParams)(nil),                   // 36: arbiter.TableRegistryParams
-	(*ClientLaneParams)(nil),                      // 37: arbiter.ClientLaneParams
-	(*SIIndexerEntry)(nil),                        // 38: arbiter.SIIndexerEntry
-	(*Stage3Params)(nil),                          // 39: arbiter.Stage3Params
-	(*SnapshotQueryAbortRecord)(nil),              // 40: arbiter.SnapshotQueryAbortRecord
-	(*ActiveQueryPolicy)(nil),                     // 41: arbiter.ActiveQueryPolicy
-	(*TrackFrontier)(nil),                         // 42: arbiter.TrackFrontier
-	(*emptypb.Empty)(nil),                         // 43: google.protobuf.Empty
-	(*Ack)(nil),                                   // 44: arbiter.Ack
-	(*SnapshotQueryStatus)(nil),                   // 45: arbiter.SnapshotQueryStatus
+	(RaftMembershipOp)(0),                         // 0: arbiter.RaftMembershipOp
+	(RaftVoterSetState)(0),                        // 1: arbiter.RaftVoterSetState
+	(ConsensusHoldMode)(0),                        // 2: arbiter.ConsensusHoldMode
+	(TrackSettleState)(0),                         // 3: arbiter.TrackSettleState
+	(*ConsensusMutableParams)(nil),                // 4: arbiter.ConsensusMutableParams
+	(*ConsensusParamsUpdate)(nil),                 // 5: arbiter.ConsensusParamsUpdate
+	(*VoterEntry)(nil),                            // 6: arbiter.VoterEntry
+	(*PendingAuthorityChange)(nil),                // 7: arbiter.PendingAuthorityChange
+	(*AccountBudgetParams)(nil),                   // 8: arbiter.AccountBudgetParams
+	(*AnchorFinalityParams)(nil),                  // 9: arbiter.AnchorFinalityParams
+	(*UpdateConsensusParamsCmd)(nil),              // 10: arbiter.UpdateConsensusParamsCmd
+	(*GetSnapshotQueryAbortCandidateRequest)(nil), // 11: arbiter.GetSnapshotQueryAbortCandidateRequest
+	(*AbortSnapshotQueryRequest)(nil),             // 12: arbiter.AbortSnapshotQueryRequest
+	(*ActivateQueryProfileRequest)(nil),           // 13: arbiter.ActivateQueryProfileRequest
+	(*ProtocolInfo)(nil),                          // 14: arbiter.ProtocolInfo
+	(*ConsensusParamsState)(nil),                  // 15: arbiter.ConsensusParamsState
+	(*NodeFeatureEntry)(nil),                      // 16: arbiter.NodeFeatureEntry
+	(*NodeFeatures)(nil),                          // 17: arbiter.NodeFeatures
+	(*VerifierEntry)(nil),                         // 18: arbiter.VerifierEntry
+	(*EvictNodeRequest)(nil),                      // 19: arbiter.EvictNodeRequest
+	(*RaftMembershipChange)(nil),                  // 20: arbiter.RaftMembershipChange
+	(*ChangeRaftMembershipRequest)(nil),           // 21: arbiter.ChangeRaftMembershipRequest
+	(*ChangeRaftMembershipReply)(nil),             // 22: arbiter.ChangeRaftMembershipReply
+	(*RaftServerView)(nil),                        // 23: arbiter.RaftServerView
+	(*RaftConfigurationView)(nil),                 // 24: arbiter.RaftConfigurationView
+	(*QuarantineIndexerCmd)(nil),                  // 25: arbiter.QuarantineIndexerCmd
+	(*ReleaseIndexerCmd)(nil),                     // 26: arbiter.ReleaseIndexerCmd
+	(*IndexerTrackView)(nil),                      // 27: arbiter.IndexerTrackView
+	(*TrackStateView)(nil),                        // 28: arbiter.TrackStateView
+	(*PrepareConsensusUpdateRequest)(nil),         // 29: arbiter.PrepareConsensusUpdateRequest
+	(*ConsensusHoldRef)(nil),                      // 30: arbiter.ConsensusHoldRef
+	(*TrackDrain)(nil),                            // 31: arbiter.TrackDrain
+	(*ConsensusHold)(nil),                         // 32: arbiter.ConsensusHold
+	(*SettleTrackRequest)(nil),                    // 33: arbiter.SettleTrackRequest
+	(*TrackSettleRef)(nil),                        // 34: arbiter.TrackSettleRef
+	(*TrackSettle)(nil),                           // 35: arbiter.TrackSettle
+	(*RebalanceGroupCmd)(nil),                     // 36: arbiter.RebalanceGroupCmd
+	(*ReselectVerifiersCmd)(nil),                  // 37: arbiter.ReselectVerifiersCmd
+	(*MarkMemberLaggingCmd)(nil),                  // 38: arbiter.MarkMemberLaggingCmd
+	(*Stage3SwitchCutover)(nil),                   // 39: arbiter.Stage3SwitchCutover
+	(*Stage3StateView)(nil),                       // 40: arbiter.Stage3StateView
+	(*GetConsensusHistoryRequest)(nil),            // 41: arbiter.GetConsensusHistoryRequest
+	(*ConsensusHistory)(nil),                      // 42: arbiter.ConsensusHistory
+	(*TableRegistryParams)(nil),                   // 43: arbiter.TableRegistryParams
+	(*ClientLaneParams)(nil),                      // 44: arbiter.ClientLaneParams
+	(*SIIndexerEntry)(nil),                        // 45: arbiter.SIIndexerEntry
+	(*Stage3Params)(nil),                          // 46: arbiter.Stage3Params
+	(*SnapshotQueryAbortRecord)(nil),              // 47: arbiter.SnapshotQueryAbortRecord
+	(*ActiveQueryPolicy)(nil),                     // 48: arbiter.ActiveQueryPolicy
+	(*TrackFrontier)(nil),                         // 49: arbiter.TrackFrontier
+	(*emptypb.Empty)(nil),                         // 50: google.protobuf.Empty
+	(*Ack)(nil),                                   // 51: arbiter.Ack
+	(*SnapshotQueryStatus)(nil),                   // 52: arbiter.SnapshotQueryStatus
 }
 var file_consensus_proto_depIdxs = []int32{
-	36, // 0: arbiter.ConsensusMutableParams.table_registry:type_name -> arbiter.TableRegistryParams
-	37, // 1: arbiter.ConsensusMutableParams.client_lanes:type_name -> arbiter.ClientLaneParams
-	38, // 2: arbiter.ConsensusMutableParams.si_indexers:type_name -> arbiter.SIIndexerEntry
-	16, // 3: arbiter.ConsensusMutableParams.verifiers:type_name -> arbiter.VerifierEntry
-	39, // 4: arbiter.ConsensusMutableParams.stage3:type_name -> arbiter.Stage3Params
-	4,  // 5: arbiter.ConsensusMutableParams.voters:type_name -> arbiter.VoterEntry
-	7,  // 6: arbiter.ConsensusMutableParams.anchor_finality:type_name -> arbiter.AnchorFinalityParams
-	5,  // 7: arbiter.ConsensusMutableParams.pending_authority_change:type_name -> arbiter.PendingAuthorityChange
-	6,  // 8: arbiter.ConsensusMutableParams.account_budget:type_name -> arbiter.AccountBudgetParams
-	36, // 9: arbiter.ConsensusParamsUpdate.table_registry:type_name -> arbiter.TableRegistryParams
-	37, // 10: arbiter.ConsensusParamsUpdate.client_lanes:type_name -> arbiter.ClientLaneParams
-	38, // 11: arbiter.ConsensusParamsUpdate.si_indexers:type_name -> arbiter.SIIndexerEntry
-	16, // 12: arbiter.ConsensusParamsUpdate.verifiers:type_name -> arbiter.VerifierEntry
-	39, // 13: arbiter.ConsensusParamsUpdate.stage3:type_name -> arbiter.Stage3Params
-	4,  // 14: arbiter.ConsensusParamsUpdate.voters:type_name -> arbiter.VoterEntry
-	7,  // 15: arbiter.ConsensusParamsUpdate.anchor_finality:type_name -> arbiter.AnchorFinalityParams
-	5,  // 16: arbiter.ConsensusParamsUpdate.pending_authority_change:type_name -> arbiter.PendingAuthorityChange
-	6,  // 17: arbiter.ConsensusParamsUpdate.account_budget:type_name -> arbiter.AccountBudgetParams
-	3,  // 18: arbiter.UpdateConsensusParamsCmd.update:type_name -> arbiter.ConsensusParamsUpdate
-	40, // 19: arbiter.AbortSnapshotQueryRequest.record:type_name -> arbiter.SnapshotQueryAbortRecord
-	41, // 20: arbiter.ActivateQueryProfileRequest.activation:type_name -> arbiter.ActiveQueryPolicy
-	2,  // 21: arbiter.ConsensusParamsState.bootstrap:type_name -> arbiter.ConsensusMutableParams
-	2,  // 22: arbiter.ConsensusParamsState.current:type_name -> arbiter.ConsensusMutableParams
-	33, // 23: arbiter.ConsensusParamsState.stage3_state:type_name -> arbiter.Stage3StateView
-	14, // 24: arbiter.NodeFeatures.entries:type_name -> arbiter.NodeFeatureEntry
-	42, // 25: arbiter.IndexerTrackView.initial:type_name -> arbiter.TrackFrontier
-	42, // 26: arbiter.IndexerTrackView.published:type_name -> arbiter.TrackFrontier
-	20, // 27: arbiter.TrackStateView.indexers:type_name -> arbiter.IndexerTrackView
-	0,  // 28: arbiter.PrepareConsensusUpdateRequest.mode:type_name -> arbiter.ConsensusHoldMode
-	8,  // 29: arbiter.PrepareConsensusUpdateRequest.draft:type_name -> arbiter.UpdateConsensusParamsCmd
-	0,  // 30: arbiter.ConsensusHold.mode:type_name -> arbiter.ConsensusHoldMode
-	24, // 31: arbiter.ConsensusHold.tracks:type_name -> arbiter.TrackDrain
-	1,  // 32: arbiter.TrackSettle.state:type_name -> arbiter.TrackSettleState
-	42, // 33: arbiter.MarkMemberLaggingCmd.observed_entry:type_name -> arbiter.TrackFrontier
-	32, // 34: arbiter.Stage3StateView.switches:type_name -> arbiter.Stage3SwitchCutover
-	8,  // 35: arbiter.ConsensusHistory.updates:type_name -> arbiter.UpdateConsensusParamsCmd
-	43, // 36: arbiter.ConsensusAdmin.GetProtocolInfo:input_type -> google.protobuf.Empty
-	43, // 37: arbiter.ConsensusAdmin.GetConsensusParams:input_type -> google.protobuf.Empty
-	8,  // 38: arbiter.ConsensusAdmin.UpdateConsensusParams:input_type -> arbiter.UpdateConsensusParamsCmd
-	9,  // 39: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:input_type -> arbiter.GetSnapshotQueryAbortCandidateRequest
-	10, // 40: arbiter.ConsensusAdmin.AbortSnapshotQuery:input_type -> arbiter.AbortSnapshotQueryRequest
-	11, // 41: arbiter.ConsensusAdmin.ActivateQueryProfile:input_type -> arbiter.ActivateQueryProfileRequest
-	43, // 42: arbiter.ConsensusAdmin.GetNodeFeatures:input_type -> google.protobuf.Empty
-	17, // 43: arbiter.ConsensusAdmin.EvictNode:input_type -> arbiter.EvictNodeRequest
-	18, // 44: arbiter.ConsensusAdmin.QuarantineIndexer:input_type -> arbiter.QuarantineIndexerCmd
-	19, // 45: arbiter.ConsensusAdmin.ReleaseIndexer:input_type -> arbiter.ReleaseIndexerCmd
-	43, // 46: arbiter.ConsensusAdmin.GetTrackState:input_type -> google.protobuf.Empty
-	22, // 47: arbiter.ConsensusAdmin.PrepareConsensusUpdate:input_type -> arbiter.PrepareConsensusUpdateRequest
-	23, // 48: arbiter.ConsensusAdmin.GetConsensusHold:input_type -> arbiter.ConsensusHoldRef
-	23, // 49: arbiter.ConsensusAdmin.ReleaseConsensusHold:input_type -> arbiter.ConsensusHoldRef
-	26, // 50: arbiter.ConsensusAdmin.SettleTrack:input_type -> arbiter.SettleTrackRequest
-	27, // 51: arbiter.ConsensusAdmin.GetTrackSettle:input_type -> arbiter.TrackSettleRef
-	29, // 52: arbiter.ConsensusAdmin.RebalanceGroup:input_type -> arbiter.RebalanceGroupCmd
-	31, // 53: arbiter.ConsensusAdmin.MarkMemberLagging:input_type -> arbiter.MarkMemberLaggingCmd
-	34, // 54: arbiter.ConsensusHistoryService.GetConsensusHistory:input_type -> arbiter.GetConsensusHistoryRequest
-	12, // 55: arbiter.ConsensusAdmin.GetProtocolInfo:output_type -> arbiter.ProtocolInfo
-	13, // 56: arbiter.ConsensusAdmin.GetConsensusParams:output_type -> arbiter.ConsensusParamsState
-	44, // 57: arbiter.ConsensusAdmin.UpdateConsensusParams:output_type -> arbiter.Ack
-	40, // 58: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:output_type -> arbiter.SnapshotQueryAbortRecord
-	45, // 59: arbiter.ConsensusAdmin.AbortSnapshotQuery:output_type -> arbiter.SnapshotQueryStatus
-	44, // 60: arbiter.ConsensusAdmin.ActivateQueryProfile:output_type -> arbiter.Ack
-	15, // 61: arbiter.ConsensusAdmin.GetNodeFeatures:output_type -> arbiter.NodeFeatures
-	44, // 62: arbiter.ConsensusAdmin.EvictNode:output_type -> arbiter.Ack
-	44, // 63: arbiter.ConsensusAdmin.QuarantineIndexer:output_type -> arbiter.Ack
-	44, // 64: arbiter.ConsensusAdmin.ReleaseIndexer:output_type -> arbiter.Ack
-	21, // 65: arbiter.ConsensusAdmin.GetTrackState:output_type -> arbiter.TrackStateView
-	25, // 66: arbiter.ConsensusAdmin.PrepareConsensusUpdate:output_type -> arbiter.ConsensusHold
-	25, // 67: arbiter.ConsensusAdmin.GetConsensusHold:output_type -> arbiter.ConsensusHold
-	44, // 68: arbiter.ConsensusAdmin.ReleaseConsensusHold:output_type -> arbiter.Ack
-	28, // 69: arbiter.ConsensusAdmin.SettleTrack:output_type -> arbiter.TrackSettle
-	28, // 70: arbiter.ConsensusAdmin.GetTrackSettle:output_type -> arbiter.TrackSettle
-	44, // 71: arbiter.ConsensusAdmin.RebalanceGroup:output_type -> arbiter.Ack
-	44, // 72: arbiter.ConsensusAdmin.MarkMemberLagging:output_type -> arbiter.Ack
-	35, // 73: arbiter.ConsensusHistoryService.GetConsensusHistory:output_type -> arbiter.ConsensusHistory
-	55, // [55:74] is the sub-list for method output_type
-	36, // [36:55] is the sub-list for method input_type
-	36, // [36:36] is the sub-list for extension type_name
-	36, // [36:36] is the sub-list for extension extendee
-	0,  // [0:36] is the sub-list for field type_name
+	43, // 0: arbiter.ConsensusMutableParams.table_registry:type_name -> arbiter.TableRegistryParams
+	44, // 1: arbiter.ConsensusMutableParams.client_lanes:type_name -> arbiter.ClientLaneParams
+	45, // 2: arbiter.ConsensusMutableParams.si_indexers:type_name -> arbiter.SIIndexerEntry
+	18, // 3: arbiter.ConsensusMutableParams.verifiers:type_name -> arbiter.VerifierEntry
+	46, // 4: arbiter.ConsensusMutableParams.stage3:type_name -> arbiter.Stage3Params
+	6,  // 5: arbiter.ConsensusMutableParams.voters:type_name -> arbiter.VoterEntry
+	9,  // 6: arbiter.ConsensusMutableParams.anchor_finality:type_name -> arbiter.AnchorFinalityParams
+	7,  // 7: arbiter.ConsensusMutableParams.pending_authority_change:type_name -> arbiter.PendingAuthorityChange
+	8,  // 8: arbiter.ConsensusMutableParams.account_budget:type_name -> arbiter.AccountBudgetParams
+	43, // 9: arbiter.ConsensusParamsUpdate.table_registry:type_name -> arbiter.TableRegistryParams
+	44, // 10: arbiter.ConsensusParamsUpdate.client_lanes:type_name -> arbiter.ClientLaneParams
+	45, // 11: arbiter.ConsensusParamsUpdate.si_indexers:type_name -> arbiter.SIIndexerEntry
+	18, // 12: arbiter.ConsensusParamsUpdate.verifiers:type_name -> arbiter.VerifierEntry
+	46, // 13: arbiter.ConsensusParamsUpdate.stage3:type_name -> arbiter.Stage3Params
+	6,  // 14: arbiter.ConsensusParamsUpdate.voters:type_name -> arbiter.VoterEntry
+	9,  // 15: arbiter.ConsensusParamsUpdate.anchor_finality:type_name -> arbiter.AnchorFinalityParams
+	7,  // 16: arbiter.ConsensusParamsUpdate.pending_authority_change:type_name -> arbiter.PendingAuthorityChange
+	8,  // 17: arbiter.ConsensusParamsUpdate.account_budget:type_name -> arbiter.AccountBudgetParams
+	5,  // 18: arbiter.UpdateConsensusParamsCmd.update:type_name -> arbiter.ConsensusParamsUpdate
+	47, // 19: arbiter.AbortSnapshotQueryRequest.record:type_name -> arbiter.SnapshotQueryAbortRecord
+	48, // 20: arbiter.ActivateQueryProfileRequest.activation:type_name -> arbiter.ActiveQueryPolicy
+	4,  // 21: arbiter.ConsensusParamsState.bootstrap:type_name -> arbiter.ConsensusMutableParams
+	4,  // 22: arbiter.ConsensusParamsState.current:type_name -> arbiter.ConsensusMutableParams
+	40, // 23: arbiter.ConsensusParamsState.stage3_state:type_name -> arbiter.Stage3StateView
+	16, // 24: arbiter.NodeFeatures.entries:type_name -> arbiter.NodeFeatureEntry
+	0,  // 25: arbiter.RaftMembershipChange.op:type_name -> arbiter.RaftMembershipOp
+	20, // 26: arbiter.ChangeRaftMembershipRequest.change:type_name -> arbiter.RaftMembershipChange
+	23, // 27: arbiter.RaftConfigurationView.servers:type_name -> arbiter.RaftServerView
+	1,  // 28: arbiter.RaftConfigurationView.state:type_name -> arbiter.RaftVoterSetState
+	49, // 29: arbiter.IndexerTrackView.initial:type_name -> arbiter.TrackFrontier
+	49, // 30: arbiter.IndexerTrackView.published:type_name -> arbiter.TrackFrontier
+	27, // 31: arbiter.TrackStateView.indexers:type_name -> arbiter.IndexerTrackView
+	2,  // 32: arbiter.PrepareConsensusUpdateRequest.mode:type_name -> arbiter.ConsensusHoldMode
+	10, // 33: arbiter.PrepareConsensusUpdateRequest.draft:type_name -> arbiter.UpdateConsensusParamsCmd
+	2,  // 34: arbiter.ConsensusHold.mode:type_name -> arbiter.ConsensusHoldMode
+	31, // 35: arbiter.ConsensusHold.tracks:type_name -> arbiter.TrackDrain
+	3,  // 36: arbiter.TrackSettle.state:type_name -> arbiter.TrackSettleState
+	49, // 37: arbiter.MarkMemberLaggingCmd.observed_entry:type_name -> arbiter.TrackFrontier
+	39, // 38: arbiter.Stage3StateView.switches:type_name -> arbiter.Stage3SwitchCutover
+	10, // 39: arbiter.ConsensusHistory.updates:type_name -> arbiter.UpdateConsensusParamsCmd
+	50, // 40: arbiter.ConsensusAdmin.GetProtocolInfo:input_type -> google.protobuf.Empty
+	50, // 41: arbiter.ConsensusAdmin.GetConsensusParams:input_type -> google.protobuf.Empty
+	10, // 42: arbiter.ConsensusAdmin.UpdateConsensusParams:input_type -> arbiter.UpdateConsensusParamsCmd
+	11, // 43: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:input_type -> arbiter.GetSnapshotQueryAbortCandidateRequest
+	12, // 44: arbiter.ConsensusAdmin.AbortSnapshotQuery:input_type -> arbiter.AbortSnapshotQueryRequest
+	13, // 45: arbiter.ConsensusAdmin.ActivateQueryProfile:input_type -> arbiter.ActivateQueryProfileRequest
+	50, // 46: arbiter.ConsensusAdmin.GetNodeFeatures:input_type -> google.protobuf.Empty
+	19, // 47: arbiter.ConsensusAdmin.EvictNode:input_type -> arbiter.EvictNodeRequest
+	25, // 48: arbiter.ConsensusAdmin.QuarantineIndexer:input_type -> arbiter.QuarantineIndexerCmd
+	26, // 49: arbiter.ConsensusAdmin.ReleaseIndexer:input_type -> arbiter.ReleaseIndexerCmd
+	50, // 50: arbiter.ConsensusAdmin.GetTrackState:input_type -> google.protobuf.Empty
+	29, // 51: arbiter.ConsensusAdmin.PrepareConsensusUpdate:input_type -> arbiter.PrepareConsensusUpdateRequest
+	30, // 52: arbiter.ConsensusAdmin.GetConsensusHold:input_type -> arbiter.ConsensusHoldRef
+	30, // 53: arbiter.ConsensusAdmin.ReleaseConsensusHold:input_type -> arbiter.ConsensusHoldRef
+	33, // 54: arbiter.ConsensusAdmin.SettleTrack:input_type -> arbiter.SettleTrackRequest
+	34, // 55: arbiter.ConsensusAdmin.GetTrackSettle:input_type -> arbiter.TrackSettleRef
+	36, // 56: arbiter.ConsensusAdmin.RebalanceGroup:input_type -> arbiter.RebalanceGroupCmd
+	38, // 57: arbiter.ConsensusAdmin.MarkMemberLagging:input_type -> arbiter.MarkMemberLaggingCmd
+	50, // 58: arbiter.ConsensusAdmin.GetRaftConfiguration:input_type -> google.protobuf.Empty
+	21, // 59: arbiter.ConsensusAdmin.ChangeRaftMembership:input_type -> arbiter.ChangeRaftMembershipRequest
+	41, // 60: arbiter.ConsensusHistoryService.GetConsensusHistory:input_type -> arbiter.GetConsensusHistoryRequest
+	14, // 61: arbiter.ConsensusAdmin.GetProtocolInfo:output_type -> arbiter.ProtocolInfo
+	15, // 62: arbiter.ConsensusAdmin.GetConsensusParams:output_type -> arbiter.ConsensusParamsState
+	51, // 63: arbiter.ConsensusAdmin.UpdateConsensusParams:output_type -> arbiter.Ack
+	47, // 64: arbiter.ConsensusAdmin.GetSnapshotQueryAbortCandidate:output_type -> arbiter.SnapshotQueryAbortRecord
+	52, // 65: arbiter.ConsensusAdmin.AbortSnapshotQuery:output_type -> arbiter.SnapshotQueryStatus
+	51, // 66: arbiter.ConsensusAdmin.ActivateQueryProfile:output_type -> arbiter.Ack
+	17, // 67: arbiter.ConsensusAdmin.GetNodeFeatures:output_type -> arbiter.NodeFeatures
+	51, // 68: arbiter.ConsensusAdmin.EvictNode:output_type -> arbiter.Ack
+	51, // 69: arbiter.ConsensusAdmin.QuarantineIndexer:output_type -> arbiter.Ack
+	51, // 70: arbiter.ConsensusAdmin.ReleaseIndexer:output_type -> arbiter.Ack
+	28, // 71: arbiter.ConsensusAdmin.GetTrackState:output_type -> arbiter.TrackStateView
+	32, // 72: arbiter.ConsensusAdmin.PrepareConsensusUpdate:output_type -> arbiter.ConsensusHold
+	32, // 73: arbiter.ConsensusAdmin.GetConsensusHold:output_type -> arbiter.ConsensusHold
+	51, // 74: arbiter.ConsensusAdmin.ReleaseConsensusHold:output_type -> arbiter.Ack
+	35, // 75: arbiter.ConsensusAdmin.SettleTrack:output_type -> arbiter.TrackSettle
+	35, // 76: arbiter.ConsensusAdmin.GetTrackSettle:output_type -> arbiter.TrackSettle
+	51, // 77: arbiter.ConsensusAdmin.RebalanceGroup:output_type -> arbiter.Ack
+	51, // 78: arbiter.ConsensusAdmin.MarkMemberLagging:output_type -> arbiter.Ack
+	24, // 79: arbiter.ConsensusAdmin.GetRaftConfiguration:output_type -> arbiter.RaftConfigurationView
+	22, // 80: arbiter.ConsensusAdmin.ChangeRaftMembership:output_type -> arbiter.ChangeRaftMembershipReply
+	42, // 81: arbiter.ConsensusHistoryService.GetConsensusHistory:output_type -> arbiter.ConsensusHistory
+	61, // [61:82] is the sub-list for method output_type
+	40, // [40:61] is the sub-list for method input_type
+	40, // [40:40] is the sub-list for extension type_name
+	40, // [40:40] is the sub-list for extension extendee
+	0,  // [0:40] is the sub-list for field type_name
 }
 
 func init() { file_consensus_proto_init() }
@@ -4068,8 +4599,8 @@ func file_consensus_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_consensus_proto_rawDesc), len(file_consensus_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   34,
+			NumEnums:      4,
+			NumMessages:   39,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
