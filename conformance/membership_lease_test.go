@@ -68,10 +68,10 @@ func TestMembershipLeaseFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.Uint64Kind || f.IsList() || f.HasOptionalKeyword() || f.ContainingOneof() != nil {
 				t.Fatalf("field = %v, want plain uint64 number %d", f, tc.number)
 			}
-			// promotion_ack_delta_snapshot and snapshot_query_tracks are the only
-			// fields appended after it.
-			if got := d.Fields().Len(); got != int(tc.number)+2 {
-				t.Fatalf("field count = %d, want %d (only promotion_ack_delta_snapshot and snapshot_query_tracks follow membership_lease_l2_blocks)", got, tc.number+2)
+			// promotion_ack_delta_snapshot, snapshot_query_tracks and
+			// custody_frontier are the only fields appended after it.
+			if got := d.Fields().Len(); got != int(tc.number)+3 {
+				t.Fatalf("field count = %d, want %d (only promotion_ack_delta_snapshot snapshot_query_tracks and custody_frontier follow membership_lease_l2_blocks)", got, tc.number+3)
 			}
 		})
 	}

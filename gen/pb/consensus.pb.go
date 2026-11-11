@@ -211,8 +211,12 @@ type ConsensusMutableParams struct {
 	// update after the tracks activation and promotion_ack_delta_snapshot sets
 	// it, then carried by every update and never lowered.
 	SnapshotQueryTracks bool `protobuf:"varint,19,opt,name=snapshot_query_tracks,json=snapshotQueryTracks,proto3" json:"snapshot_query_tracks,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	// The committed custody frontier: false until one authority-signed update
+	// after snapshot_query_tracks sets it, then carried by every update and
+	// never lowered.
+	CustodyFrontier bool `protobuf:"varint,20,opt,name=custody_frontier,json=custodyFrontier,proto3" json:"custody_frontier,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *ConsensusMutableParams) Reset() {
@@ -374,6 +378,13 @@ func (x *ConsensusMutableParams) GetPromotionAckDeltaSnapshot() bool {
 func (x *ConsensusMutableParams) GetSnapshotQueryTracks() bool {
 	if x != nil {
 		return x.SnapshotQueryTracks
+	}
+	return false
+}
+
+func (x *ConsensusMutableParams) GetCustodyFrontier() bool {
+	if x != nil {
+		return x.CustodyFrontier
 	}
 	return false
 }
@@ -564,8 +575,18 @@ type ConsensusParamsUpdate struct {
 	// knows the field before an update sets it. It joins the params digest only
 	// once set, so earlier digests are unchanged.
 	SnapshotQueryTracks bool `protobuf:"varint,24,opt,name=snapshot_query_tracks,json=snapshotQueryTracks,proto3" json:"snapshot_query_tracks,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	// The committed custody frontier: raise-only; once set every update must
+	// carry it. It needs snapshot_query_tracks (earlier or in the same update).
+	// While it is set the leader records its payload custody progress with
+	// RecordCustodyProgressCmd (Raft tag 45), and a new leader resumes custody
+	// from the recorded progress instead of re-asserting every block's holds.
+	// From its commit on, snapshots are written as v25, so every voter must run
+	// a binary that knows the field and the command before an update sets it.
+	// It joins the params digest only once set, so earlier digests are
+	// unchanged.
+	CustodyFrontier bool `protobuf:"varint,25,opt,name=custody_frontier,json=custodyFrontier,proto3" json:"custody_frontier,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *ConsensusParamsUpdate) Reset() {
@@ -762,6 +783,13 @@ func (x *ConsensusParamsUpdate) GetPromotionAckDeltaSnapshot() bool {
 func (x *ConsensusParamsUpdate) GetSnapshotQueryTracks() bool {
 	if x != nil {
 		return x.SnapshotQueryTracks
+	}
+	return false
+}
+
+func (x *ConsensusParamsUpdate) GetCustodyFrontier() bool {
+	if x != nil {
+		return x.CustodyFrontier
 	}
 	return false
 }
@@ -3210,7 +3238,7 @@ var File_consensus_proto protoreflect.FileDescriptor
 
 const file_consensus_proto_rawDesc = "" +
 	"\n" +
-	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xba\b\n" +
+	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xe5\b\n" +
 	"\x16ConsensusMutableParams\x12/\n" +
 	"\x13authority_addresses\x18\x01 \x03(\tR\x12authorityAddresses\x12\x1f\n" +
 	"\vmax_writers\x18\x02 \x01(\x04R\n" +
@@ -3233,7 +3261,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\x13authority_threshold\x18\x10 \x01(\rR\x12authorityThreshold\x12;\n" +
 	"\x1amembership_lease_l2_blocks\x18\x11 \x01(\x04R\x17membershipLeaseL2Blocks\x12?\n" +
 	"\x1cpromotion_ack_delta_snapshot\x18\x12 \x01(\bR\x19promotionAckDeltaSnapshot\x122\n" +
-	"\x15snapshot_query_tracks\x18\x13 \x01(\bR\x13snapshotQueryTracks\"\x9b\n" +
+	"\x15snapshot_query_tracks\x18\x13 \x01(\bR\x13snapshotQueryTracks\x12)\n" +
+	"\x10custody_frontier\x18\x14 \x01(\bR\x0fcustodyFrontier\"\xc6\n" +
 	"\n" +
 	"\x15ConsensusParamsUpdate\x12\x1d\n" +
 	"\n" +
@@ -3263,7 +3292,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\x13authority_threshold\x18\x15 \x01(\rR\x12authorityThreshold\x12;\n" +
 	"\x1amembership_lease_l2_blocks\x18\x16 \x01(\x04R\x17membershipLeaseL2Blocks\x12?\n" +
 	"\x1cpromotion_ack_delta_snapshot\x18\x17 \x01(\bR\x19promotionAckDeltaSnapshot\x122\n" +
-	"\x15snapshot_query_tracks\x18\x18 \x01(\bR\x13snapshotQueryTracks\"o\n" +
+	"\x15snapshot_query_tracks\x18\x18 \x01(\bR\x13snapshotQueryTracks\x12)\n" +
+	"\x10custody_frontier\x18\x19 \x01(\bR\x0fcustodyFrontier\"o\n" +
 	"\n" +
 	"VoterEntry\x12\x19\n" +
 	"\bvoter_id\x18\x01 \x01(\tR\avoterId\x12%\n" +

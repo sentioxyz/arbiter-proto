@@ -42,10 +42,11 @@ func TestPromotionFinalityGateFieldNumbers(t *testing.T) {
 			}
 			// manifest_delta_snapshot, table_admission_rules_version, the
 			// three anchor finality quorum fields, authority_threshold,
-			// membership_lease_l2_blocks, promotion_ack_delta_snapshot and
-			// snapshot_query_tracks are the only fields appended after it.
-			if got := d.Fields().Len(); got != int(tc.number)+9 {
-				t.Fatalf("field count = %d, want %d (only manifest_delta_snapshot, table_admission_rules_version, the anchor finality quorum fields, authority_threshold, membership_lease_l2_blocks, promotion_ack_delta_snapshot and snapshot_query_tracks follow the gate)", got, tc.number+9)
+			// membership_lease_l2_blocks, promotion_ack_delta_snapshot,
+			// snapshot_query_tracks and custody_frontier are the only fields
+			// appended after it.
+			if got := d.Fields().Len(); got != int(tc.number)+10 {
+				t.Fatalf("field count = %d, want %d (only manifest_delta_snapshot, table_admission_rules_version, the anchor finality quorum fields, authority_threshold, membership_lease_l2_blocks, promotion_ack_delta_snapshot snapshot_query_tracks and custody_frontier follow the gate)", got, tc.number+10)
 			}
 		})
 	}

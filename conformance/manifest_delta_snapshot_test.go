@@ -43,10 +43,10 @@ func TestManifestDeltaSnapshotFieldNumbers(t *testing.T) {
 			}
 			// table_admission_rules_version, the three anchor finality quorum
 			// fields, authority_threshold, membership_lease_l2_blocks,
-			// promotion_ack_delta_snapshot and snapshot_query_tracks are the
-			// only fields appended after it.
-			if got := d.Fields().Len(); got != int(tc.number)+8 {
-				t.Fatalf("field count = %d, want %d (only table_admission_rules_version, the anchor finality quorum fields, authority_threshold, membership_lease_l2_blocks, promotion_ack_delta_snapshot and snapshot_query_tracks follow the switch)", got, tc.number+8)
+			// promotion_ack_delta_snapshot, snapshot_query_tracks and
+			// custody_frontier are the only fields appended after it.
+			if got := d.Fields().Len(); got != int(tc.number)+9 {
+				t.Fatalf("field count = %d, want %d (only table_admission_rules_version, the anchor finality quorum fields, authority_threshold, membership_lease_l2_blocks, promotion_ack_delta_snapshot snapshot_query_tracks and custody_frontier follow the switch)", got, tc.number+9)
 			}
 		})
 	}

@@ -145,7 +145,7 @@ func TestStage3ConsensusFieldNumbers(t *testing.T) {
 		})
 	}
 	for msg, want := range map[proto.Message]int{
-		&pb.VerifierEntry{}: 11, &pb.ConsensusMutableParams{}: 19, &pb.ConsensusParamsUpdate{}: 24, &pb.ConsensusParamsState{}: 11,
+		&pb.VerifierEntry{}: 11, &pb.ConsensusMutableParams{}: 20, &pb.ConsensusParamsUpdate{}: 25, &pb.ConsensusParamsState{}: 11,
 		&pb.TableIncarnation{}: 20, &pb.TableRegistrySnapshot{}: 15, &pb.L3BlockTrack{}: 2, &pb.BlockVerification{}: 23,
 	} {
 		if got := msg.ProtoReflect().Descriptor().Fields().Len(); got != want {
@@ -344,8 +344,8 @@ func TestStage3ConsensusAdmissionCodes(t *testing.T) {
 func TestStage3ConsensusRaftCommandTags(t *testing.T) {
 	raft := (&pb.RaftCommand{}).ProtoReflect().Descriptor()
 	cmd := raft.Oneofs().ByName("cmd")
-	if cmd == nil || raft.Fields().Len() != 43 || cmd.Fields().Len() != 43 {
-		t.Fatalf("RaftCommand has %d fields, want 43 oneof tags", raft.Fields().Len())
+	if cmd == nil || raft.Fields().Len() != 44 || cmd.Fields().Len() != 44 {
+		t.Fatalf("RaftCommand has %d fields, want 44 oneof tags", raft.Fields().Len())
 	}
 	tags := map[protoreflect.FieldNumber]struct{ name, typ string }{
 		38: {"rebalance_group", "RebalanceGroupCmd"},
@@ -363,8 +363,9 @@ func TestStage3ConsensusRaftCommandTags(t *testing.T) {
 	}
 	for i := 0; i < raft.Fields().Len(); i++ {
 		// Tag 43 is the anchor finality attestation (anchor_finality_test.go),
-		// tag 44 the membership lease renewal (membership_lease_test.go).
-		if f := raft.Fields().Get(i); f.Number() > 37 && f.Number() != 43 && f.Number() != 44 && tags[f.Number()].name == "" {
+		// tag 44 the membership lease renewal (membership_lease_test.go), tag
+		// 45 the custody progress record (custody_frontier_test.go).
+		if f := raft.Fields().Get(i); f.Number() > 37 && f.Number() != 43 && f.Number() != 44 && f.Number() != 45 && tags[f.Number()].name == "" {
 			t.Fatalf("RaftCommand tag %d (%s) is not a stage-3 command", f.Number(), f.Name())
 		}
 	}
