@@ -1263,16 +1263,17 @@ var VoterGateway_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	SafeState_GetSafeWatermark_FullMethodName     = "/arbiter.SafeState/GetSafeWatermark"
-	SafeState_GetManifest_FullMethodName          = "/arbiter.SafeState/GetManifest"
-	SafeState_GetManifestByBlock_FullMethodName   = "/arbiter.SafeState/GetManifestByBlock"
-	SafeState_GetL3Block_FullMethodName           = "/arbiter.SafeState/GetL3Block"
-	SafeState_GetPublishedSnapshot_FullMethodName = "/arbiter.SafeState/GetPublishedSnapshot"
-	SafeState_GetQueryPolicy_FullMethodName       = "/arbiter.SafeState/GetQueryPolicy"
-	SafeState_GetClientSeqState_FullMethodName    = "/arbiter.SafeState/GetClientSeqState"
-	SafeState_GetPartitionStates_FullMethodName   = "/arbiter.SafeState/GetPartitionStates"
-	SafeState_GetPromotionOutcomes_FullMethodName = "/arbiter.SafeState/GetPromotionOutcomes"
-	SafeState_GetBlockVerification_FullMethodName = "/arbiter.SafeState/GetBlockVerification"
+	SafeState_GetSafeWatermark_FullMethodName      = "/arbiter.SafeState/GetSafeWatermark"
+	SafeState_GetManifest_FullMethodName           = "/arbiter.SafeState/GetManifest"
+	SafeState_GetManifestByBlock_FullMethodName    = "/arbiter.SafeState/GetManifestByBlock"
+	SafeState_GetL3Block_FullMethodName            = "/arbiter.SafeState/GetL3Block"
+	SafeState_GetPublishedSnapshot_FullMethodName  = "/arbiter.SafeState/GetPublishedSnapshot"
+	SafeState_GetQueryPolicy_FullMethodName        = "/arbiter.SafeState/GetQueryPolicy"
+	SafeState_GetClientSeqState_FullMethodName     = "/arbiter.SafeState/GetClientSeqState"
+	SafeState_GetPartitionStates_FullMethodName    = "/arbiter.SafeState/GetPartitionStates"
+	SafeState_GetPromotionOutcomes_FullMethodName  = "/arbiter.SafeState/GetPromotionOutcomes"
+	SafeState_GetBlockVerification_FullMethodName  = "/arbiter.SafeState/GetBlockVerification"
+	SafeState_GetHistoryCheckpoints_FullMethodName = "/arbiter.SafeState/GetHistoryCheckpoints"
 )
 
 // SafeStateClient is the client API for SafeState service.
@@ -1297,6 +1298,11 @@ type SafeStateClient interface {
 	GetPartitionStates(ctx context.Context, in *GetPartitionStatesRequest, opts ...grpc.CallOption) (*PartitionStates, error)
 	GetPromotionOutcomes(ctx context.Context, in *GetPromotionOutcomesRequest, opts ...grpc.CallOption) (*PromotionOutcomes, error)
 	GetBlockVerification(ctx context.Context, in *L3BlockRef, opts ...grpc.CallOption) (*BlockVerification, error)
+	// The committed history checkpoints, oldest first: what history pruning
+	// removed and where its archive object is, for the offline history
+	// verifier. Empty while history_retain_blocks is unset or before the
+	// first prune.
+	GetHistoryCheckpoints(ctx context.Context, in *GetHistoryCheckpointsRequest, opts ...grpc.CallOption) (*HistoryCheckpoints, error)
 }
 
 type safeStateClient struct {
@@ -1407,6 +1413,16 @@ func (c *safeStateClient) GetBlockVerification(ctx context.Context, in *L3BlockR
 	return out, nil
 }
 
+func (c *safeStateClient) GetHistoryCheckpoints(ctx context.Context, in *GetHistoryCheckpointsRequest, opts ...grpc.CallOption) (*HistoryCheckpoints, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HistoryCheckpoints)
+	err := c.cc.Invoke(ctx, SafeState_GetHistoryCheckpoints_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SafeStateServer is the server API for SafeState service.
 // All implementations must embed UnimplementedSafeStateServer
 // for forward compatibility.
@@ -1429,6 +1445,11 @@ type SafeStateServer interface {
 	GetPartitionStates(context.Context, *GetPartitionStatesRequest) (*PartitionStates, error)
 	GetPromotionOutcomes(context.Context, *GetPromotionOutcomesRequest) (*PromotionOutcomes, error)
 	GetBlockVerification(context.Context, *L3BlockRef) (*BlockVerification, error)
+	// The committed history checkpoints, oldest first: what history pruning
+	// removed and where its archive object is, for the offline history
+	// verifier. Empty while history_retain_blocks is unset or before the
+	// first prune.
+	GetHistoryCheckpoints(context.Context, *GetHistoryCheckpointsRequest) (*HistoryCheckpoints, error)
 	mustEmbedUnimplementedSafeStateServer()
 }
 
@@ -1468,6 +1489,9 @@ func (UnimplementedSafeStateServer) GetPromotionOutcomes(context.Context, *GetPr
 }
 func (UnimplementedSafeStateServer) GetBlockVerification(context.Context, *L3BlockRef) (*BlockVerification, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBlockVerification not implemented")
+}
+func (UnimplementedSafeStateServer) GetHistoryCheckpoints(context.Context, *GetHistoryCheckpointsRequest) (*HistoryCheckpoints, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetHistoryCheckpoints not implemented")
 }
 func (UnimplementedSafeStateServer) mustEmbedUnimplementedSafeStateServer() {}
 func (UnimplementedSafeStateServer) testEmbeddedByValue()                   {}
@@ -1670,6 +1694,24 @@ func _SafeState_GetBlockVerification_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SafeState_GetHistoryCheckpoints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetHistoryCheckpointsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SafeStateServer).GetHistoryCheckpoints(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SafeState_GetHistoryCheckpoints_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SafeStateServer).GetHistoryCheckpoints(ctx, req.(*GetHistoryCheckpointsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SafeState_ServiceDesc is the grpc.ServiceDesc for SafeState service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1716,6 +1758,10 @@ var SafeState_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetBlockVerification",
 			Handler:    _SafeState_GetBlockVerification_Handler,
+		},
+		{
+			MethodName: "GetHistoryCheckpoints",
+			Handler:    _SafeState_GetHistoryCheckpoints_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

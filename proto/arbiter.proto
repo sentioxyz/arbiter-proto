@@ -1022,6 +1022,37 @@ service SafeState {
   rpc GetPartitionStates (GetPartitionStatesRequest) returns (PartitionStates) {}
   rpc GetPromotionOutcomes (GetPromotionOutcomesRequest) returns (PromotionOutcomes) {}
   rpc GetBlockVerification (L3BlockRef) returns (BlockVerification) {}
+  // The committed history checkpoints, oldest first: what history pruning
+  // removed and where its archive object is, for the offline history
+  // verifier. Empty while history_retain_blocks is unset or before the
+  // first prune.
+  rpc GetHistoryCheckpoints (GetHistoryCheckpointsRequest) returns (HistoryCheckpoints) {}
+}
+
+message GetHistoryCheckpointsRequest {}
+
+// HistoryCheckpoint is one applied PruneHistoryCmd: the last block it
+// covers, the chain hash of that block's header (the anchor the retained L3
+// chain continues from), the archive object at the payload store, the digest
+// of the canonical record set it removed, the digest of the previous
+// checkpoint (empty for the first), and how many records of each kind it
+// removed or compacted.
+message HistoryCheckpoint {
+  uint64 through_block_seq = 1;
+  string l3_hash = 2;
+  string archive_ref = 3;
+  string archive_sha256 = 4;
+  string record_set_digest = 5;
+  string prev_checkpoint = 6;
+  uint64 statements = 7;
+  uint64 verifications = 8;
+  uint64 manifests = 9;
+  uint64 promotions = 10;
+  uint64 cleanup_audits = 11;
+}
+
+message HistoryCheckpoints {
+  repeated HistoryCheckpoint checkpoints = 1;
 }
 
 // Membership is called by SNodes / Verifiers.
