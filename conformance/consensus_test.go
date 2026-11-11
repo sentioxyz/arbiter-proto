@@ -27,8 +27,8 @@ func TestConsensusUpdateContract(t *testing.T) {
 			[]protoreflect.Name{"node_id", "protocol_version", "updates_enabled", "features", "voter_ed25519_pubkey"},
 			[]protoreflect.Kind{protoreflect.StringKind, protoreflect.Uint32Kind, protoreflect.BoolKind, protoreflect.StringKind, protoreflect.BytesKind}},
 		{&pb.ConsensusParamsState{},
-			[]protoreflect.Name{"protocol_version", "network_id", "genesis_snapshot_id", "bootstrap", "current", "epoch", "params_digest", "promotion_seq", "stage3_state"},
-			[]protoreflect.Kind{protoreflect.Uint32Kind, protoreflect.StringKind, protoreflect.StringKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.Uint64Kind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.MessageKind}},
+			[]protoreflect.Name{"protocol_version", "network_id", "genesis_snapshot_id", "bootstrap", "current", "epoch", "params_digest", "promotion_seq", "stage3_state", "schema_snapshot_id", "executor_profile_id"},
+			[]protoreflect.Kind{protoreflect.Uint32Kind, protoreflect.StringKind, protoreflect.StringKind, protoreflect.MessageKind, protoreflect.MessageKind, protoreflect.Uint64Kind, protoreflect.StringKind, protoreflect.Uint64Kind, protoreflect.MessageKind, protoreflect.StringKind, protoreflect.StringKind}},
 	}
 	for _, tt := range tests {
 		d := tt.message.ProtoReflect().Descriptor()

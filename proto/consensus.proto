@@ -343,6 +343,11 @@ message ConsensusParamsState {
   // The v21 activation and switch cutovers (plan S3-E1 K64); absent before the
   // activation.
   Stage3StateView stage3_state = 9;
+  // The network's immutable schema and executor identity, the two fields
+  // besides network_id that the immutable consensus digest binds. They never
+  // change after genesis; servers before these fields leave them empty.
+  string schema_snapshot_id = 10;
+  string executor_profile_id = 11;
 }
 
 // NodeFeatureEntry joins one non-evicted verifier or SNode registration with
