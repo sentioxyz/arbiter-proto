@@ -2563,9 +2563,15 @@ type L3Block struct {
 	Header    *L3BlockHeader         `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
 	ChainHash string                 `protobuf:"bytes,2,opt,name=chain_hash,json=chainHash,proto3" json:"chain_hash,omitempty"`
 	// Envelopes in statement_seq order (statement_seq_start .. +statement_count).
-	Statements    []*StatementEnvelopeV2 `protobuf:"bytes,3,rep,name=statements,proto3" json:"statements,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Statements []*StatementEnvelopeV2 `protobuf:"bytes,3,rep,name=statements,proto3" json:"statements,omitempty"`
+	// True when the block's statements were pruned with the history at or
+	// below checkpoint_through_block_seq: the header and chain hash are
+	// answered, statements is empty, and the statements are in the archive.
+	Pruned bool `protobuf:"varint,4,opt,name=pruned,proto3" json:"pruned,omitempty"`
+	// The through_block_seq of the newest history checkpoint when pruned.
+	CheckpointThroughBlockSeq uint64 `protobuf:"varint,5,opt,name=checkpoint_through_block_seq,json=checkpointThroughBlockSeq,proto3" json:"checkpoint_through_block_seq,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
 }
 
 func (x *L3Block) Reset() {
@@ -2617,6 +2623,20 @@ func (x *L3Block) GetStatements() []*StatementEnvelopeV2 {
 		return x.Statements
 	}
 	return nil
+}
+
+func (x *L3Block) GetPruned() bool {
+	if x != nil {
+		return x.Pruned
+	}
+	return false
+}
+
+func (x *L3Block) GetCheckpointThroughBlockSeq() uint64 {
+	if x != nil {
+		return x.CheckpointThroughBlockSeq
+	}
+	return 0
 }
 
 // NodeRegistration enters a data-plane node into FSM membership (§4.1
@@ -3066,9 +3086,17 @@ type StatementStatus struct {
 	Status  string `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
 	RcBound bool   `protobuf:"varint,4,opt,name=rc_bound,json=rcBound,proto3" json:"rc_bound,omitempty"`
 	// The statement's assigned source when rc_bound.
-	BoundSource   string `protobuf:"bytes,5,opt,name=bound_source,json=boundSource,proto3" json:"bound_source,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	BoundSource string `protobuf:"bytes,5,opt,name=bound_source,json=boundSource,proto3" json:"bound_source,omitempty"`
+	// True when the statement was sequenced and is safe, but its record was
+	// pruned with the history at or below checkpoint_through_block_seq: found
+	// is true, status is "Safe", and statement_seq, rc_bound and bound_source
+	// are unset. A client must not resend it (the spent-ids accumulator refuses
+	// a resend as a duplicate client_seq).
+	Pruned bool `protobuf:"varint,6,opt,name=pruned,proto3" json:"pruned,omitempty"`
+	// The through_block_seq of the newest history checkpoint when pruned.
+	CheckpointThroughBlockSeq uint64 `protobuf:"varint,7,opt,name=checkpoint_through_block_seq,json=checkpointThroughBlockSeq,proto3" json:"checkpoint_through_block_seq,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
 }
 
 func (x *StatementStatus) Reset() {
@@ -3134,6 +3162,20 @@ func (x *StatementStatus) GetBoundSource() string {
 		return x.BoundSource
 	}
 	return ""
+}
+
+func (x *StatementStatus) GetPruned() bool {
+	if x != nil {
+		return x.Pruned
+	}
+	return false
+}
+
+func (x *StatementStatus) GetCheckpointThroughBlockSeq() uint64 {
+	if x != nil {
+		return x.CheckpointThroughBlockSeq
+	}
+	return 0
 }
 
 // AnchorFinalityAttestation is one enrolled voter's signed judgment that a
@@ -3790,8 +3832,14 @@ type PromotionOutcome struct {
 	// A cleanup of this promotion's promoted hg_unsafe parts is scheduled and
 	// not acknowledged yet.
 	CleanupPending bool `protobuf:"varint,13,opt,name=cleanup_pending,json=cleanupPending,proto3" json:"cleanup_pending,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// True when the promotion was acknowledged at or below a history
+	// checkpoint and compacted: promote carries only the table and partition,
+	// statement_seqs, authority_jws, ack and ack_jws are unset, and the full
+	// record is in the archive. block_seq, track, source_node, the epochs and
+	// acked stay answered.
+	Pruned        bool `protobuf:"varint,14,opt,name=pruned,proto3" json:"pruned,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PromotionOutcome) Reset() {
@@ -3911,6 +3959,13 @@ func (x *PromotionOutcome) GetAckEpoch() uint64 {
 func (x *PromotionOutcome) GetCleanupPending() bool {
 	if x != nil {
 		return x.CleanupPending
+	}
+	return false
+}
+
+func (x *PromotionOutcome) GetPruned() bool {
+	if x != nil {
+		return x.Pruned
 	}
 	return false
 }
@@ -5855,14 +5910,16 @@ const file_arbiter_proto_rawDesc = "" +
 	"\n" +
 	"L3BlockRef\x12 \n" +
 	"\fl3_block_seq\x18\x01 \x01(\x04R\n" +
-	"l3BlockSeq\"\x96\x01\n" +
+	"l3BlockSeq\"\xef\x01\n" +
 	"\aL3Block\x12.\n" +
 	"\x06header\x18\x01 \x01(\v2\x16.arbiter.L3BlockHeaderR\x06header\x12\x1d\n" +
 	"\n" +
 	"chain_hash\x18\x02 \x01(\tR\tchainHash\x12<\n" +
 	"\n" +
 	"statements\x18\x03 \x03(\v2\x1c.arbiter.StatementEnvelopeV2R\n" +
-	"statements\"\xab\x02\n" +
+	"statements\x12\x16\n" +
+	"\x06pruned\x18\x04 \x01(\bR\x06pruned\x12?\n" +
+	"\x1ccheckpoint_through_block_seq\x18\x05 \x01(\x04R\x19checkpointThroughBlockSeq\"\xab\x02\n" +
 	"\x10NodeRegistration\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12'\n" +
 	"\x05roles\x18\x02 \x03(\x0e2\x11.arbiter.NodeRoleR\x05roles\x12%\n" +
@@ -5891,13 +5948,15 @@ const file_arbiter_proto_rawDesc = "" +
 	"\vleader_addr\x18\x01 \x01(\tR\n" +
 	"leaderAddr\">\n" +
 	"\x19GetStatementStatusRequest\x12!\n" +
-	"\fstatement_id\x18\x01 \x01(\tR\vstatementId\"\xa2\x01\n" +
+	"\fstatement_id\x18\x01 \x01(\tR\vstatementId\"\xfb\x01\n" +
 	"\x0fStatementStatus\x12\x14\n" +
 	"\x05found\x18\x01 \x01(\bR\x05found\x12#\n" +
 	"\rstatement_seq\x18\x02 \x01(\x04R\fstatementSeq\x12\x16\n" +
 	"\x06status\x18\x03 \x01(\tR\x06status\x12\x19\n" +
 	"\brc_bound\x18\x04 \x01(\bR\arcBound\x12!\n" +
-	"\fbound_source\x18\x05 \x01(\tR\vboundSource\"\x9e\x02\n" +
+	"\fbound_source\x18\x05 \x01(\tR\vboundSource\x12\x16\n" +
+	"\x06pruned\x18\x06 \x01(\bR\x06pruned\x12?\n" +
+	"\x1ccheckpoint_through_block_seq\x18\a \x01(\x04R\x19checkpointThroughBlockSeq\"\x9e\x02\n" +
 	"\x19AnchorFinalityAttestation\x12\x19\n" +
 	"\bvoter_id\x18\x01 \x01(\tR\avoterId\x12 \n" +
 	"\fl3_block_seq\x18\x02 \x01(\x04R\n" +
@@ -5948,7 +6007,7 @@ const file_arbiter_proto_rawDesc = "" +
 	"\btable_id\x18\x01 \x01(\tR\atableId\x12!\n" +
 	"\fpartition_id\x18\x02 \x01(\tR\vpartitionId\x12.\n" +
 	"\x13after_promotion_seq\x18\x03 \x01(\x04R\x11afterPromotionSeq\x12\x14\n" +
-	"\x05limit\x18\x04 \x01(\rR\x05limit\"\xee\x03\n" +
+	"\x05limit\x18\x04 \x01(\rR\x05limit\"\x86\x04\n" +
 	"\x10PromotionOutcome\x12#\n" +
 	"\rpromotion_seq\x18\x01 \x01(\x04R\fpromotionSeq\x127\n" +
 	"\apromote\x18\x02 \x01(\v2\x1d.arbiter.PromoteSafePartitionR\apromote\x12%\n" +
@@ -5964,7 +6023,8 @@ const file_arbiter_proto_rawDesc = "" +
 	" \x01(\v2\x15.arbiter.PromotionAckR\x03ack\x12\x17\n" +
 	"\aack_jws\x18\v \x01(\tR\x06ackJws\x12\x1b\n" +
 	"\tack_epoch\x18\f \x01(\x04R\backEpoch\x12'\n" +
-	"\x0fcleanup_pending\x18\r \x01(\bR\x0ecleanupPending\"\xa8\x01\n" +
+	"\x0fcleanup_pending\x18\r \x01(\bR\x0ecleanupPending\x12\x16\n" +
+	"\x06pruned\x18\x0e \x01(\bR\x06pruned\"\xa8\x01\n" +
 	"\x11PromotionOutcomes\x12#\n" +
 	"\rpromotion_seq\x18\x01 \x01(\x04R\fpromotionSeq\x125\n" +
 	"\boutcomes\x18\x02 \x03(\v2\x19.arbiter.PromotionOutcomeR\boutcomes\x127\n" +

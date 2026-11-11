@@ -84,6 +84,9 @@ message ConsensusMutableParams {
   // sets it, then carried non-empty by every update. While empty, operational
   // commands verify against authority_addresses.
   repeated string operations_authority_addresses = 21;
+  // History pruning: 0 until one authority-signed update after
+  // custody_frontier sets it, then carried by every update and never lowered.
+  uint64 history_retain_blocks = 22;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -301,6 +304,20 @@ message ConsensusParamsUpdate {
   // the field before an update sets it. Absent from the params digest while
   // empty, so earlier digests are unchanged.
   repeated string operations_authority_addresses = 26;
+  // History pruning and archival (internal design doc
+  // 2026-11-10-arbiter-v22-history-pruning-design): the retention window K in
+  // safe blocks. 0 means never set: nothing is ever pruned. Raise-only: once
+  // set every update must carry a value at least as large, so the window can
+  // grow but never shrink. It needs custody_frontier (earlier or in the same
+  // update), and with it the whole chain of snapshot switches before it. It
+  // is never set at genesis. While it is set the leader archives sealed
+  // history below the prune horizon to the payload store (PIN_PURPOSE_ARCHIVE)
+  // and proposes PruneHistoryCmd (Raft tag 46); Apply recomputes the horizon,
+  // with this window, from committed state. From its commit on, snapshots are
+  // written as v26, so every voter must run a binary that knows the field and
+  // the command before an update sets it. It joins the params digest only
+  // once set, so earlier digests are unchanged.
+  uint64 history_retain_blocks = 27;
 }
 
 // VoterEntry is one enrolled Raft voter. consent_sig is lowercase hex of the

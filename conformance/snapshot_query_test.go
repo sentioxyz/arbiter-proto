@@ -694,7 +694,8 @@ func TestSnapshotQueryLedgerCoversEveryNewMessage(t *testing.T) {
 				_, anchor := anchorFinalityMessageFields[name]
 				_, lease := membershipLeaseMessageFields[name]
 				_, custody := custodyFrontierMessageFields[name]
-				if _, consensus := stage3ConsensusFields[name]; !covered && !stage3 && !consensus && !anchor && !lease && !custody {
+				_, history := historyRetentionMessageFields[name]
+				if _, consensus := stage3ConsensusFields[name]; !covered && !stage3 && !consensus && !anchor && !lease && !custody && !history {
 					t.Errorf("new message %s lacks every-field wire coverage", name)
 				}
 			}

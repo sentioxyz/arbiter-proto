@@ -31,6 +31,7 @@ func operationsAuthorityList(number int32) *descriptorpb.FieldDescriptorProto {
 // older baseline comparisons see the message as it was before.
 func stripOperationsAuthorityField(t *testing.T, d *descriptorpb.DescriptorProto) {
 	t.Helper()
+	stripHistoryRetentionFields(t, d)
 	want, ok := operationsAuthorityFields[d.GetName()]
 	if !ok {
 		return
@@ -65,8 +66,10 @@ func TestOperationsAuthorityFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.StringKind || f.IsList() != tc.repeated || f.HasOptionalKeyword() || f.ContainingOneof() != nil {
 				t.Fatalf("field = %v, want plain string number %d repeated %v", f, tc.number, tc.repeated)
 			}
-			if got := d.Fields().Len(); got != int(tc.number) {
-				t.Fatalf("field count = %d, want %d (%s is the last field)", got, tc.number, tc.name)
+			// history_retain_blocks and the read flags of history pruning are
+			// the only fields appended after it.
+			if got := d.Fields().Len(); got != int(tc.number)+len(historyRetentionFields[string(d.Name())]) {
+				t.Fatalf("field count = %d, want %d plus the history pruning fields", got, tc.number)
 			}
 		})
 	}

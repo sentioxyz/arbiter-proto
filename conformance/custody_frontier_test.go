@@ -88,9 +88,10 @@ func TestCustodyFrontierFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.BoolKind || f.IsList() || f.HasOptionalKeyword() || f.ContainingOneof() != nil {
 				t.Fatalf("field = %v, want plain bool number %d", f, tc.number)
 			}
-			// operations_authority_addresses is the only field appended after it.
-			if got := d.Fields().Len(); got != int(tc.number)+1 {
-				t.Fatalf("field count = %d, want %d (only operations_authority_addresses follows custody_frontier)", got, tc.number+1)
+			// operations_authority_addresses and history_retain_blocks are the only
+			// fields appended after it.
+			if got := d.Fields().Len(); got != int(tc.number)+2 {
+				t.Fatalf("field count = %d, want %d (only operations_authority_addresses and history_retain_blocks follow custody_frontier)", got, tc.number+2)
 			}
 		})
 	}

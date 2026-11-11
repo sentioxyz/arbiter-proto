@@ -251,6 +251,10 @@ message RaftCommand {
     // committed, because a voter whose decoder lacks this tag refuses the
     // command.
     RecordCustodyProgressCmd record_custody_progress = 45;
+    // History pruning: the leader's prune of sealed history it has archived,
+    // proposed only after the history_retain_blocks parameter is committed,
+    // because a voter whose decoder lacks this tag refuses the command.
+    PruneHistoryCmd prune_history = 46;
   }
 }
 
@@ -283,6 +287,31 @@ message CustodyMark {
 // ignores a mark at or below the block's recorded stage.
 message RecordCustodyProgressCmd {
   repeated CustodyMark marks = 1;
+}
+
+// PruneHistoryCmd removes or compacts the sealed history of every block at or
+// below through_block_seq and appends a history checkpoint. The leader
+// proposes it without a signature after it has written the archive object
+// (every removed or compacted record in full, in canonical encoding) to the
+// payload store, read it back and pinned it under PIN_PURPOSE_ARCHIVE. Apply
+// never reads the payload store: it recomputes the prune horizon from
+// committed state and refuses a through_block_seq beyond it, and it
+// recomputes the digest of the canonical record set the prune removes and
+// refuses a record_set_digest that differs. So a forged or early prune can
+// remove nothing the horizon still needs, and can name no other content;
+// only the availability of the archive object depends on the leader, which
+// an offline verifier checks.
+message PruneHistoryCmd {
+  // The last block the prune covers; above the previous checkpoint.
+  uint64 through_block_seq = 1;
+  // The payload store ref of the archive object.
+  string archive_ref = 2;
+  // "0x" + hex(SHA-256) of the archive object bytes: its content identity at
+  // the payload store.
+  string archive_sha256 = 3;
+  // "0x" + hex(SHA-256) of the canonical record set the prune removes or
+  // compacts, which Apply recomputes.
+  string record_set_digest = 4;
 }
 
 // RenewNodeLeaseCmd records one node's lease renewal; Apply verifies the

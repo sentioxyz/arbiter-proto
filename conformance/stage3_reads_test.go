@@ -27,7 +27,7 @@ var stage3Fields = map[string]string{
 	"PartitionStateEntry":           "table_id:string partition_id:string base_safe_snapshot_id:string base_partition_root:string publish_seq:uint64 safe_parts:[]PartManifestEntry promoted_unsafe_part_row_lthashes:[]string unacked_promotion_seq:uint64 last_acked_promotion_seq:uint64 inventory_unrefreshed:bool",
 	"PartitionStates":               "promotion_seq:uint64 safe_watermark:SafeWatermark partitions:[]PartitionStateEntry",
 	"GetPromotionOutcomesRequest":   "table_id:string partition_id:string after_promotion_seq:uint64 limit:uint32",
-	"PromotionOutcome":              "promotion_seq:uint64 promote:PromoteSafePartition statement_seqs:[]uint64 block_seq:uint64 track:L3BlockTrack source_node:string authority_jws:string authority_epoch:uint64 acked:bool ack:PromotionAck ack_jws:string ack_epoch:uint64 cleanup_pending:bool",
+	"PromotionOutcome":              "promotion_seq:uint64 promote:PromoteSafePartition statement_seqs:[]uint64 block_seq:uint64 track:L3BlockTrack source_node:string authority_jws:string authority_epoch:uint64 acked:bool ack:PromotionAck ack_jws:string ack_epoch:uint64 cleanup_pending:bool pruned:bool",
 	"PromotionOutcomes":             "promotion_seq:uint64 outcomes:[]PromotionOutcome next_after_promotion_seq:uint64",
 	"StatementCandidates":           "statement_seq:uint64 statement_id:string status:string source_node:string rc_bound:bool source_claim_root:string candidate_parts:[]CandidatePart partition_new_part_sums:[]PartitionLtHashSum unpromoted_part_row_lthashes:[]string",
 	"VerifierEvidence":              "replica_id:string attestation:ReplayAttestation byte_side_scan:ByteSideScanMsg evaluated:bool check1_root_match:bool check2_partition_match:bool check3_byte_side_match:bool pass:bool",
@@ -282,12 +282,12 @@ func TestStage3MessagesAreNotRaftReachable(t *testing.T) {
 		t.Fatal("PrepareConsensusUpdateRequest walk does not reach its draft and mode")
 	}
 	cmd := raft.Oneofs().ByName("cmd")
-	if cmd == nil || raft.Fields().Len() != 44 || cmd.Fields().Len() != 44 {
-		t.Fatalf("RaftCommand has %d fields, want its 44 oneof tags", raft.Fields().Len())
+	if cmd == nil || raft.Fields().Len() != 45 || cmd.Fields().Len() != 45 {
+		t.Fatalf("RaftCommand has %d fields, want its 45 oneof tags", raft.Fields().Len())
 	}
-	for n := protoreflect.FieldNumber(1); n <= 45; n++ {
+	for n := protoreflect.FieldNumber(1); n <= 46; n++ {
 		if f := raft.Fields().ByNumber(n); (f == nil) != (n == 29) {
-			t.Fatalf("RaftCommand tag %d = %v; want tags 1-28 and 30-45 only", n, f)
+			t.Fatalf("RaftCommand tag %d = %v; want tags 1-28 and 30-46 only", n, f)
 		}
 	}
 	update := (&pb.UpdateConsensusParamsCmd{}).ProtoReflect().Descriptor().Fields()

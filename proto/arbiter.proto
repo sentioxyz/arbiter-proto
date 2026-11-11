@@ -492,6 +492,12 @@ message L3Block {
   string chain_hash = 2;
   // Envelopes in statement_seq order (statement_seq_start .. +statement_count).
   repeated StatementEnvelopeV2 statements = 3;
+  // True when the block's statements were pruned with the history at or
+  // below checkpoint_through_block_seq: the header and chain hash are
+  // answered, statements is empty, and the statements are in the archive.
+  bool pruned = 4;
+  // The through_block_seq of the newest history checkpoint when pruned.
+  uint64 checkpoint_through_block_seq = 5;
 }
 
 enum NodeRole {
@@ -615,6 +621,14 @@ message StatementStatus {
   bool rc_bound = 4;
   // The statement's assigned source when rc_bound.
   string bound_source = 5;
+  // True when the statement was sequenced and is safe, but its record was
+  // pruned with the history at or below checkpoint_through_block_seq: found
+  // is true, status is "Safe", and statement_seq, rc_bound and bound_source
+  // are unset. A client must not resend it (the spent-ids accumulator refuses
+  // a resend as a duplicate client_seq).
+  bool pruned = 6;
+  // The through_block_seq of the newest history checkpoint when pruned.
+  uint64 checkpoint_through_block_seq = 7;
 }
 
 // ============================================================
@@ -861,6 +875,12 @@ message PromotionOutcome {
   // A cleanup of this promotion's promoted hg_unsafe parts is scheduled and
   // not acknowledged yet.
   bool cleanup_pending = 13;
+  // True when the promotion was acknowledged at or below a history
+  // checkpoint and compacted: promote carries only the table and partition,
+  // statement_seqs, authority_jws, ack and ack_jws are unset, and the full
+  // record is in the archive. block_seq, track, source_node, the epochs and
+  // acked stay answered.
+  bool pruned = 14;
 }
 
 // PromotionOutcomes answers SafeState.GetPromotionOutcomes.
