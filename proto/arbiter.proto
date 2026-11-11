@@ -492,6 +492,12 @@ message L3Block {
   string chain_hash = 2;
   // Envelopes in statement_seq order (statement_seq_start .. +statement_count).
   repeated StatementEnvelopeV2 statements = 3;
+  // True when the block's statements were pruned with the history at or
+  // below checkpoint_through_block_seq: the header and chain hash are
+  // answered, statements is empty, and the statements are in the archive.
+  bool pruned = 4;
+  // The through_block_seq of the newest history checkpoint when pruned.
+  uint64 checkpoint_through_block_seq = 5;
 }
 
 enum NodeRole {
@@ -615,6 +621,14 @@ message StatementStatus {
   bool rc_bound = 4;
   // The statement's assigned source when rc_bound.
   string bound_source = 5;
+  // True when the statement was sequenced and is safe, but its record was
+  // pruned with the history at or below checkpoint_through_block_seq: found
+  // is true, status is "Safe", and statement_seq, rc_bound and bound_source
+  // are unset. A client must not resend it (the spent-ids accumulator refuses
+  // a resend as a duplicate client_seq).
+  bool pruned = 6;
+  // The through_block_seq of the newest history checkpoint when pruned.
+  uint64 checkpoint_through_block_seq = 7;
 }
 
 // ============================================================
@@ -861,6 +875,12 @@ message PromotionOutcome {
   // A cleanup of this promotion's promoted hg_unsafe parts is scheduled and
   // not acknowledged yet.
   bool cleanup_pending = 13;
+  // True when the promotion was acknowledged at or below a history
+  // checkpoint and compacted: promote carries only the table and partition,
+  // statement_seqs, authority_jws, ack and ack_jws are unset, and the full
+  // record is in the archive. block_seq, track, source_node, the epochs and
+  // acked stay answered.
+  bool pruned = 14;
 }
 
 // PromotionOutcomes answers SafeState.GetPromotionOutcomes.
@@ -1002,6 +1022,37 @@ service SafeState {
   rpc GetPartitionStates (GetPartitionStatesRequest) returns (PartitionStates) {}
   rpc GetPromotionOutcomes (GetPromotionOutcomesRequest) returns (PromotionOutcomes) {}
   rpc GetBlockVerification (L3BlockRef) returns (BlockVerification) {}
+  // The committed history checkpoints, oldest first: what history pruning
+  // removed and where its archive object is, for the offline history
+  // verifier. Empty while history_retain_blocks is unset or before the
+  // first prune.
+  rpc GetHistoryCheckpoints (GetHistoryCheckpointsRequest) returns (HistoryCheckpoints) {}
+}
+
+message GetHistoryCheckpointsRequest {}
+
+// HistoryCheckpoint is one applied PruneHistoryCmd: the last block it
+// covers, the chain hash of that block's header (the anchor the retained L3
+// chain continues from), the archive object at the payload store, the digest
+// of the canonical record set it removed, the digest of the previous
+// checkpoint (empty for the first), and how many records of each kind it
+// removed or compacted.
+message HistoryCheckpoint {
+  uint64 through_block_seq = 1;
+  string l3_hash = 2;
+  string archive_ref = 3;
+  string archive_sha256 = 4;
+  string record_set_digest = 5;
+  string prev_checkpoint = 6;
+  uint64 statements = 7;
+  uint64 verifications = 8;
+  uint64 manifests = 9;
+  uint64 promotions = 10;
+  uint64 cleanup_audits = 11;
+}
+
+message HistoryCheckpoints {
+  repeated HistoryCheckpoint checkpoints = 1;
 }
 
 // Membership is called by SNodes / Verifiers.

@@ -57,8 +57,8 @@ func TestSnapshotQueryTracksFieldNumbers(t *testing.T) {
 			}
 			// custody_frontier and operations_authority_addresses are the only
 			// fields appended after it.
-			if got := d.Fields().Len(); got != int(tc.number)+2 {
-				t.Fatalf("field count = %d, want %d (only custody_frontier and operations_authority_addresses follow snapshot_query_tracks)", got, tc.number+2)
+			if got := d.Fields().Len(); got != int(tc.number)+3 {
+				t.Fatalf("field count = %d, want %d (only custody_frontier and operations_authority_addresses and history_retain_blocks follow snapshot_query_tracks)", got, tc.number+3)
 			}
 		})
 	}

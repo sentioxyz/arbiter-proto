@@ -2563,9 +2563,15 @@ type L3Block struct {
 	Header    *L3BlockHeader         `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
 	ChainHash string                 `protobuf:"bytes,2,opt,name=chain_hash,json=chainHash,proto3" json:"chain_hash,omitempty"`
 	// Envelopes in statement_seq order (statement_seq_start .. +statement_count).
-	Statements    []*StatementEnvelopeV2 `protobuf:"bytes,3,rep,name=statements,proto3" json:"statements,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Statements []*StatementEnvelopeV2 `protobuf:"bytes,3,rep,name=statements,proto3" json:"statements,omitempty"`
+	// True when the block's statements were pruned with the history at or
+	// below checkpoint_through_block_seq: the header and chain hash are
+	// answered, statements is empty, and the statements are in the archive.
+	Pruned bool `protobuf:"varint,4,opt,name=pruned,proto3" json:"pruned,omitempty"`
+	// The through_block_seq of the newest history checkpoint when pruned.
+	CheckpointThroughBlockSeq uint64 `protobuf:"varint,5,opt,name=checkpoint_through_block_seq,json=checkpointThroughBlockSeq,proto3" json:"checkpoint_through_block_seq,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
 }
 
 func (x *L3Block) Reset() {
@@ -2617,6 +2623,20 @@ func (x *L3Block) GetStatements() []*StatementEnvelopeV2 {
 		return x.Statements
 	}
 	return nil
+}
+
+func (x *L3Block) GetPruned() bool {
+	if x != nil {
+		return x.Pruned
+	}
+	return false
+}
+
+func (x *L3Block) GetCheckpointThroughBlockSeq() uint64 {
+	if x != nil {
+		return x.CheckpointThroughBlockSeq
+	}
+	return 0
 }
 
 // NodeRegistration enters a data-plane node into FSM membership (§4.1
@@ -3066,9 +3086,17 @@ type StatementStatus struct {
 	Status  string `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
 	RcBound bool   `protobuf:"varint,4,opt,name=rc_bound,json=rcBound,proto3" json:"rc_bound,omitempty"`
 	// The statement's assigned source when rc_bound.
-	BoundSource   string `protobuf:"bytes,5,opt,name=bound_source,json=boundSource,proto3" json:"bound_source,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	BoundSource string `protobuf:"bytes,5,opt,name=bound_source,json=boundSource,proto3" json:"bound_source,omitempty"`
+	// True when the statement was sequenced and is safe, but its record was
+	// pruned with the history at or below checkpoint_through_block_seq: found
+	// is true, status is "Safe", and statement_seq, rc_bound and bound_source
+	// are unset. A client must not resend it (the spent-ids accumulator refuses
+	// a resend as a duplicate client_seq).
+	Pruned bool `protobuf:"varint,6,opt,name=pruned,proto3" json:"pruned,omitempty"`
+	// The through_block_seq of the newest history checkpoint when pruned.
+	CheckpointThroughBlockSeq uint64 `protobuf:"varint,7,opt,name=checkpoint_through_block_seq,json=checkpointThroughBlockSeq,proto3" json:"checkpoint_through_block_seq,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
 }
 
 func (x *StatementStatus) Reset() {
@@ -3134,6 +3162,20 @@ func (x *StatementStatus) GetBoundSource() string {
 		return x.BoundSource
 	}
 	return ""
+}
+
+func (x *StatementStatus) GetPruned() bool {
+	if x != nil {
+		return x.Pruned
+	}
+	return false
+}
+
+func (x *StatementStatus) GetCheckpointThroughBlockSeq() uint64 {
+	if x != nil {
+		return x.CheckpointThroughBlockSeq
+	}
+	return 0
 }
 
 // AnchorFinalityAttestation is one enrolled voter's signed judgment that a
@@ -3790,8 +3832,14 @@ type PromotionOutcome struct {
 	// A cleanup of this promotion's promoted hg_unsafe parts is scheduled and
 	// not acknowledged yet.
 	CleanupPending bool `protobuf:"varint,13,opt,name=cleanup_pending,json=cleanupPending,proto3" json:"cleanup_pending,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// True when the promotion was acknowledged at or below a history
+	// checkpoint and compacted: promote carries only the table and partition,
+	// statement_seqs, authority_jws, ack and ack_jws are unset, and the full
+	// record is in the archive. block_seq, track, source_node, the epochs and
+	// acked stay answered.
+	Pruned        bool `protobuf:"varint,14,opt,name=pruned,proto3" json:"pruned,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PromotionOutcome) Reset() {
@@ -3911,6 +3959,13 @@ func (x *PromotionOutcome) GetAckEpoch() uint64 {
 func (x *PromotionOutcome) GetCleanupPending() bool {
 	if x != nil {
 		return x.CleanupPending
+	}
+	return false
+}
+
+func (x *PromotionOutcome) GetPruned() bool {
+	if x != nil {
+		return x.Pruned
 	}
 	return false
 }
@@ -4591,6 +4646,216 @@ func (x *BlockReselection) GetAuthorityEpoch() uint64 {
 	return 0
 }
 
+type GetHistoryCheckpointsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetHistoryCheckpointsRequest) Reset() {
+	*x = GetHistoryCheckpointsRequest{}
+	mi := &file_arbiter_proto_msgTypes[52]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetHistoryCheckpointsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetHistoryCheckpointsRequest) ProtoMessage() {}
+
+func (x *GetHistoryCheckpointsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_arbiter_proto_msgTypes[52]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetHistoryCheckpointsRequest.ProtoReflect.Descriptor instead.
+func (*GetHistoryCheckpointsRequest) Descriptor() ([]byte, []int) {
+	return file_arbiter_proto_rawDescGZIP(), []int{52}
+}
+
+// HistoryCheckpoint is one applied PruneHistoryCmd: the last block it
+// covers, the chain hash of that block's header (the anchor the retained L3
+// chain continues from), the archive object at the payload store, the digest
+// of the canonical record set it removed, the digest of the previous
+// checkpoint (empty for the first), and how many records of each kind it
+// removed or compacted.
+type HistoryCheckpoint struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ThroughBlockSeq uint64                 `protobuf:"varint,1,opt,name=through_block_seq,json=throughBlockSeq,proto3" json:"through_block_seq,omitempty"`
+	L3Hash          string                 `protobuf:"bytes,2,opt,name=l3_hash,json=l3Hash,proto3" json:"l3_hash,omitempty"`
+	ArchiveRef      string                 `protobuf:"bytes,3,opt,name=archive_ref,json=archiveRef,proto3" json:"archive_ref,omitempty"`
+	ArchiveSha256   string                 `protobuf:"bytes,4,opt,name=archive_sha256,json=archiveSha256,proto3" json:"archive_sha256,omitempty"`
+	RecordSetDigest string                 `protobuf:"bytes,5,opt,name=record_set_digest,json=recordSetDigest,proto3" json:"record_set_digest,omitempty"`
+	PrevCheckpoint  string                 `protobuf:"bytes,6,opt,name=prev_checkpoint,json=prevCheckpoint,proto3" json:"prev_checkpoint,omitempty"`
+	Statements      uint64                 `protobuf:"varint,7,opt,name=statements,proto3" json:"statements,omitempty"`
+	Verifications   uint64                 `protobuf:"varint,8,opt,name=verifications,proto3" json:"verifications,omitempty"`
+	Manifests       uint64                 `protobuf:"varint,9,opt,name=manifests,proto3" json:"manifests,omitempty"`
+	Promotions      uint64                 `protobuf:"varint,10,opt,name=promotions,proto3" json:"promotions,omitempty"`
+	CleanupAudits   uint64                 `protobuf:"varint,11,opt,name=cleanup_audits,json=cleanupAudits,proto3" json:"cleanup_audits,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *HistoryCheckpoint) Reset() {
+	*x = HistoryCheckpoint{}
+	mi := &file_arbiter_proto_msgTypes[53]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HistoryCheckpoint) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HistoryCheckpoint) ProtoMessage() {}
+
+func (x *HistoryCheckpoint) ProtoReflect() protoreflect.Message {
+	mi := &file_arbiter_proto_msgTypes[53]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HistoryCheckpoint.ProtoReflect.Descriptor instead.
+func (*HistoryCheckpoint) Descriptor() ([]byte, []int) {
+	return file_arbiter_proto_rawDescGZIP(), []int{53}
+}
+
+func (x *HistoryCheckpoint) GetThroughBlockSeq() uint64 {
+	if x != nil {
+		return x.ThroughBlockSeq
+	}
+	return 0
+}
+
+func (x *HistoryCheckpoint) GetL3Hash() string {
+	if x != nil {
+		return x.L3Hash
+	}
+	return ""
+}
+
+func (x *HistoryCheckpoint) GetArchiveRef() string {
+	if x != nil {
+		return x.ArchiveRef
+	}
+	return ""
+}
+
+func (x *HistoryCheckpoint) GetArchiveSha256() string {
+	if x != nil {
+		return x.ArchiveSha256
+	}
+	return ""
+}
+
+func (x *HistoryCheckpoint) GetRecordSetDigest() string {
+	if x != nil {
+		return x.RecordSetDigest
+	}
+	return ""
+}
+
+func (x *HistoryCheckpoint) GetPrevCheckpoint() string {
+	if x != nil {
+		return x.PrevCheckpoint
+	}
+	return ""
+}
+
+func (x *HistoryCheckpoint) GetStatements() uint64 {
+	if x != nil {
+		return x.Statements
+	}
+	return 0
+}
+
+func (x *HistoryCheckpoint) GetVerifications() uint64 {
+	if x != nil {
+		return x.Verifications
+	}
+	return 0
+}
+
+func (x *HistoryCheckpoint) GetManifests() uint64 {
+	if x != nil {
+		return x.Manifests
+	}
+	return 0
+}
+
+func (x *HistoryCheckpoint) GetPromotions() uint64 {
+	if x != nil {
+		return x.Promotions
+	}
+	return 0
+}
+
+func (x *HistoryCheckpoint) GetCleanupAudits() uint64 {
+	if x != nil {
+		return x.CleanupAudits
+	}
+	return 0
+}
+
+type HistoryCheckpoints struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Checkpoints   []*HistoryCheckpoint   `protobuf:"bytes,1,rep,name=checkpoints,proto3" json:"checkpoints,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HistoryCheckpoints) Reset() {
+	*x = HistoryCheckpoints{}
+	mi := &file_arbiter_proto_msgTypes[54]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HistoryCheckpoints) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HistoryCheckpoints) ProtoMessage() {}
+
+func (x *HistoryCheckpoints) ProtoReflect() protoreflect.Message {
+	mi := &file_arbiter_proto_msgTypes[54]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HistoryCheckpoints.ProtoReflect.Descriptor instead.
+func (*HistoryCheckpoints) Descriptor() ([]byte, []int) {
+	return file_arbiter_proto_rawDescGZIP(), []int{54}
+}
+
+func (x *HistoryCheckpoints) GetCheckpoints() []*HistoryCheckpoint {
+	if x != nil {
+		return x.Checkpoints
+	}
+	return nil
+}
+
 // Signed with purpose housegate-snapshot-query-control-v1.
 // operation is acquire, lookup, or release; no client-selectable profile.
 type SnapshotQueryControlBinding struct {
@@ -4609,7 +4874,7 @@ type SnapshotQueryControlBinding struct {
 
 func (x *SnapshotQueryControlBinding) Reset() {
 	*x = SnapshotQueryControlBinding{}
-	mi := &file_arbiter_proto_msgTypes[52]
+	mi := &file_arbiter_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4621,7 +4886,7 @@ func (x *SnapshotQueryControlBinding) String() string {
 func (*SnapshotQueryControlBinding) ProtoMessage() {}
 
 func (x *SnapshotQueryControlBinding) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[52]
+	mi := &file_arbiter_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4634,7 +4899,7 @@ func (x *SnapshotQueryControlBinding) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotQueryControlBinding.ProtoReflect.Descriptor instead.
 func (*SnapshotQueryControlBinding) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{52}
+	return file_arbiter_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *SnapshotQueryControlBinding) GetOperation() string {
@@ -4715,7 +4980,7 @@ type AcquireSnapshotQueryRequest struct {
 
 func (x *AcquireSnapshotQueryRequest) Reset() {
 	*x = AcquireSnapshotQueryRequest{}
-	mi := &file_arbiter_proto_msgTypes[53]
+	mi := &file_arbiter_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4727,7 +4992,7 @@ func (x *AcquireSnapshotQueryRequest) String() string {
 func (*AcquireSnapshotQueryRequest) ProtoMessage() {}
 
 func (x *AcquireSnapshotQueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[53]
+	mi := &file_arbiter_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4740,7 +5005,7 @@ func (x *AcquireSnapshotQueryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AcquireSnapshotQueryRequest.ProtoReflect.Descriptor instead.
 func (*AcquireSnapshotQueryRequest) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{53}
+	return file_arbiter_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *AcquireSnapshotQueryRequest) GetNetworkId() string {
@@ -4815,7 +5080,7 @@ type GetSnapshotQueryReservationRequest struct {
 
 func (x *GetSnapshotQueryReservationRequest) Reset() {
 	*x = GetSnapshotQueryReservationRequest{}
-	mi := &file_arbiter_proto_msgTypes[54]
+	mi := &file_arbiter_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4827,7 +5092,7 @@ func (x *GetSnapshotQueryReservationRequest) String() string {
 func (*GetSnapshotQueryReservationRequest) ProtoMessage() {}
 
 func (x *GetSnapshotQueryReservationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[54]
+	mi := &file_arbiter_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4840,7 +5105,7 @@ func (x *GetSnapshotQueryReservationRequest) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use GetSnapshotQueryReservationRequest.ProtoReflect.Descriptor instead.
 func (*GetSnapshotQueryReservationRequest) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{54}
+	return file_arbiter_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *GetSnapshotQueryReservationRequest) GetNetworkId() string {
@@ -4930,7 +5195,7 @@ type ReleaseSnapshotQueryRequest struct {
 
 func (x *ReleaseSnapshotQueryRequest) Reset() {
 	*x = ReleaseSnapshotQueryRequest{}
-	mi := &file_arbiter_proto_msgTypes[55]
+	mi := &file_arbiter_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4942,7 +5207,7 @@ func (x *ReleaseSnapshotQueryRequest) String() string {
 func (*ReleaseSnapshotQueryRequest) ProtoMessage() {}
 
 func (x *ReleaseSnapshotQueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[55]
+	mi := &file_arbiter_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4955,7 +5220,7 @@ func (x *ReleaseSnapshotQueryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReleaseSnapshotQueryRequest.ProtoReflect.Descriptor instead.
 func (*ReleaseSnapshotQueryRequest) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{55}
+	return file_arbiter_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *ReleaseSnapshotQueryRequest) GetNetworkId() string {
@@ -5042,7 +5307,7 @@ type GetSnapshotQueryStatusRequest struct {
 
 func (x *GetSnapshotQueryStatusRequest) Reset() {
 	*x = GetSnapshotQueryStatusRequest{}
-	mi := &file_arbiter_proto_msgTypes[56]
+	mi := &file_arbiter_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5054,7 +5319,7 @@ func (x *GetSnapshotQueryStatusRequest) String() string {
 func (*GetSnapshotQueryStatusRequest) ProtoMessage() {}
 
 func (x *GetSnapshotQueryStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[56]
+	mi := &file_arbiter_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5067,7 +5332,7 @@ func (x *GetSnapshotQueryStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSnapshotQueryStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetSnapshotQueryStatusRequest) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{56}
+	return file_arbiter_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *GetSnapshotQueryStatusRequest) GetNetworkId() string {
@@ -5129,7 +5394,7 @@ type SnapshotBarrier struct {
 
 func (x *SnapshotBarrier) Reset() {
 	*x = SnapshotBarrier{}
-	mi := &file_arbiter_proto_msgTypes[57]
+	mi := &file_arbiter_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5141,7 +5406,7 @@ func (x *SnapshotBarrier) String() string {
 func (*SnapshotBarrier) ProtoMessage() {}
 
 func (x *SnapshotBarrier) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[57]
+	mi := &file_arbiter_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5154,7 +5419,7 @@ func (x *SnapshotBarrier) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotBarrier.ProtoReflect.Descriptor instead.
 func (*SnapshotBarrier) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{57}
+	return file_arbiter_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *SnapshotBarrier) GetState() string {
@@ -5218,7 +5483,7 @@ type SnapshotArtifactReadySubmission struct {
 
 func (x *SnapshotArtifactReadySubmission) Reset() {
 	*x = SnapshotArtifactReadySubmission{}
-	mi := &file_arbiter_proto_msgTypes[58]
+	mi := &file_arbiter_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5230,7 +5495,7 @@ func (x *SnapshotArtifactReadySubmission) String() string {
 func (*SnapshotArtifactReadySubmission) ProtoMessage() {}
 
 func (x *SnapshotArtifactReadySubmission) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[58]
+	mi := &file_arbiter_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5243,7 +5508,7 @@ func (x *SnapshotArtifactReadySubmission) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotArtifactReadySubmission.ProtoReflect.Descriptor instead.
 func (*SnapshotArtifactReadySubmission) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{58}
+	return file_arbiter_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *SnapshotArtifactReadySubmission) GetRecord() *SnapshotArtifactReady {
@@ -5272,7 +5537,7 @@ type GetPublishedSnapshotRequest struct {
 
 func (x *GetPublishedSnapshotRequest) Reset() {
 	*x = GetPublishedSnapshotRequest{}
-	mi := &file_arbiter_proto_msgTypes[59]
+	mi := &file_arbiter_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5284,7 +5549,7 @@ func (x *GetPublishedSnapshotRequest) String() string {
 func (*GetPublishedSnapshotRequest) ProtoMessage() {}
 
 func (x *GetPublishedSnapshotRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[59]
+	mi := &file_arbiter_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5297,7 +5562,7 @@ func (x *GetPublishedSnapshotRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPublishedSnapshotRequest.ProtoReflect.Descriptor instead.
 func (*GetPublishedSnapshotRequest) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{59}
+	return file_arbiter_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *GetPublishedSnapshotRequest) GetNetworkId() string {
@@ -5337,7 +5602,7 @@ type PublishedSnapshot struct {
 
 func (x *PublishedSnapshot) Reset() {
 	*x = PublishedSnapshot{}
-	mi := &file_arbiter_proto_msgTypes[60]
+	mi := &file_arbiter_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5349,7 +5614,7 @@ func (x *PublishedSnapshot) String() string {
 func (*PublishedSnapshot) ProtoMessage() {}
 
 func (x *PublishedSnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[60]
+	mi := &file_arbiter_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5362,7 +5627,7 @@ func (x *PublishedSnapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PublishedSnapshot.ProtoReflect.Descriptor instead.
 func (*PublishedSnapshot) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{60}
+	return file_arbiter_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *PublishedSnapshot) GetManifest() *SafeSnapshotManifest {
@@ -5407,7 +5672,7 @@ type GetQueryPolicyRequest struct {
 
 func (x *GetQueryPolicyRequest) Reset() {
 	*x = GetQueryPolicyRequest{}
-	mi := &file_arbiter_proto_msgTypes[61]
+	mi := &file_arbiter_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5419,7 +5684,7 @@ func (x *GetQueryPolicyRequest) String() string {
 func (*GetQueryPolicyRequest) ProtoMessage() {}
 
 func (x *GetQueryPolicyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[61]
+	mi := &file_arbiter_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5432,7 +5697,7 @@ func (x *GetQueryPolicyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetQueryPolicyRequest.ProtoReflect.Descriptor instead.
 func (*GetQueryPolicyRequest) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{61}
+	return file_arbiter_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *GetQueryPolicyRequest) GetNetworkId() string {
@@ -5478,7 +5743,7 @@ type QueryPolicyStatus struct {
 
 func (x *QueryPolicyStatus) Reset() {
 	*x = QueryPolicyStatus{}
-	mi := &file_arbiter_proto_msgTypes[62]
+	mi := &file_arbiter_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5490,7 +5755,7 @@ func (x *QueryPolicyStatus) String() string {
 func (*QueryPolicyStatus) ProtoMessage() {}
 
 func (x *QueryPolicyStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[62]
+	mi := &file_arbiter_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5503,7 +5768,7 @@ func (x *QueryPolicyStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryPolicyStatus.ProtoReflect.Descriptor instead.
 func (*QueryPolicyStatus) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{62}
+	return file_arbiter_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *QueryPolicyStatus) GetFound() bool {
@@ -5542,7 +5807,7 @@ type SnapshotArtifactEntry struct {
 
 func (x *SnapshotArtifactEntry) Reset() {
 	*x = SnapshotArtifactEntry{}
-	mi := &file_arbiter_proto_msgTypes[63]
+	mi := &file_arbiter_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5554,7 +5819,7 @@ func (x *SnapshotArtifactEntry) String() string {
 func (*SnapshotArtifactEntry) ProtoMessage() {}
 
 func (x *SnapshotArtifactEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[63]
+	mi := &file_arbiter_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5567,7 +5832,7 @@ func (x *SnapshotArtifactEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotArtifactEntry.ProtoReflect.Descriptor instead.
 func (*SnapshotArtifactEntry) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{63}
+	return file_arbiter_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *SnapshotArtifactEntry) GetTableId() string {
@@ -5623,7 +5888,7 @@ type SnapshotArtifactSet struct {
 
 func (x *SnapshotArtifactSet) Reset() {
 	*x = SnapshotArtifactSet{}
-	mi := &file_arbiter_proto_msgTypes[64]
+	mi := &file_arbiter_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5635,7 +5900,7 @@ func (x *SnapshotArtifactSet) String() string {
 func (*SnapshotArtifactSet) ProtoMessage() {}
 
 func (x *SnapshotArtifactSet) ProtoReflect() protoreflect.Message {
-	mi := &file_arbiter_proto_msgTypes[64]
+	mi := &file_arbiter_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5648,7 +5913,7 @@ func (x *SnapshotArtifactSet) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotArtifactSet.ProtoReflect.Descriptor instead.
 func (*SnapshotArtifactSet) Descriptor() ([]byte, []int) {
-	return file_arbiter_proto_rawDescGZIP(), []int{64}
+	return file_arbiter_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *SnapshotArtifactSet) GetParts() []*SnapshotArtifactEntry {
@@ -5855,14 +6120,16 @@ const file_arbiter_proto_rawDesc = "" +
 	"\n" +
 	"L3BlockRef\x12 \n" +
 	"\fl3_block_seq\x18\x01 \x01(\x04R\n" +
-	"l3BlockSeq\"\x96\x01\n" +
+	"l3BlockSeq\"\xef\x01\n" +
 	"\aL3Block\x12.\n" +
 	"\x06header\x18\x01 \x01(\v2\x16.arbiter.L3BlockHeaderR\x06header\x12\x1d\n" +
 	"\n" +
 	"chain_hash\x18\x02 \x01(\tR\tchainHash\x12<\n" +
 	"\n" +
 	"statements\x18\x03 \x03(\v2\x1c.arbiter.StatementEnvelopeV2R\n" +
-	"statements\"\xab\x02\n" +
+	"statements\x12\x16\n" +
+	"\x06pruned\x18\x04 \x01(\bR\x06pruned\x12?\n" +
+	"\x1ccheckpoint_through_block_seq\x18\x05 \x01(\x04R\x19checkpointThroughBlockSeq\"\xab\x02\n" +
 	"\x10NodeRegistration\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12'\n" +
 	"\x05roles\x18\x02 \x03(\x0e2\x11.arbiter.NodeRoleR\x05roles\x12%\n" +
@@ -5891,13 +6158,15 @@ const file_arbiter_proto_rawDesc = "" +
 	"\vleader_addr\x18\x01 \x01(\tR\n" +
 	"leaderAddr\">\n" +
 	"\x19GetStatementStatusRequest\x12!\n" +
-	"\fstatement_id\x18\x01 \x01(\tR\vstatementId\"\xa2\x01\n" +
+	"\fstatement_id\x18\x01 \x01(\tR\vstatementId\"\xfb\x01\n" +
 	"\x0fStatementStatus\x12\x14\n" +
 	"\x05found\x18\x01 \x01(\bR\x05found\x12#\n" +
 	"\rstatement_seq\x18\x02 \x01(\x04R\fstatementSeq\x12\x16\n" +
 	"\x06status\x18\x03 \x01(\tR\x06status\x12\x19\n" +
 	"\brc_bound\x18\x04 \x01(\bR\arcBound\x12!\n" +
-	"\fbound_source\x18\x05 \x01(\tR\vboundSource\"\x9e\x02\n" +
+	"\fbound_source\x18\x05 \x01(\tR\vboundSource\x12\x16\n" +
+	"\x06pruned\x18\x06 \x01(\bR\x06pruned\x12?\n" +
+	"\x1ccheckpoint_through_block_seq\x18\a \x01(\x04R\x19checkpointThroughBlockSeq\"\x9e\x02\n" +
 	"\x19AnchorFinalityAttestation\x12\x19\n" +
 	"\bvoter_id\x18\x01 \x01(\tR\avoterId\x12 \n" +
 	"\fl3_block_seq\x18\x02 \x01(\x04R\n" +
@@ -5948,7 +6217,7 @@ const file_arbiter_proto_rawDesc = "" +
 	"\btable_id\x18\x01 \x01(\tR\atableId\x12!\n" +
 	"\fpartition_id\x18\x02 \x01(\tR\vpartitionId\x12.\n" +
 	"\x13after_promotion_seq\x18\x03 \x01(\x04R\x11afterPromotionSeq\x12\x14\n" +
-	"\x05limit\x18\x04 \x01(\rR\x05limit\"\xee\x03\n" +
+	"\x05limit\x18\x04 \x01(\rR\x05limit\"\x86\x04\n" +
 	"\x10PromotionOutcome\x12#\n" +
 	"\rpromotion_seq\x18\x01 \x01(\x04R\fpromotionSeq\x127\n" +
 	"\apromote\x18\x02 \x01(\v2\x1d.arbiter.PromoteSafePartitionR\apromote\x12%\n" +
@@ -5964,7 +6233,8 @@ const file_arbiter_proto_rawDesc = "" +
 	" \x01(\v2\x15.arbiter.PromotionAckR\x03ack\x12\x17\n" +
 	"\aack_jws\x18\v \x01(\tR\x06ackJws\x12\x1b\n" +
 	"\tack_epoch\x18\f \x01(\x04R\backEpoch\x12'\n" +
-	"\x0fcleanup_pending\x18\r \x01(\bR\x0ecleanupPending\"\xa8\x01\n" +
+	"\x0fcleanup_pending\x18\r \x01(\bR\x0ecleanupPending\x12\x16\n" +
+	"\x06pruned\x18\x0e \x01(\bR\x06pruned\"\xa8\x01\n" +
 	"\x11PromotionOutcomes\x12#\n" +
 	"\rpromotion_seq\x18\x01 \x01(\x04R\fpromotionSeq\x125\n" +
 	"\boutcomes\x18\x02 \x03(\v2\x19.arbiter.PromotionOutcomeR\boutcomes\x127\n" +
@@ -6031,7 +6301,28 @@ const file_arbiter_proto_rawDesc = "" +
 	"\rring_position\x18\x03 \x01(\rR\fringPosition\x12!\n" +
 	"\fcursor_block\x18\x04 \x01(\x04R\vcursorBlock\x12#\n" +
 	"\rauthority_jws\x18\x05 \x01(\tR\fauthorityJws\x12'\n" +
-	"\x0fauthority_epoch\x18\x06 \x01(\x04R\x0eauthorityEpoch\"\xc1\x02\n" +
+	"\x0fauthority_epoch\x18\x06 \x01(\x04R\x0eauthorityEpoch\"\x1e\n" +
+	"\x1cGetHistoryCheckpointsRequest\"\xa0\x03\n" +
+	"\x11HistoryCheckpoint\x12*\n" +
+	"\x11through_block_seq\x18\x01 \x01(\x04R\x0fthroughBlockSeq\x12\x17\n" +
+	"\al3_hash\x18\x02 \x01(\tR\x06l3Hash\x12\x1f\n" +
+	"\varchive_ref\x18\x03 \x01(\tR\n" +
+	"archiveRef\x12%\n" +
+	"\x0earchive_sha256\x18\x04 \x01(\tR\rarchiveSha256\x12*\n" +
+	"\x11record_set_digest\x18\x05 \x01(\tR\x0frecordSetDigest\x12'\n" +
+	"\x0fprev_checkpoint\x18\x06 \x01(\tR\x0eprevCheckpoint\x12\x1e\n" +
+	"\n" +
+	"statements\x18\a \x01(\x04R\n" +
+	"statements\x12$\n" +
+	"\rverifications\x18\b \x01(\x04R\rverifications\x12\x1c\n" +
+	"\tmanifests\x18\t \x01(\x04R\tmanifests\x12\x1e\n" +
+	"\n" +
+	"promotions\x18\n" +
+	" \x01(\x04R\n" +
+	"promotions\x12%\n" +
+	"\x0ecleanup_audits\x18\v \x01(\x04R\rcleanupAudits\"R\n" +
+	"\x12HistoryCheckpoints\x12<\n" +
+	"\vcheckpoints\x18\x01 \x03(\v2\x1a.arbiter.HistoryCheckpointR\vcheckpoints\"\xc1\x02\n" +
 	"\x1bSnapshotQueryControlBinding\x12\x1c\n" +
 	"\toperation\x18\x01 \x01(\tR\toperation\x12\x1d\n" +
 	"\n" +
@@ -6187,7 +6478,7 @@ const file_arbiter_proto_rawDesc = "" +
 	"AckCleanup\x12\x13.arbiter.CleanupAck\x1a\f.arbiter.Ack\"\x00\x12B\n" +
 	"\x11SubmitTablePurged\x12\x1d.arbiter.RecordTablePurgedCmd\x1a\f.arbiter.Ack\"\x002e\n" +
 	"\fVoterGateway\x12U\n" +
-	"\x1fSubmitAnchorFinalityAttestation\x12\".arbiter.AnchorFinalityAttestation\x1a\f.arbiter.Ack\"\x002\x9e\x06\n" +
+	"\x1fSubmitAnchorFinalityAttestation\x12\".arbiter.AnchorFinalityAttestation\x1a\f.arbiter.Ack\"\x002\xfd\x06\n" +
 	"\tSafeState\x12N\n" +
 	"\x10GetSafeWatermark\x12 .arbiter.GetSafeWatermarkRequest\x1a\x16.arbiter.SafeWatermark\"\x00\x12D\n" +
 	"\vGetManifest\x12\x14.arbiter.SnapshotRef\x1a\x1d.arbiter.SafeSnapshotManifest\"\x00\x12H\n" +
@@ -6199,7 +6490,8 @@ const file_arbiter_proto_rawDesc = "" +
 	"\x11GetClientSeqState\x12!.arbiter.GetClientSeqStateRequest\x1a\x17.arbiter.ClientSeqState\"\x00\x12T\n" +
 	"\x12GetPartitionStates\x12\".arbiter.GetPartitionStatesRequest\x1a\x18.arbiter.PartitionStates\"\x00\x12Z\n" +
 	"\x14GetPromotionOutcomes\x12$.arbiter.GetPromotionOutcomesRequest\x1a\x1a.arbiter.PromotionOutcomes\"\x00\x12I\n" +
-	"\x14GetBlockVerification\x12\x13.arbiter.L3BlockRef\x1a\x1a.arbiter.BlockVerification\"\x002\xb4\x01\n" +
+	"\x14GetBlockVerification\x12\x13.arbiter.L3BlockRef\x1a\x1a.arbiter.BlockVerification\"\x00\x12]\n" +
+	"\x15GetHistoryCheckpoints\x12%.arbiter.GetHistoryCheckpointsRequest\x1a\x1b.arbiter.HistoryCheckpoints\"\x002\xb4\x01\n" +
 	"\n" +
 	"Membership\x129\n" +
 	"\fRegisterNode\x12\x19.arbiter.NodeRegistration\x1a\f.arbiter.Ack\"\x00\x12.\n" +
@@ -6220,7 +6512,7 @@ func file_arbiter_proto_rawDescGZIP() []byte {
 }
 
 var file_arbiter_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_arbiter_proto_msgTypes = make([]protoimpl.MessageInfo, 65)
+var file_arbiter_proto_msgTypes = make([]protoimpl.MessageInfo, 68)
 var file_arbiter_proto_goTypes = []any{
 	(StatementKind)(0),                         // 0: arbiter.StatementKind
 	(AdmissionCode)(0),                         // 1: arbiter.AdmissionCode
@@ -6277,36 +6569,39 @@ var file_arbiter_proto_goTypes = []any{
 	(*BlockVerification)(nil),                  // 52: arbiter.BlockVerification
 	(*BlockGroupRef)(nil),                      // 53: arbiter.BlockGroupRef
 	(*BlockReselection)(nil),                   // 54: arbiter.BlockReselection
-	(*SnapshotQueryControlBinding)(nil),        // 55: arbiter.SnapshotQueryControlBinding
-	(*AcquireSnapshotQueryRequest)(nil),        // 56: arbiter.AcquireSnapshotQueryRequest
-	(*GetSnapshotQueryReservationRequest)(nil), // 57: arbiter.GetSnapshotQueryReservationRequest
-	(*ReleaseSnapshotQueryRequest)(nil),        // 58: arbiter.ReleaseSnapshotQueryRequest
-	(*GetSnapshotQueryStatusRequest)(nil),      // 59: arbiter.GetSnapshotQueryStatusRequest
-	(*SnapshotBarrier)(nil),                    // 60: arbiter.SnapshotBarrier
-	(*SnapshotArtifactReadySubmission)(nil),    // 61: arbiter.SnapshotArtifactReadySubmission
-	(*GetPublishedSnapshotRequest)(nil),        // 62: arbiter.GetPublishedSnapshotRequest
-	(*PublishedSnapshot)(nil),                  // 63: arbiter.PublishedSnapshot
-	(*GetQueryPolicyRequest)(nil),              // 64: arbiter.GetQueryPolicyRequest
-	(*QueryPolicyStatus)(nil),                  // 65: arbiter.QueryPolicyStatus
-	(*SnapshotArtifactEntry)(nil),              // 66: arbiter.SnapshotArtifactEntry
-	(*SnapshotArtifactSet)(nil),                // 67: arbiter.SnapshotArtifactSet
-	(*ReplayJob)(nil),                          // 68: arbiter.ReplayJob
-	(*SnapshotQueryJob)(nil),                   // 69: arbiter.SnapshotQueryJob
-	(*PartManifestEntry)(nil),                  // 70: arbiter.PartManifestEntry
-	(*ReplayAttestation)(nil),                  // 71: arbiter.ReplayAttestation
-	(*SnapshotQueryReservation)(nil),           // 72: arbiter.SnapshotQueryReservation
-	(*SnapshotArtifactReady)(nil),              // 73: arbiter.SnapshotArtifactReady
-	(*SafeSnapshotManifest)(nil),               // 74: arbiter.SafeSnapshotManifest
-	(*ActiveQueryPolicy)(nil),                  // 75: arbiter.ActiveQueryPolicy
-	(*SnapshotQueryEnvelope)(nil),              // 76: arbiter.SnapshotQueryEnvelope
-	(*SnapshotQueryClaim)(nil),                 // 77: arbiter.SnapshotQueryClaim
-	(*SnapshotQueryAttestation)(nil),           // 78: arbiter.SnapshotQueryAttestation
-	(*MemberReadyCmd)(nil),                     // 79: arbiter.MemberReadyCmd
-	(*MemberCheckpointCmd)(nil),                // 80: arbiter.MemberCheckpointCmd
-	(*RecordTablePurgedCmd)(nil),               // 81: arbiter.RecordTablePurgedCmd
-	(*SnapshotQueryReservationStatus)(nil),     // 82: arbiter.SnapshotQueryReservationStatus
-	(*SnapshotQuerySubmitResult)(nil),          // 83: arbiter.SnapshotQuerySubmitResult
-	(*SnapshotQueryStatus)(nil),                // 84: arbiter.SnapshotQueryStatus
+	(*GetHistoryCheckpointsRequest)(nil),       // 55: arbiter.GetHistoryCheckpointsRequest
+	(*HistoryCheckpoint)(nil),                  // 56: arbiter.HistoryCheckpoint
+	(*HistoryCheckpoints)(nil),                 // 57: arbiter.HistoryCheckpoints
+	(*SnapshotQueryControlBinding)(nil),        // 58: arbiter.SnapshotQueryControlBinding
+	(*AcquireSnapshotQueryRequest)(nil),        // 59: arbiter.AcquireSnapshotQueryRequest
+	(*GetSnapshotQueryReservationRequest)(nil), // 60: arbiter.GetSnapshotQueryReservationRequest
+	(*ReleaseSnapshotQueryRequest)(nil),        // 61: arbiter.ReleaseSnapshotQueryRequest
+	(*GetSnapshotQueryStatusRequest)(nil),      // 62: arbiter.GetSnapshotQueryStatusRequest
+	(*SnapshotBarrier)(nil),                    // 63: arbiter.SnapshotBarrier
+	(*SnapshotArtifactReadySubmission)(nil),    // 64: arbiter.SnapshotArtifactReadySubmission
+	(*GetPublishedSnapshotRequest)(nil),        // 65: arbiter.GetPublishedSnapshotRequest
+	(*PublishedSnapshot)(nil),                  // 66: arbiter.PublishedSnapshot
+	(*GetQueryPolicyRequest)(nil),              // 67: arbiter.GetQueryPolicyRequest
+	(*QueryPolicyStatus)(nil),                  // 68: arbiter.QueryPolicyStatus
+	(*SnapshotArtifactEntry)(nil),              // 69: arbiter.SnapshotArtifactEntry
+	(*SnapshotArtifactSet)(nil),                // 70: arbiter.SnapshotArtifactSet
+	(*ReplayJob)(nil),                          // 71: arbiter.ReplayJob
+	(*SnapshotQueryJob)(nil),                   // 72: arbiter.SnapshotQueryJob
+	(*PartManifestEntry)(nil),                  // 73: arbiter.PartManifestEntry
+	(*ReplayAttestation)(nil),                  // 74: arbiter.ReplayAttestation
+	(*SnapshotQueryReservation)(nil),           // 75: arbiter.SnapshotQueryReservation
+	(*SnapshotArtifactReady)(nil),              // 76: arbiter.SnapshotArtifactReady
+	(*SafeSnapshotManifest)(nil),               // 77: arbiter.SafeSnapshotManifest
+	(*ActiveQueryPolicy)(nil),                  // 78: arbiter.ActiveQueryPolicy
+	(*SnapshotQueryEnvelope)(nil),              // 79: arbiter.SnapshotQueryEnvelope
+	(*SnapshotQueryClaim)(nil),                 // 80: arbiter.SnapshotQueryClaim
+	(*SnapshotQueryAttestation)(nil),           // 81: arbiter.SnapshotQueryAttestation
+	(*MemberReadyCmd)(nil),                     // 82: arbiter.MemberReadyCmd
+	(*MemberCheckpointCmd)(nil),                // 83: arbiter.MemberCheckpointCmd
+	(*RecordTablePurgedCmd)(nil),               // 84: arbiter.RecordTablePurgedCmd
+	(*SnapshotQueryReservationStatus)(nil),     // 85: arbiter.SnapshotQueryReservationStatus
+	(*SnapshotQuerySubmitResult)(nil),          // 86: arbiter.SnapshotQuerySubmitResult
+	(*SnapshotQueryStatus)(nil),                // 87: arbiter.SnapshotQueryStatus
 }
 var file_arbiter_proto_depIdxs = []int32{
 	3,  // 0: arbiter.StatementEnvelopeV2.statement_id:type_name -> arbiter.StatementID
@@ -6315,9 +6610,9 @@ var file_arbiter_proto_depIdxs = []int32{
 	3,  // 3: arbiter.RCRecord.statement_id:type_name -> arbiter.StatementID
 	6,  // 4: arbiter.RCRecord.candidate_parts:type_name -> arbiter.CandidatePart
 	7,  // 5: arbiter.RCRecord.partition_new_part_sums:type_name -> arbiter.PartitionLtHashSum
-	68, // 6: arbiter.VerifierDispatch.replay_job:type_name -> arbiter.ReplayJob
+	71, // 6: arbiter.VerifierDispatch.replay_job:type_name -> arbiter.ReplayJob
 	11, // 7: arbiter.VerifierDispatch.byte_side_scan:type_name -> arbiter.ByteSideScanRequest
-	69, // 8: arbiter.VerifierDispatch.snapshot_query_job:type_name -> arbiter.SnapshotQueryJob
+	72, // 8: arbiter.VerifierDispatch.snapshot_query_job:type_name -> arbiter.SnapshotQueryJob
 	14, // 9: arbiter.ByteSideScanRequest.parts:type_name -> arbiter.PartRef
 	12, // 10: arbiter.ByteSideScanMsg.parts:type_name -> arbiter.PartScan
 	14, // 11: arbiter.PromoteSafePartition.candidate_parts:type_name -> arbiter.PartRef
@@ -6334,7 +6629,7 @@ var file_arbiter_proto_depIdxs = []int32{
 	4,  // 22: arbiter.L3Block.statements:type_name -> arbiter.StatementEnvelopeV2
 	2,  // 23: arbiter.NodeRegistration.roles:type_name -> arbiter.NodeRole
 	42, // 24: arbiter.ClientSeqState.ranges:type_name -> arbiter.ClientSeqRange
-	70, // 25: arbiter.PartitionStateEntry.safe_parts:type_name -> arbiter.PartManifestEntry
+	73, // 25: arbiter.PartitionStateEntry.safe_parts:type_name -> arbiter.PartManifestEntry
 	24, // 26: arbiter.PartitionStates.safe_watermark:type_name -> arbiter.SafeWatermark
 	45, // 27: arbiter.PartitionStates.partitions:type_name -> arbiter.PartitionStateEntry
 	15, // 28: arbiter.PromotionOutcome.promote:type_name -> arbiter.PromoteSafePartition
@@ -6343,10 +6638,10 @@ var file_arbiter_proto_depIdxs = []int32{
 	48, // 31: arbiter.PromotionOutcomes.outcomes:type_name -> arbiter.PromotionOutcome
 	6,  // 32: arbiter.StatementCandidates.candidate_parts:type_name -> arbiter.CandidatePart
 	7,  // 33: arbiter.StatementCandidates.partition_new_part_sums:type_name -> arbiter.PartitionLtHashSum
-	71, // 34: arbiter.VerifierEvidence.attestation:type_name -> arbiter.ReplayAttestation
+	74, // 34: arbiter.VerifierEvidence.attestation:type_name -> arbiter.ReplayAttestation
 	13, // 35: arbiter.VerifierEvidence.byte_side_scan:type_name -> arbiter.ByteSideScanMsg
 	27, // 36: arbiter.BlockVerification.header:type_name -> arbiter.L3BlockHeader
-	68, // 37: arbiter.BlockVerification.replay_job:type_name -> arbiter.ReplayJob
+	71, // 37: arbiter.BlockVerification.replay_job:type_name -> arbiter.ReplayJob
 	50, // 38: arbiter.BlockVerification.statements:type_name -> arbiter.StatementCandidates
 	14, // 39: arbiter.BlockVerification.scan_parts:type_name -> arbiter.PartRef
 	51, // 40: arbiter.BlockVerification.evidence:type_name -> arbiter.VerifierEvidence
@@ -6354,86 +6649,89 @@ var file_arbiter_proto_depIdxs = []int32{
 	53, // 42: arbiter.BlockVerification.group_databases:type_name -> arbiter.BlockGroupRef
 	54, // 43: arbiter.BlockVerification.reselections:type_name -> arbiter.BlockReselection
 	40, // 44: arbiter.BlockVerification.finality_attestations:type_name -> arbiter.AnchorFinalityAttestation
-	72, // 45: arbiter.SnapshotBarrier.reservation:type_name -> arbiter.SnapshotQueryReservation
-	73, // 46: arbiter.SnapshotArtifactReadySubmission.record:type_name -> arbiter.SnapshotArtifactReady
-	74, // 47: arbiter.PublishedSnapshot.manifest:type_name -> arbiter.SafeSnapshotManifest
-	75, // 48: arbiter.PublishedSnapshot.activation:type_name -> arbiter.ActiveQueryPolicy
-	61, // 49: arbiter.PublishedSnapshot.artifact_ready:type_name -> arbiter.SnapshotArtifactReadySubmission
-	75, // 50: arbiter.QueryPolicyStatus.activation:type_name -> arbiter.ActiveQueryPolicy
-	66, // 51: arbiter.SnapshotArtifactSet.parts:type_name -> arbiter.SnapshotArtifactEntry
-	4,  // 52: arbiter.ArbiterIngress.SubmitStatement:input_type -> arbiter.StatementEnvelopeV2
-	38, // 53: arbiter.ArbiterIngress.GetStatementStatus:input_type -> arbiter.GetStatementStatusRequest
-	56, // 54: arbiter.ArbiterIngress.AcquireSnapshotQuery:input_type -> arbiter.AcquireSnapshotQueryRequest
-	57, // 55: arbiter.ArbiterIngress.GetSnapshotQueryReservation:input_type -> arbiter.GetSnapshotQueryReservationRequest
-	58, // 56: arbiter.ArbiterIngress.ReleaseSnapshotQuery:input_type -> arbiter.ReleaseSnapshotQueryRequest
-	76, // 57: arbiter.ArbiterIngress.SubmitSnapshotQuery:input_type -> arbiter.SnapshotQueryEnvelope
-	59, // 58: arbiter.ArbiterIngress.GetSnapshotQueryStatus:input_type -> arbiter.GetSnapshotQueryStatusRequest
-	8,  // 59: arbiter.SourceClaims.RegisterResultClaim:input_type -> arbiter.RCRecord
-	77, // 60: arbiter.SourceClaims.RegisterSnapshotQueryClaim:input_type -> arbiter.SnapshotQueryClaim
-	61, // 61: arbiter.SourceClaims.RecordSnapshotArtifactReady:input_type -> arbiter.SnapshotArtifactReadySubmission
-	9,  // 62: arbiter.VerifierGateway.SubscribeVerifierDispatch:input_type -> arbiter.VerifierHello
-	71, // 63: arbiter.VerifierGateway.SubmitAttestation:input_type -> arbiter.ReplayAttestation
-	78, // 64: arbiter.VerifierGateway.SubmitSnapshotQueryAttestation:input_type -> arbiter.SnapshotQueryAttestation
-	13, // 65: arbiter.VerifierGateway.SubmitByteSideScan:input_type -> arbiter.ByteSideScanMsg
-	79, // 66: arbiter.VerifierGateway.SubmitMemberReady:input_type -> arbiter.MemberReadyCmd
-	80, // 67: arbiter.VerifierGateway.SubmitMemberCheckpoint:input_type -> arbiter.MemberCheckpointCmd
-	18, // 68: arbiter.PromotionGateway.SubscribePromotions:input_type -> arbiter.SNodeHello
-	20, // 69: arbiter.PromotionGateway.AckPromotion:input_type -> arbiter.PromotionAck
-	21, // 70: arbiter.PromotionGateway.AckCleanup:input_type -> arbiter.CleanupAck
-	81, // 71: arbiter.PromotionGateway.SubmitTablePurged:input_type -> arbiter.RecordTablePurgedCmd
-	40, // 72: arbiter.VoterGateway.SubmitAnchorFinalityAttestation:input_type -> arbiter.AnchorFinalityAttestation
-	23, // 73: arbiter.SafeState.GetSafeWatermark:input_type -> arbiter.GetSafeWatermarkRequest
-	25, // 74: arbiter.SafeState.GetManifest:input_type -> arbiter.SnapshotRef
-	26, // 75: arbiter.SafeState.GetManifestByBlock:input_type -> arbiter.BlockRef
-	31, // 76: arbiter.SafeState.GetL3Block:input_type -> arbiter.L3BlockRef
-	62, // 77: arbiter.SafeState.GetPublishedSnapshot:input_type -> arbiter.GetPublishedSnapshotRequest
-	64, // 78: arbiter.SafeState.GetQueryPolicy:input_type -> arbiter.GetQueryPolicyRequest
-	41, // 79: arbiter.SafeState.GetClientSeqState:input_type -> arbiter.GetClientSeqStateRequest
-	44, // 80: arbiter.SafeState.GetPartitionStates:input_type -> arbiter.GetPartitionStatesRequest
-	47, // 81: arbiter.SafeState.GetPromotionOutcomes:input_type -> arbiter.GetPromotionOutcomesRequest
-	31, // 82: arbiter.SafeState.GetBlockVerification:input_type -> arbiter.L3BlockRef
-	33, // 83: arbiter.Membership.RegisterNode:input_type -> arbiter.NodeRegistration
-	34, // 84: arbiter.Membership.MarkActive:input_type -> arbiter.NodeRef
-	35, // 85: arbiter.Membership.RenewNodeLease:input_type -> arbiter.NodeLeaseRenewal
-	5,  // 86: arbiter.ArbiterIngress.SubmitStatement:output_type -> arbiter.SequencedAck
-	39, // 87: arbiter.ArbiterIngress.GetStatementStatus:output_type -> arbiter.StatementStatus
-	72, // 88: arbiter.ArbiterIngress.AcquireSnapshotQuery:output_type -> arbiter.SnapshotQueryReservation
-	82, // 89: arbiter.ArbiterIngress.GetSnapshotQueryReservation:output_type -> arbiter.SnapshotQueryReservationStatus
-	82, // 90: arbiter.ArbiterIngress.ReleaseSnapshotQuery:output_type -> arbiter.SnapshotQueryReservationStatus
-	83, // 91: arbiter.ArbiterIngress.SubmitSnapshotQuery:output_type -> arbiter.SnapshotQuerySubmitResult
-	84, // 92: arbiter.ArbiterIngress.GetSnapshotQueryStatus:output_type -> arbiter.SnapshotQueryStatus
-	36, // 93: arbiter.SourceClaims.RegisterResultClaim:output_type -> arbiter.Ack
-	36, // 94: arbiter.SourceClaims.RegisterSnapshotQueryClaim:output_type -> arbiter.Ack
-	36, // 95: arbiter.SourceClaims.RecordSnapshotArtifactReady:output_type -> arbiter.Ack
-	10, // 96: arbiter.VerifierGateway.SubscribeVerifierDispatch:output_type -> arbiter.VerifierDispatch
-	36, // 97: arbiter.VerifierGateway.SubmitAttestation:output_type -> arbiter.Ack
-	36, // 98: arbiter.VerifierGateway.SubmitSnapshotQueryAttestation:output_type -> arbiter.Ack
-	36, // 99: arbiter.VerifierGateway.SubmitByteSideScan:output_type -> arbiter.Ack
-	36, // 100: arbiter.VerifierGateway.SubmitMemberReady:output_type -> arbiter.Ack
-	36, // 101: arbiter.VerifierGateway.SubmitMemberCheckpoint:output_type -> arbiter.Ack
-	17, // 102: arbiter.PromotionGateway.SubscribePromotions:output_type -> arbiter.PromotionCommand
-	36, // 103: arbiter.PromotionGateway.AckPromotion:output_type -> arbiter.Ack
-	36, // 104: arbiter.PromotionGateway.AckCleanup:output_type -> arbiter.Ack
-	36, // 105: arbiter.PromotionGateway.SubmitTablePurged:output_type -> arbiter.Ack
-	36, // 106: arbiter.VoterGateway.SubmitAnchorFinalityAttestation:output_type -> arbiter.Ack
-	24, // 107: arbiter.SafeState.GetSafeWatermark:output_type -> arbiter.SafeWatermark
-	74, // 108: arbiter.SafeState.GetManifest:output_type -> arbiter.SafeSnapshotManifest
-	74, // 109: arbiter.SafeState.GetManifestByBlock:output_type -> arbiter.SafeSnapshotManifest
-	32, // 110: arbiter.SafeState.GetL3Block:output_type -> arbiter.L3Block
-	63, // 111: arbiter.SafeState.GetPublishedSnapshot:output_type -> arbiter.PublishedSnapshot
-	65, // 112: arbiter.SafeState.GetQueryPolicy:output_type -> arbiter.QueryPolicyStatus
-	43, // 113: arbiter.SafeState.GetClientSeqState:output_type -> arbiter.ClientSeqState
-	46, // 114: arbiter.SafeState.GetPartitionStates:output_type -> arbiter.PartitionStates
-	49, // 115: arbiter.SafeState.GetPromotionOutcomes:output_type -> arbiter.PromotionOutcomes
-	52, // 116: arbiter.SafeState.GetBlockVerification:output_type -> arbiter.BlockVerification
-	36, // 117: arbiter.Membership.RegisterNode:output_type -> arbiter.Ack
-	36, // 118: arbiter.Membership.MarkActive:output_type -> arbiter.Ack
-	36, // 119: arbiter.Membership.RenewNodeLease:output_type -> arbiter.Ack
-	86, // [86:120] is the sub-list for method output_type
-	52, // [52:86] is the sub-list for method input_type
-	52, // [52:52] is the sub-list for extension type_name
-	52, // [52:52] is the sub-list for extension extendee
-	0,  // [0:52] is the sub-list for field type_name
+	56, // 45: arbiter.HistoryCheckpoints.checkpoints:type_name -> arbiter.HistoryCheckpoint
+	75, // 46: arbiter.SnapshotBarrier.reservation:type_name -> arbiter.SnapshotQueryReservation
+	76, // 47: arbiter.SnapshotArtifactReadySubmission.record:type_name -> arbiter.SnapshotArtifactReady
+	77, // 48: arbiter.PublishedSnapshot.manifest:type_name -> arbiter.SafeSnapshotManifest
+	78, // 49: arbiter.PublishedSnapshot.activation:type_name -> arbiter.ActiveQueryPolicy
+	64, // 50: arbiter.PublishedSnapshot.artifact_ready:type_name -> arbiter.SnapshotArtifactReadySubmission
+	78, // 51: arbiter.QueryPolicyStatus.activation:type_name -> arbiter.ActiveQueryPolicy
+	69, // 52: arbiter.SnapshotArtifactSet.parts:type_name -> arbiter.SnapshotArtifactEntry
+	4,  // 53: arbiter.ArbiterIngress.SubmitStatement:input_type -> arbiter.StatementEnvelopeV2
+	38, // 54: arbiter.ArbiterIngress.GetStatementStatus:input_type -> arbiter.GetStatementStatusRequest
+	59, // 55: arbiter.ArbiterIngress.AcquireSnapshotQuery:input_type -> arbiter.AcquireSnapshotQueryRequest
+	60, // 56: arbiter.ArbiterIngress.GetSnapshotQueryReservation:input_type -> arbiter.GetSnapshotQueryReservationRequest
+	61, // 57: arbiter.ArbiterIngress.ReleaseSnapshotQuery:input_type -> arbiter.ReleaseSnapshotQueryRequest
+	79, // 58: arbiter.ArbiterIngress.SubmitSnapshotQuery:input_type -> arbiter.SnapshotQueryEnvelope
+	62, // 59: arbiter.ArbiterIngress.GetSnapshotQueryStatus:input_type -> arbiter.GetSnapshotQueryStatusRequest
+	8,  // 60: arbiter.SourceClaims.RegisterResultClaim:input_type -> arbiter.RCRecord
+	80, // 61: arbiter.SourceClaims.RegisterSnapshotQueryClaim:input_type -> arbiter.SnapshotQueryClaim
+	64, // 62: arbiter.SourceClaims.RecordSnapshotArtifactReady:input_type -> arbiter.SnapshotArtifactReadySubmission
+	9,  // 63: arbiter.VerifierGateway.SubscribeVerifierDispatch:input_type -> arbiter.VerifierHello
+	74, // 64: arbiter.VerifierGateway.SubmitAttestation:input_type -> arbiter.ReplayAttestation
+	81, // 65: arbiter.VerifierGateway.SubmitSnapshotQueryAttestation:input_type -> arbiter.SnapshotQueryAttestation
+	13, // 66: arbiter.VerifierGateway.SubmitByteSideScan:input_type -> arbiter.ByteSideScanMsg
+	82, // 67: arbiter.VerifierGateway.SubmitMemberReady:input_type -> arbiter.MemberReadyCmd
+	83, // 68: arbiter.VerifierGateway.SubmitMemberCheckpoint:input_type -> arbiter.MemberCheckpointCmd
+	18, // 69: arbiter.PromotionGateway.SubscribePromotions:input_type -> arbiter.SNodeHello
+	20, // 70: arbiter.PromotionGateway.AckPromotion:input_type -> arbiter.PromotionAck
+	21, // 71: arbiter.PromotionGateway.AckCleanup:input_type -> arbiter.CleanupAck
+	84, // 72: arbiter.PromotionGateway.SubmitTablePurged:input_type -> arbiter.RecordTablePurgedCmd
+	40, // 73: arbiter.VoterGateway.SubmitAnchorFinalityAttestation:input_type -> arbiter.AnchorFinalityAttestation
+	23, // 74: arbiter.SafeState.GetSafeWatermark:input_type -> arbiter.GetSafeWatermarkRequest
+	25, // 75: arbiter.SafeState.GetManifest:input_type -> arbiter.SnapshotRef
+	26, // 76: arbiter.SafeState.GetManifestByBlock:input_type -> arbiter.BlockRef
+	31, // 77: arbiter.SafeState.GetL3Block:input_type -> arbiter.L3BlockRef
+	65, // 78: arbiter.SafeState.GetPublishedSnapshot:input_type -> arbiter.GetPublishedSnapshotRequest
+	67, // 79: arbiter.SafeState.GetQueryPolicy:input_type -> arbiter.GetQueryPolicyRequest
+	41, // 80: arbiter.SafeState.GetClientSeqState:input_type -> arbiter.GetClientSeqStateRequest
+	44, // 81: arbiter.SafeState.GetPartitionStates:input_type -> arbiter.GetPartitionStatesRequest
+	47, // 82: arbiter.SafeState.GetPromotionOutcomes:input_type -> arbiter.GetPromotionOutcomesRequest
+	31, // 83: arbiter.SafeState.GetBlockVerification:input_type -> arbiter.L3BlockRef
+	55, // 84: arbiter.SafeState.GetHistoryCheckpoints:input_type -> arbiter.GetHistoryCheckpointsRequest
+	33, // 85: arbiter.Membership.RegisterNode:input_type -> arbiter.NodeRegistration
+	34, // 86: arbiter.Membership.MarkActive:input_type -> arbiter.NodeRef
+	35, // 87: arbiter.Membership.RenewNodeLease:input_type -> arbiter.NodeLeaseRenewal
+	5,  // 88: arbiter.ArbiterIngress.SubmitStatement:output_type -> arbiter.SequencedAck
+	39, // 89: arbiter.ArbiterIngress.GetStatementStatus:output_type -> arbiter.StatementStatus
+	75, // 90: arbiter.ArbiterIngress.AcquireSnapshotQuery:output_type -> arbiter.SnapshotQueryReservation
+	85, // 91: arbiter.ArbiterIngress.GetSnapshotQueryReservation:output_type -> arbiter.SnapshotQueryReservationStatus
+	85, // 92: arbiter.ArbiterIngress.ReleaseSnapshotQuery:output_type -> arbiter.SnapshotQueryReservationStatus
+	86, // 93: arbiter.ArbiterIngress.SubmitSnapshotQuery:output_type -> arbiter.SnapshotQuerySubmitResult
+	87, // 94: arbiter.ArbiterIngress.GetSnapshotQueryStatus:output_type -> arbiter.SnapshotQueryStatus
+	36, // 95: arbiter.SourceClaims.RegisterResultClaim:output_type -> arbiter.Ack
+	36, // 96: arbiter.SourceClaims.RegisterSnapshotQueryClaim:output_type -> arbiter.Ack
+	36, // 97: arbiter.SourceClaims.RecordSnapshotArtifactReady:output_type -> arbiter.Ack
+	10, // 98: arbiter.VerifierGateway.SubscribeVerifierDispatch:output_type -> arbiter.VerifierDispatch
+	36, // 99: arbiter.VerifierGateway.SubmitAttestation:output_type -> arbiter.Ack
+	36, // 100: arbiter.VerifierGateway.SubmitSnapshotQueryAttestation:output_type -> arbiter.Ack
+	36, // 101: arbiter.VerifierGateway.SubmitByteSideScan:output_type -> arbiter.Ack
+	36, // 102: arbiter.VerifierGateway.SubmitMemberReady:output_type -> arbiter.Ack
+	36, // 103: arbiter.VerifierGateway.SubmitMemberCheckpoint:output_type -> arbiter.Ack
+	17, // 104: arbiter.PromotionGateway.SubscribePromotions:output_type -> arbiter.PromotionCommand
+	36, // 105: arbiter.PromotionGateway.AckPromotion:output_type -> arbiter.Ack
+	36, // 106: arbiter.PromotionGateway.AckCleanup:output_type -> arbiter.Ack
+	36, // 107: arbiter.PromotionGateway.SubmitTablePurged:output_type -> arbiter.Ack
+	36, // 108: arbiter.VoterGateway.SubmitAnchorFinalityAttestation:output_type -> arbiter.Ack
+	24, // 109: arbiter.SafeState.GetSafeWatermark:output_type -> arbiter.SafeWatermark
+	77, // 110: arbiter.SafeState.GetManifest:output_type -> arbiter.SafeSnapshotManifest
+	77, // 111: arbiter.SafeState.GetManifestByBlock:output_type -> arbiter.SafeSnapshotManifest
+	32, // 112: arbiter.SafeState.GetL3Block:output_type -> arbiter.L3Block
+	66, // 113: arbiter.SafeState.GetPublishedSnapshot:output_type -> arbiter.PublishedSnapshot
+	68, // 114: arbiter.SafeState.GetQueryPolicy:output_type -> arbiter.QueryPolicyStatus
+	43, // 115: arbiter.SafeState.GetClientSeqState:output_type -> arbiter.ClientSeqState
+	46, // 116: arbiter.SafeState.GetPartitionStates:output_type -> arbiter.PartitionStates
+	49, // 117: arbiter.SafeState.GetPromotionOutcomes:output_type -> arbiter.PromotionOutcomes
+	52, // 118: arbiter.SafeState.GetBlockVerification:output_type -> arbiter.BlockVerification
+	57, // 119: arbiter.SafeState.GetHistoryCheckpoints:output_type -> arbiter.HistoryCheckpoints
+	36, // 120: arbiter.Membership.RegisterNode:output_type -> arbiter.Ack
+	36, // 121: arbiter.Membership.MarkActive:output_type -> arbiter.Ack
+	36, // 122: arbiter.Membership.RenewNodeLease:output_type -> arbiter.Ack
+	88, // [88:123] is the sub-list for method output_type
+	53, // [53:88] is the sub-list for method input_type
+	53, // [53:53] is the sub-list for extension type_name
+	53, // [53:53] is the sub-list for extension extendee
+	0,  // [0:53] is the sub-list for field type_name
 }
 
 func init() { file_arbiter_proto_init() }
@@ -6458,7 +6756,7 @@ func file_arbiter_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_arbiter_proto_rawDesc), len(file_arbiter_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   65,
+			NumMessages:   68,
 			NumExtensions: 0,
 			NumServices:   7,
 		},

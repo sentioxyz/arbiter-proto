@@ -44,15 +44,15 @@ func TestTableAdmissionRulesVersionFieldNumbers(t *testing.T) {
 			}
 			// The three anchor finality quorum fields, authority_threshold,
 			// membership_lease_l2_blocks, promotion_ack_delta_snapshot,
-			// snapshot_query_tracks, custody_frontier and
-			// operations_authority_addresses are the only fields appended after
-			// it on the consensus messages.
+			// snapshot_query_tracks, custody_frontier,
+			// operations_authority_addresses and history_retain_blocks are the
+			// only fields appended after it on the consensus messages.
 			want := int(tc.number)
 			if d.Name() != "TableRegistrySnapshot" {
-				want += 9
+				want += 10
 			}
 			if got := d.Fields().Len(); got != want {
-				t.Fatalf("field count = %d, want %d (only the anchor finality quorum fields, authority_threshold, membership_lease_l2_blocks, promotion_ack_delta_snapshot, snapshot_query_tracks, custody_frontier and operations_authority_addresses follow the version)", got, want)
+				t.Fatalf("field count = %d, want %d (only the anchor finality quorum fields, authority_threshold, membership_lease_l2_blocks, promotion_ack_delta_snapshot, snapshot_query_tracks, custody_frontier, operations_authority_addresses and history_retain_blocks follow the version)", got, want)
 			}
 		})
 	}
