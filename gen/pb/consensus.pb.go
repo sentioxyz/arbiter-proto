@@ -1229,9 +1229,14 @@ type ConsensusParamsState struct {
 	PromotionSeq uint64 `protobuf:"varint,8,opt,name=promotion_seq,json=promotionSeq,proto3" json:"promotion_seq,omitempty"`
 	// The v21 activation and switch cutovers (plan S3-E1 K64); absent before the
 	// activation.
-	Stage3State   *Stage3StateView `protobuf:"bytes,9,opt,name=stage3_state,json=stage3State,proto3" json:"stage3_state,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Stage3State *Stage3StateView `protobuf:"bytes,9,opt,name=stage3_state,json=stage3State,proto3" json:"stage3_state,omitempty"`
+	// The network's immutable schema and executor identity, the two fields
+	// besides network_id that the immutable consensus digest binds. They never
+	// change after genesis; servers before these fields leave them empty.
+	SchemaSnapshotId  string `protobuf:"bytes,10,opt,name=schema_snapshot_id,json=schemaSnapshotId,proto3" json:"schema_snapshot_id,omitempty"`
+	ExecutorProfileId string `protobuf:"bytes,11,opt,name=executor_profile_id,json=executorProfileId,proto3" json:"executor_profile_id,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *ConsensusParamsState) Reset() {
@@ -1325,6 +1330,20 @@ func (x *ConsensusParamsState) GetStage3State() *Stage3StateView {
 		return x.Stage3State
 	}
 	return nil
+}
+
+func (x *ConsensusParamsState) GetSchemaSnapshotId() string {
+	if x != nil {
+		return x.SchemaSnapshotId
+	}
+	return ""
+}
+
+func (x *ConsensusParamsState) GetExecutorProfileId() string {
+	if x != nil {
+		return x.ExecutorProfileId
+	}
+	return ""
 }
 
 // NodeFeatureEntry joins one non-evicted verifier or SNode registration with
@@ -3247,7 +3266,7 @@ const file_consensus_proto_rawDesc = "" +
 	"\x10protocol_version\x18\x02 \x01(\rR\x0fprotocolVersion\x12'\n" +
 	"\x0fupdates_enabled\x18\x03 \x01(\bR\x0eupdatesEnabled\x12\x1a\n" +
 	"\bfeatures\x18\x04 \x03(\tR\bfeatures\x120\n" +
-	"\x14voter_ed25519_pubkey\x18\x05 \x01(\fR\x12voterEd25519Pubkey\"\xa7\x03\n" +
+	"\x14voter_ed25519_pubkey\x18\x05 \x01(\fR\x12voterEd25519Pubkey\"\x85\x04\n" +
 	"\x14ConsensusParamsState\x12)\n" +
 	"\x10protocol_version\x18\x01 \x01(\rR\x0fprotocolVersion\x12\x1d\n" +
 	"\n" +
@@ -3258,7 +3277,10 @@ const file_consensus_proto_rawDesc = "" +
 	"\x05epoch\x18\x06 \x01(\x04R\x05epoch\x12#\n" +
 	"\rparams_digest\x18\a \x01(\tR\fparamsDigest\x12#\n" +
 	"\rpromotion_seq\x18\b \x01(\x04R\fpromotionSeq\x12;\n" +
-	"\fstage3_state\x18\t \x01(\v2\x18.arbiter.Stage3StateViewR\vstage3State\"p\n" +
+	"\fstage3_state\x18\t \x01(\v2\x18.arbiter.Stage3StateViewR\vstage3State\x12,\n" +
+	"\x12schema_snapshot_id\x18\n" +
+	" \x01(\tR\x10schemaSnapshotId\x12.\n" +
+	"\x13executor_profile_id\x18\v \x01(\tR\x11executorProfileId\"p\n" +
 	"\x10NodeFeatureEntry\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x1a\n" +
 	"\bfeatures\x18\x02 \x03(\tR\bfeatures\x12'\n" +

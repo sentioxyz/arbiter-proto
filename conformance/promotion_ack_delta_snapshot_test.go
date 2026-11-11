@@ -25,6 +25,7 @@ var promotionAckDeltaSnapshotFields = map[string]*descriptorpb.FieldDescriptorPr
 // see the message as it was before.
 func stripPromotionAckDeltaSnapshotField(t *testing.T, d *descriptorpb.DescriptorProto) {
 	t.Helper()
+	stripConsensusIdentityFields(t, d)
 	want, ok := promotionAckDeltaSnapshotFields[d.GetName()]
 	if !ok {
 		return
