@@ -439,16 +439,16 @@ const (
 	// durable BEFORE the same scope's REPLAY pin is released.
 	PinPurpose_PIN_PURPOSE_AUDIT PinPurpose = 2
 	// Archive hold; blocks collection until explicitly released, by design.
-	// Two callers place it through this same PinPayloads entry:
-	// - operator admin tooling, for a legal hold or archive of statement
-	//   payloads (the one non-orchestrator lifecycle caller);
-	// - the Arbiter orchestrator, for consensus-history archives: once
-	//   history_retain_blocks is committed, the leader puts each history
-	//   archive object (the sealed history a PruneHistoryCmd removes, in
-	//   canonical encoding) as a payload and pins it with holder_id "arbiter"
-	//   and scope_key "history:<network_id>:<through_block_seq>" BEFORE it
-	//   proposes the prune. The Arbiter never releases these pins: the archive
-	//   is the only full copy of pruned consensus history.
+	// Two callers place it through this same PinPayloads entry. Operator admin
+	// tooling places it for a legal hold or archive of statement payloads (the
+	// one non-orchestrator lifecycle caller). The Arbiter orchestrator places
+	// it for consensus-history archives: once history_retain_blocks is
+	// committed, the leader puts each history archive object (the sealed
+	// history a PruneHistoryCmd removes, in canonical encoding) as a payload
+	// and pins it with holder_id "arbiter" and scope_key
+	// "history:<network_id>:<through_block_seq>" BEFORE it proposes the prune.
+	// The Arbiter never releases these pins: the archive is the only full copy
+	// of pruned consensus history.
 	PinPurpose_PIN_PURPOSE_ARCHIVE PinPurpose = 3
 	// Sequenced-statement bridge hold: covers one statement's payload from
 	// BEFORE the SubmitStatement ack until the sealed block's REPLAY pin is
