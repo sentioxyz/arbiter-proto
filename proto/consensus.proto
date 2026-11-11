@@ -76,6 +76,10 @@ message ConsensusMutableParams {
   // update after the tracks activation and promotion_ack_delta_snapshot sets
   // it, then carried by every update and never lowered.
   bool snapshot_query_tracks = 19;
+  // The committed custody frontier: false until one authority-signed update
+  // after snapshot_query_tracks sets it, then carried by every update and
+  // never lowered.
+  bool custody_frontier = 20;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -263,6 +267,16 @@ message ConsensusParamsUpdate {
   // knows the field before an update sets it. It joins the params digest only
   // once set, so earlier digests are unchanged.
   bool snapshot_query_tracks = 24;
+  // The committed custody frontier: raise-only; once set every update must
+  // carry it. It needs snapshot_query_tracks (earlier or in the same update).
+  // While it is set the leader records its payload custody progress with
+  // RecordCustodyProgressCmd (Raft tag 45), and a new leader resumes custody
+  // from the recorded progress instead of re-asserting every block's holds.
+  // From its commit on, snapshots are written as v25, so every voter must run
+  // a binary that knows the field and the command before an update sets it.
+  // It joins the params digest only once set, so earlier digests are
+  // unchanged.
+  bool custody_frontier = 25;
 }
 
 // VoterEntry is one enrolled Raft voter. consent_sig is lowercase hex of the

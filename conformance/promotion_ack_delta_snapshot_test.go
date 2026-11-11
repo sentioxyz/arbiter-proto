@@ -57,9 +57,10 @@ func TestPromotionAckDeltaSnapshotFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.BoolKind || f.IsList() || f.HasOptionalKeyword() || f.ContainingOneof() != nil {
 				t.Fatalf("field = %v, want plain bool number %d", f, tc.number)
 			}
-			// snapshot_query_tracks is the only field appended after it.
-			if got := d.Fields().Len(); got != int(tc.number)+1 {
-				t.Fatalf("field count = %d, want %d (only snapshot_query_tracks follows promotion_ack_delta_snapshot)", got, tc.number+1)
+			// snapshot_query_tracks and custody_frontier are the only fields
+			// appended after it.
+			if got := d.Fields().Len(); got != int(tc.number)+2 {
+				t.Fatalf("field count = %d, want %d (only snapshot_query_tracks and custody_frontier follow promotion_ack_delta_snapshot)", got, tc.number+2)
 			}
 		})
 	}

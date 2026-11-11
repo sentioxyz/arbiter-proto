@@ -24,6 +24,7 @@ var snapshotQueryTracksFields = map[string]*descriptorpb.FieldDescriptorProto{
 // field, so the older baseline comparisons see the message as it was before.
 func stripSnapshotQueryTracksField(t *testing.T, d *descriptorpb.DescriptorProto) {
 	t.Helper()
+	stripCustodyFrontierField(t, d)
 	want, ok := snapshotQueryTracksFields[d.GetName()]
 	if !ok {
 		return
@@ -54,8 +55,9 @@ func TestSnapshotQueryTracksFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.BoolKind || f.IsList() || f.HasOptionalKeyword() || f.ContainingOneof() != nil {
 				t.Fatalf("field = %v, want plain bool number %d", f, tc.number)
 			}
-			if got := d.Fields().Len(); got != int(tc.number) {
-				t.Fatalf("field count = %d, want %d (snapshot_query_tracks is the last field)", got, tc.number)
+			// custody_frontier is the only field appended after it.
+			if got := d.Fields().Len(); got != int(tc.number)+1 {
+				t.Fatalf("field count = %d, want %d (only custody_frontier follows snapshot_query_tracks)", got, tc.number+1)
 			}
 		})
 	}
