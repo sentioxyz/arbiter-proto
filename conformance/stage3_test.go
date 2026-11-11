@@ -145,7 +145,7 @@ func TestStage3ConsensusFieldNumbers(t *testing.T) {
 		})
 	}
 	for msg, want := range map[proto.Message]int{
-		&pb.VerifierEntry{}: 11, &pb.ConsensusMutableParams{}: 24, &pb.ConsensusParamsUpdate{}: 29, &pb.ConsensusParamsState{}: 12,
+		&pb.VerifierEntry{}: 11, &pb.ConsensusMutableParams{}: 25, &pb.ConsensusParamsUpdate{}: 30, &pb.ConsensusParamsState{}: 12,
 		&pb.TableIncarnation{}: 20, &pb.TableRegistrySnapshot{}: 15, &pb.L3BlockTrack{}: 2, &pb.BlockVerification{}: 23,
 	} {
 		if got := msg.ProtoReflect().Descriptor().Fields().Len(); got != want {
@@ -331,8 +331,8 @@ func TestStage3ConsensusAdmissionCodes(t *testing.T) {
 			t.Fatalf("%s = %d, want %s = %d", tc.code, int32(tc.code), tc.name, tc.num)
 		}
 	}
-	if n := pb.AdmissionCode(0).Descriptor().Values().Len(); n != 14 {
-		t.Fatalf("AdmissionCode has %d values, want 14", n)
+	if n := pb.AdmissionCode(0).Descriptor().Values().Len(); n != 15 {
+		t.Fatalf("AdmissionCode has %d values, want 15", n)
 	}
 }
 

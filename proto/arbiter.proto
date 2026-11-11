@@ -138,6 +138,16 @@ enum AdmissionCode {
   // (spec §9.3; plan S3-E1 K59). Nothing changed: the coordinate is unspent;
   // HouseGate answers session-preserving back-pressure (ClickHouse 252).
   ADMISSION_CODE_COPIES_BACKPRESSURE = 13;
+  // The statement would exceed a budget of the committed account_budget
+  // parameter: its signer's (client_account) budget or the network-wide
+  // total, both leaky buckets over the committed table-registry cursor
+  // (ConsensusParamsUpdate.account_budget). Returned only once account_budget
+  // is committed with enforce set; checked after the copies back-pressure
+  // check and before the lane budget. Nothing changed: the coordinate is
+  // unspent. Retryable once the cursor has advanced enough L2 blocks to
+  // refill the budget; HouseGate answers a retryable, session-preserving
+  // QUOTA_EXCEEDED (ClickHouse 201).
+  ADMISSION_CODE_ACCOUNT_BUDGET_EXCEEDED = 14;
 }
 
 message SequencedAck {

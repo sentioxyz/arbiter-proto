@@ -143,6 +143,16 @@ const (
 	// (spec §9.3; plan S3-E1 K59). Nothing changed: the coordinate is unspent;
 	// HouseGate answers session-preserving back-pressure (ClickHouse 252).
 	AdmissionCode_ADMISSION_CODE_COPIES_BACKPRESSURE AdmissionCode = 13
+	// The statement would exceed a budget of the committed account_budget
+	// parameter: its signer's (client_account) budget or the network-wide
+	// total, both leaky buckets over the committed table-registry cursor
+	// (ConsensusParamsUpdate.account_budget). Returned only once account_budget
+	// is committed with enforce set; checked after the copies back-pressure
+	// check and before the lane budget. Nothing changed: the coordinate is
+	// unspent. Retryable once the cursor has advanced enough L2 blocks to
+	// refill the budget; HouseGate answers a retryable, session-preserving
+	// QUOTA_EXCEEDED (ClickHouse 201).
+	AdmissionCode_ADMISSION_CODE_ACCOUNT_BUDGET_EXCEEDED AdmissionCode = 14
 )
 
 // Enum value maps for AdmissionCode.
@@ -162,22 +172,24 @@ var (
 		11: "ADMISSION_CODE_INDEXER_QUARANTINED",
 		12: "ADMISSION_CODE_VERIFIERS_UNAVAILABLE",
 		13: "ADMISSION_CODE_COPIES_BACKPRESSURE",
+		14: "ADMISSION_CODE_ACCOUNT_BUDGET_EXCEEDED",
 	}
 	AdmissionCode_value = map[string]int32{
-		"ADMISSION_CODE_UNSPECIFIED":           0,
-		"ADMISSION_CODE_ACCEPTED":              1,
-		"ADMISSION_CODE_DUPLICATE_CLIENT_SEQ":  2,
-		"ADMISSION_CODE_SCHEMA_NOT_ALLOWED":    3,
-		"ADMISSION_CODE_KIND_NOT_ADMITTED":     4,
-		"ADMISSION_CODE_INVALID_SIGNATURE":     5,
-		"ADMISSION_CODE_INVALID_PROOF":         6,
-		"ADMISSION_CODE_MALFORMED":             7,
-		"ADMISSION_CODE_GAP_BUDGET_EXCEEDED":   8,
-		"ADMISSION_CODE_LANE_BUDGET_EXCEEDED":  9,
-		"ADMISSION_CODE_SOURCE_UNAVAILABLE":    10,
-		"ADMISSION_CODE_INDEXER_QUARANTINED":   11,
-		"ADMISSION_CODE_VERIFIERS_UNAVAILABLE": 12,
-		"ADMISSION_CODE_COPIES_BACKPRESSURE":   13,
+		"ADMISSION_CODE_UNSPECIFIED":             0,
+		"ADMISSION_CODE_ACCEPTED":                1,
+		"ADMISSION_CODE_DUPLICATE_CLIENT_SEQ":    2,
+		"ADMISSION_CODE_SCHEMA_NOT_ALLOWED":      3,
+		"ADMISSION_CODE_KIND_NOT_ADMITTED":       4,
+		"ADMISSION_CODE_INVALID_SIGNATURE":       5,
+		"ADMISSION_CODE_INVALID_PROOF":           6,
+		"ADMISSION_CODE_MALFORMED":               7,
+		"ADMISSION_CODE_GAP_BUDGET_EXCEEDED":     8,
+		"ADMISSION_CODE_LANE_BUDGET_EXCEEDED":    9,
+		"ADMISSION_CODE_SOURCE_UNAVAILABLE":      10,
+		"ADMISSION_CODE_INDEXER_QUARANTINED":     11,
+		"ADMISSION_CODE_VERIFIERS_UNAVAILABLE":   12,
+		"ADMISSION_CODE_COPIES_BACKPRESSURE":     13,
+		"ADMISSION_CODE_ACCOUNT_BUDGET_EXCEEDED": 14,
 	}
 )
 
@@ -6431,7 +6443,7 @@ const file_arbiter_proto_rawDesc = "" +
 	"\rStatementKind\x12\x1e\n" +
 	"\x1aSTATEMENT_KIND_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15STATEMENT_KIND_INSERT\x10\x01\x12!\n" +
-	"\x1dSTATEMENT_KIND_SNAPSHOT_QUERY\x10\x02*\x9a\x04\n" +
+	"\x1dSTATEMENT_KIND_SNAPSHOT_QUERY\x10\x02*\xc6\x04\n" +
 	"\rAdmissionCode\x12\x1e\n" +
 	"\x1aADMISSION_CODE_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17ADMISSION_CODE_ACCEPTED\x10\x01\x12'\n" +
@@ -6447,7 +6459,8 @@ const file_arbiter_proto_rawDesc = "" +
 	"\x12&\n" +
 	"\"ADMISSION_CODE_INDEXER_QUARANTINED\x10\v\x12(\n" +
 	"$ADMISSION_CODE_VERIFIERS_UNAVAILABLE\x10\f\x12&\n" +
-	"\"ADMISSION_CODE_COPIES_BACKPRESSURE\x10\r*R\n" +
+	"\"ADMISSION_CODE_COPIES_BACKPRESSURE\x10\r\x12*\n" +
+	"&ADMISSION_CODE_ACCOUNT_BUDGET_EXCEEDED\x10\x0e*R\n" +
 	"\bNodeRole\x12\x19\n" +
 	"\x15NODE_ROLE_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12NODE_ROLE_VERIFIER\x10\x01\x12\x13\n" +

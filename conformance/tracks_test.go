@@ -78,7 +78,7 @@ func TestTracksFieldNumbers(t *testing.T) {
 	}
 	for msg, want := range map[proto.Message]int{
 		&pb.TrackFrontier{}: 3, &pb.SafeSnapshotManifest{}: 11, &pb.L3BlockTrack{}: 2, &pb.L3BlockHeader{}: 14,
-		&pb.UnsafeCleanup{}: 5, &pb.CleanupAck{}: 6, &pb.ConsensusParamsUpdate{}: 29, &pb.ConsensusMutableParams{}: 24,
+		&pb.UnsafeCleanup{}: 5, &pb.CleanupAck{}: 6, &pb.ConsensusParamsUpdate{}: 30, &pb.ConsensusMutableParams{}: 25,
 		&pb.QuarantineIndexerCmd{}: 4, &pb.ReleaseIndexerCmd{}: 4, &pb.IndexerTrackView{}: 9, &pb.TrackStateView{}: 6,
 		&pb.TableRegistrySnapshot{}: 15,
 	} {
@@ -120,8 +120,8 @@ func TestIndexerQuarantinedAdmissionCodeIsEleven(t *testing.T) {
 	if got := int32(pb.AdmissionCode_ADMISSION_CODE_SOURCE_UNAVAILABLE); got != 10 {
 		t.Fatalf("ADMISSION_CODE_SOURCE_UNAVAILABLE moved to %d", got)
 	}
-	if n := pb.AdmissionCode(0).Descriptor().Values().Len(); n != 14 {
-		t.Fatalf("AdmissionCode has %d values, want 14", n)
+	if n := pb.AdmissionCode(0).Descriptor().Values().Len(); n != 15 {
+		t.Fatalf("AdmissionCode has %d values, want 15", n)
 	}
 }
 

@@ -57,8 +57,8 @@ func TestAuthorityThresholdFieldNumbers(t *testing.T) {
 			// membership_lease_l2_blocks, promotion_ack_delta_snapshot,
 			// snapshot_query_tracks, custody_frontier and
 			// operations_authority_addresses are the only fields appended after it.
-			if got := d.Fields().Len(); got != int(tc.number)+8 {
-				t.Fatalf("field count = %d, want %d (only membership_lease_l2_blocks, promotion_ack_delta_snapshot, snapshot_query_tracks, custody_frontier and operations_authority_addresses and history_retain_blocks and the authority change delay fields follow authority_threshold)", got, tc.number+8)
+			if got := d.Fields().Len(); got != int(tc.number)+9 {
+				t.Fatalf("field count = %d, want %d (only membership_lease_l2_blocks, promotion_ack_delta_snapshot, snapshot_query_tracks, custody_frontier and operations_authority_addresses and history_retain_blocks and the authority change delay fields and account_budget follow authority_threshold)", got, tc.number+9)
 			}
 		})
 	}

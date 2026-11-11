@@ -32,6 +32,7 @@ var authorityChangeDelayFields = map[string][]*descriptorpb.FieldDescriptorProto
 // the older baseline comparisons see the message as it was before.
 func stripAuthorityChangeDelayFields(t *testing.T, d *descriptorpb.DescriptorProto) {
 	t.Helper()
+	stripAccountBudgetFields(t, d)
 	want, ok := authorityChangeDelayFields[d.GetName()]
 	if !ok {
 		return
@@ -81,8 +82,8 @@ func TestAuthorityChangeDelayFieldNumbers(t *testing.T) {
 			if pending == nil || pending.Number() != tc.pending || pending.Kind() != protoreflect.MessageKind || pending.IsList() || pending.Message().Name() != "PendingAuthorityChange" || pending.ContainingOneof() != nil {
 				t.Fatalf("pending field = %v, want PendingAuthorityChange number %d", pending, tc.pending)
 			}
-			if got := d.Fields().Len(); got != int(tc.pending) {
-				t.Fatalf("field count = %d, want %d (pending_authority_change is the last field)", got, tc.pending)
+			if got := d.Fields().Len(); got != int(tc.pending)+1 {
+				t.Fatalf("field count = %d, want %d (only account_budget and account_budget follows pending_authority_change)", got, tc.pending+1)
 			}
 		})
 	}
