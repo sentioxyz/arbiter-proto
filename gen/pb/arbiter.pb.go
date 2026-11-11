@@ -4704,6 +4704,11 @@ type AcquireSnapshotQueryRequest struct {
 	StatementId   string                 `protobuf:"bytes,4,opt,name=statement_id,json=statementId,proto3" json:"statement_id,omitempty"`
 	RequestId     string                 `protobuf:"bytes,5,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	ControlJws    string                 `protobuf:"bytes,6,opt,name=control_jws,json=controlJws,proto3" json:"control_jws,omitempty"`
+	// The canonical table id of the query's target, signed by a v2 control
+	// token (housegate-snapshot-query-control-v2). Empty, and signed as v1, on a
+	// network without tracks; required while snapshot_query_tracks is set,
+	// where the target's owner track is the only track the query fences.
+	TargetTableId string `protobuf:"bytes,7,opt,name=target_table_id,json=targetTableId,proto3" json:"target_table_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4780,6 +4785,13 @@ func (x *AcquireSnapshotQueryRequest) GetControlJws() string {
 	return ""
 }
 
+func (x *AcquireSnapshotQueryRequest) GetTargetTableId() string {
+	if x != nil {
+		return x.TargetTableId
+	}
+	return ""
+}
+
 // Authenticates lookup by request identity, optionally binding a known grant.
 // Empty reservation_id and zero generation are allowed for request-only lookup.
 type GetSnapshotQueryReservationRequest struct {
@@ -4792,8 +4804,13 @@ type GetSnapshotQueryReservationRequest struct {
 	ControlJws        string                 `protobuf:"bytes,6,opt,name=control_jws,json=controlJws,proto3" json:"control_jws,omitempty"`
 	ReservationId     string                 `protobuf:"bytes,7,opt,name=reservation_id,json=reservationId,proto3" json:"reservation_id,omitempty"`
 	FencingGeneration uint64                 `protobuf:"varint,8,opt,name=fencing_generation,json=fencingGeneration,proto3" json:"fencing_generation,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// The canonical table id of the query's target, signed by a v2 control
+	// token (housegate-snapshot-query-control-v2). Empty, and signed as v1, on a
+	// network without tracks; required while snapshot_query_tracks is set,
+	// where the target's owner track is the only track the query fences.
+	TargetTableId string `protobuf:"bytes,9,opt,name=target_table_id,json=targetTableId,proto3" json:"target_table_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetSnapshotQueryReservationRequest) Reset() {
@@ -4882,6 +4899,13 @@ func (x *GetSnapshotQueryReservationRequest) GetFencingGeneration() uint64 {
 	return 0
 }
 
+func (x *GetSnapshotQueryReservationRequest) GetTargetTableId() string {
+	if x != nil {
+		return x.TargetTableId
+	}
+	return ""
+}
+
 // Conditional cancellation: zero ID/generation cancels only an absent request.
 // Draining cancellation binds the exact nonzero fence with no reservation ID.
 // Consumed work can be resolved only by committed terminal authority.
@@ -4895,8 +4919,13 @@ type ReleaseSnapshotQueryRequest struct {
 	ControlJws        string                 `protobuf:"bytes,6,opt,name=control_jws,json=controlJws,proto3" json:"control_jws,omitempty"`
 	ReservationId     string                 `protobuf:"bytes,7,opt,name=reservation_id,json=reservationId,proto3" json:"reservation_id,omitempty"`
 	FencingGeneration uint64                 `protobuf:"varint,8,opt,name=fencing_generation,json=fencingGeneration,proto3" json:"fencing_generation,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// The canonical table id of the query's target, signed by a v2 control
+	// token (housegate-snapshot-query-control-v2). Empty, and signed as v1, on a
+	// network without tracks; required while snapshot_query_tracks is set,
+	// where the target's owner track is the only track the query fences.
+	TargetTableId string `protobuf:"bytes,9,opt,name=target_table_id,json=targetTableId,proto3" json:"target_table_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ReleaseSnapshotQueryRequest) Reset() {
@@ -4983,6 +5012,13 @@ func (x *ReleaseSnapshotQueryRequest) GetFencingGeneration() uint64 {
 		return x.FencingGeneration
 	}
 	return 0
+}
+
+func (x *ReleaseSnapshotQueryRequest) GetTargetTableId() string {
+	if x != nil {
+		return x.TargetTableId
+	}
+	return ""
 }
 
 // The authenticated account/statement/root lookup is scoped to network/shard.
@@ -6006,7 +6042,7 @@ const file_arbiter_proto_rawDesc = "" +
 	"\n" +
 	"request_id\x18\x06 \x01(\tR\trequestId\x12%\n" +
 	"\x0ereservation_id\x18\a \x01(\tR\rreservationId\x12-\n" +
-	"\x12fencing_generation\x18\b \x01(\x04R\x11fencingGeneration\"\xee\x01\n" +
+	"\x12fencing_generation\x18\b \x01(\x04R\x11fencingGeneration\"\x96\x02\n" +
 	"\x1bAcquireSnapshotQueryRequest\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12&\n" +
@@ -6016,7 +6052,8 @@ const file_arbiter_proto_rawDesc = "" +
 	"\n" +
 	"request_id\x18\x05 \x01(\tR\trequestId\x12\x1f\n" +
 	"\vcontrol_jws\x18\x06 \x01(\tR\n" +
-	"controlJws\"\xcb\x02\n" +
+	"controlJws\x12&\n" +
+	"\x0ftarget_table_id\x18\a \x01(\tR\rtargetTableId\"\xf3\x02\n" +
 	"\"GetSnapshotQueryReservationRequest\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12&\n" +
@@ -6028,7 +6065,8 @@ const file_arbiter_proto_rawDesc = "" +
 	"\vcontrol_jws\x18\x06 \x01(\tR\n" +
 	"controlJws\x12%\n" +
 	"\x0ereservation_id\x18\a \x01(\tR\rreservationId\x12-\n" +
-	"\x12fencing_generation\x18\b \x01(\x04R\x11fencingGeneration\"\xc4\x02\n" +
+	"\x12fencing_generation\x18\b \x01(\x04R\x11fencingGeneration\x12&\n" +
+	"\x0ftarget_table_id\x18\t \x01(\tR\rtargetTableId\"\xec\x02\n" +
 	"\x1bReleaseSnapshotQueryRequest\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12&\n" +
@@ -6040,7 +6078,8 @@ const file_arbiter_proto_rawDesc = "" +
 	"\vcontrol_jws\x18\x06 \x01(\tR\n" +
 	"controlJws\x12%\n" +
 	"\x0ereservation_id\x18\a \x01(\tR\rreservationId\x12-\n" +
-	"\x12fencing_generation\x18\b \x01(\x04R\x11fencingGeneration\"\x95\x02\n" +
+	"\x12fencing_generation\x18\b \x01(\x04R\x11fencingGeneration\x12&\n" +
+	"\x0ftarget_table_id\x18\t \x01(\tR\rtargetTableId\"\x95\x02\n" +
 	"\x1dGetSnapshotQueryStatusRequest\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12&\n" +

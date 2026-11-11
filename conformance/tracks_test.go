@@ -78,7 +78,7 @@ func TestTracksFieldNumbers(t *testing.T) {
 	}
 	for msg, want := range map[proto.Message]int{
 		&pb.TrackFrontier{}: 3, &pb.SafeSnapshotManifest{}: 11, &pb.L3BlockTrack{}: 2, &pb.L3BlockHeader{}: 14,
-		&pb.UnsafeCleanup{}: 5, &pb.CleanupAck{}: 6, &pb.ConsensusParamsUpdate{}: 23, &pb.ConsensusMutableParams{}: 18,
+		&pb.UnsafeCleanup{}: 5, &pb.CleanupAck{}: 6, &pb.ConsensusParamsUpdate{}: 24, &pb.ConsensusMutableParams{}: 19,
 		&pb.QuarantineIndexerCmd{}: 4, &pb.ReleaseIndexerCmd{}: 4, &pb.IndexerTrackView{}: 9, &pb.TrackStateView{}: 6,
 		&pb.TableRegistrySnapshot{}: 15,
 	} {

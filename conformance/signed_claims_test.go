@@ -83,7 +83,7 @@ func TestSignedClaimsFieldNumbers(t *testing.T) {
 	}
 	for msg, want := range map[proto.Message]int{
 		&pb.SIIndexerEntry{}: 5, &pb.VerifierEntry{}: 11, &pb.EvictNodeRequest{}: 4,
-		&pb.ConsensusParamsUpdate{}: 23, &pb.ConsensusMutableParams{}: 18,
+		&pb.ConsensusParamsUpdate{}: 24, &pb.ConsensusMutableParams{}: 19,
 		&pb.TableRegistrySnapshot{}: 15, &pb.TableIncarnation{}: 20, &pb.AddTableCmd{}: 8,
 		&pb.SeedLegacyTablesCmd{}: 3, &pb.RecordTablePurgedCmd{}: 4,
 		&pb.NodeRegistration{}: 8, &pb.NodeRef{}: 4, &pb.RCRecord{}: 6, &pb.PromotionAck{}: 10, &pb.CleanupAck{}: 6,

@@ -25,6 +25,7 @@ var promotionAckDeltaSnapshotFields = map[string]*descriptorpb.FieldDescriptorPr
 // see the message as it was before.
 func stripPromotionAckDeltaSnapshotField(t *testing.T, d *descriptorpb.DescriptorProto) {
 	t.Helper()
+	stripSnapshotQueryTracksField(t, d)
 	stripConsensusIdentityFields(t, d)
 	want, ok := promotionAckDeltaSnapshotFields[d.GetName()]
 	if !ok {
@@ -56,8 +57,9 @@ func TestPromotionAckDeltaSnapshotFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.BoolKind || f.IsList() || f.HasOptionalKeyword() || f.ContainingOneof() != nil {
 				t.Fatalf("field = %v, want plain bool number %d", f, tc.number)
 			}
-			if got := d.Fields().Len(); got != int(tc.number) {
-				t.Fatalf("field count = %d, want %d (promotion_ack_delta_snapshot is the last field)", got, tc.number)
+			// snapshot_query_tracks is the only field appended after it.
+			if got := d.Fields().Len(); got != int(tc.number)+1 {
+				t.Fatalf("field count = %d, want %d (only snapshot_query_tracks follows promotion_ack_delta_snapshot)", got, tc.number+1)
 			}
 		})
 	}
