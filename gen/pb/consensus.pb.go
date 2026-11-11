@@ -215,8 +215,12 @@ type ConsensusMutableParams struct {
 	// after snapshot_query_tracks sets it, then carried by every update and
 	// never lowered.
 	CustodyFrontier bool `protobuf:"varint,20,opt,name=custody_frontier,json=custodyFrontier,proto3" json:"custody_frontier,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// The operations authority set: empty until one authority-signed update
+	// sets it, then carried non-empty by every update. While empty, operational
+	// commands verify against authority_addresses.
+	OperationsAuthorityAddresses []string `protobuf:"bytes,21,rep,name=operations_authority_addresses,json=operationsAuthorityAddresses,proto3" json:"operations_authority_addresses,omitempty"`
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
 }
 
 func (x *ConsensusMutableParams) Reset() {
@@ -387,6 +391,13 @@ func (x *ConsensusMutableParams) GetCustodyFrontier() bool {
 		return x.CustodyFrontier
 	}
 	return false
+}
+
+func (x *ConsensusMutableParams) GetOperationsAuthorityAddresses() []string {
+	if x != nil {
+		return x.OperationsAuthorityAddresses
+	}
+	return nil
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -585,8 +596,28 @@ type ConsensusParamsUpdate struct {
 	// It joins the params digest only once set, so earlier digests are
 	// unchanged.
 	CustodyFrontier bool `protobuf:"varint,25,opt,name=custody_frontier,json=custodyFrontier,proto3" json:"custody_frontier,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// The operations authority set: the addresses that sign operational
+	// commands, which the leader signs automatically with its one online key
+	// (promotion including the settle re-send, cleanup including rejected-part
+	// cleanups, member lagging, verifier reselection, and payload-store
+	// ReleasePins). Lowercase 0x-prefixed Ethereum addresses, sorted and unique.
+	// Empty means never set: operational commands then verify against
+	// authority_addresses, as before the field existed. Once committed, every
+	// update must carry a non-empty set (there is no way back to one set),
+	// operational commands verify only against it, and governance commands
+	// only against authority_addresses. Every update that carries it must keep
+	// it disjoint from its own authority_addresses, so an online operations key
+	// never counts toward the governance threshold. Setting, changing and
+	// revoking it are ordinary consensus updates, authorized by the governance
+	// set under authority_threshold. There is no empty set after it is set: to
+	// stop all operational signing, set an address whose key nobody holds. It
+	// is never set at genesis. It changes Apply, so every voter, and every SNode
+	// that follows the committed authority set, must run a binary that knows
+	// the field before an update sets it. Absent from the params digest while
+	// empty, so earlier digests are unchanged.
+	OperationsAuthorityAddresses []string `protobuf:"bytes,26,rep,name=operations_authority_addresses,json=operationsAuthorityAddresses,proto3" json:"operations_authority_addresses,omitempty"`
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
 }
 
 func (x *ConsensusParamsUpdate) Reset() {
@@ -792,6 +823,13 @@ func (x *ConsensusParamsUpdate) GetCustodyFrontier() bool {
 		return x.CustodyFrontier
 	}
 	return false
+}
+
+func (x *ConsensusParamsUpdate) GetOperationsAuthorityAddresses() []string {
+	if x != nil {
+		return x.OperationsAuthorityAddresses
+	}
+	return nil
 }
 
 // VoterEntry is one enrolled Raft voter. consent_sig is lowercase hex of the
@@ -1202,8 +1240,13 @@ type ProtocolInfo struct {
 	// none is configured; read by the anchor finality activation gate, which
 	// requires it to equal the key the voter's VoterEntry enrols.
 	VoterEd25519Pubkey []byte `protobuf:"bytes,5,opt,name=voter_ed25519_pubkey,json=voterEd25519Pubkey,proto3" json:"voter_ed25519_pubkey,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// The address of the authority key this voter signs operational commands
+	// with (its online key), empty when none is configured; read by the
+	// operations authority activation gate, which requires every voter's
+	// address to be in the operations set the activating update names.
+	AuthoritySignerAddress string `protobuf:"bytes,6,opt,name=authority_signer_address,json=authoritySignerAddress,proto3" json:"authority_signer_address,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *ProtocolInfo) Reset() {
@@ -1269,6 +1312,13 @@ func (x *ProtocolInfo) GetVoterEd25519Pubkey() []byte {
 		return x.VoterEd25519Pubkey
 	}
 	return nil
+}
+
+func (x *ProtocolInfo) GetAuthoritySignerAddress() string {
+	if x != nil {
+		return x.AuthoritySignerAddress
+	}
+	return ""
 }
 
 // ConsensusParamsState is a leader-barrier view used to prepare the next
@@ -3253,7 +3303,7 @@ var File_consensus_proto protoreflect.FileDescriptor
 
 const file_consensus_proto_rawDesc = "" +
 	"\n" +
-	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xe5\b\n" +
+	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xab\t\n" +
 	"\x16ConsensusMutableParams\x12/\n" +
 	"\x13authority_addresses\x18\x01 \x03(\tR\x12authorityAddresses\x12\x1f\n" +
 	"\vmax_writers\x18\x02 \x01(\x04R\n" +
@@ -3277,8 +3327,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\x1amembership_lease_l2_blocks\x18\x11 \x01(\x04R\x17membershipLeaseL2Blocks\x12?\n" +
 	"\x1cpromotion_ack_delta_snapshot\x18\x12 \x01(\bR\x19promotionAckDeltaSnapshot\x122\n" +
 	"\x15snapshot_query_tracks\x18\x13 \x01(\bR\x13snapshotQueryTracks\x12)\n" +
-	"\x10custody_frontier\x18\x14 \x01(\bR\x0fcustodyFrontier\"\xc6\n" +
-	"\n" +
+	"\x10custody_frontier\x18\x14 \x01(\bR\x0fcustodyFrontier\x12D\n" +
+	"\x1eoperations_authority_addresses\x18\x15 \x03(\tR\x1coperationsAuthorityAddresses\"\x8c\v\n" +
 	"\x15ConsensusParamsUpdate\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12.\n" +
@@ -3308,7 +3358,8 @@ const file_consensus_proto_rawDesc = "" +
 	"\x1amembership_lease_l2_blocks\x18\x16 \x01(\x04R\x17membershipLeaseL2Blocks\x12?\n" +
 	"\x1cpromotion_ack_delta_snapshot\x18\x17 \x01(\bR\x19promotionAckDeltaSnapshot\x122\n" +
 	"\x15snapshot_query_tracks\x18\x18 \x01(\bR\x13snapshotQueryTracks\x12)\n" +
-	"\x10custody_frontier\x18\x19 \x01(\bR\x0fcustodyFrontier\"o\n" +
+	"\x10custody_frontier\x18\x19 \x01(\bR\x0fcustodyFrontier\x12D\n" +
+	"\x1eoperations_authority_addresses\x18\x1a \x03(\tR\x1coperationsAuthorityAddresses\"o\n" +
 	"\n" +
 	"VoterEntry\x12\x19\n" +
 	"\bvoter_id\x18\x01 \x01(\tR\avoterId\x12%\n" +
@@ -3338,13 +3389,14 @@ const file_consensus_proto_rawDesc = "" +
 	"\n" +
 	"activation\x18\x01 \x01(\v2\x1a.arbiter.ActiveQueryPolicyR\n" +
 	"activation\x12#\n" +
-	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"\xc9\x01\n" +
+	"\rauthority_jws\x18\x02 \x01(\tR\fauthorityJws\"\x83\x02\n" +
 	"\fProtocolInfo\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12)\n" +
 	"\x10protocol_version\x18\x02 \x01(\rR\x0fprotocolVersion\x12'\n" +
 	"\x0fupdates_enabled\x18\x03 \x01(\bR\x0eupdatesEnabled\x12\x1a\n" +
 	"\bfeatures\x18\x04 \x03(\tR\bfeatures\x120\n" +
-	"\x14voter_ed25519_pubkey\x18\x05 \x01(\fR\x12voterEd25519Pubkey\"\xef\x04\n" +
+	"\x14voter_ed25519_pubkey\x18\x05 \x01(\fR\x12voterEd25519Pubkey\x128\n" +
+	"\x18authority_signer_address\x18\x06 \x01(\tR\x16authoritySignerAddress\"\xef\x04\n" +
 	"\x14ConsensusParamsState\x12)\n" +
 	"\x10protocol_version\x18\x01 \x01(\rR\x0fprotocolVersion\x12\x1d\n" +
 	"\n" +

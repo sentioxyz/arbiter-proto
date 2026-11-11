@@ -24,6 +24,7 @@ var custodyFrontierFields = map[string]*descriptorpb.FieldDescriptorProto{
 // so the older baseline comparisons see the message as it was before.
 func stripCustodyFrontierField(t *testing.T, d *descriptorpb.DescriptorProto) {
 	t.Helper()
+	stripOperationsAuthorityField(t, d)
 	want, ok := custodyFrontierFields[d.GetName()]
 	if !ok {
 		return
@@ -87,8 +88,9 @@ func TestCustodyFrontierFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.BoolKind || f.IsList() || f.HasOptionalKeyword() || f.ContainingOneof() != nil {
 				t.Fatalf("field = %v, want plain bool number %d", f, tc.number)
 			}
-			if got := d.Fields().Len(); got != int(tc.number) {
-				t.Fatalf("field count = %d, want %d (custody_frontier is the last field)", got, tc.number)
+			// operations_authority_addresses is the only field appended after it.
+			if got := d.Fields().Len(); got != int(tc.number)+1 {
+				t.Fatalf("field count = %d, want %d (only operations_authority_addresses follows custody_frontier)", got, tc.number+1)
 			}
 		})
 	}

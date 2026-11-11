@@ -80,6 +80,10 @@ message ConsensusMutableParams {
   // after snapshot_query_tracks sets it, then carried by every update and
   // never lowered.
   bool custody_frontier = 20;
+  // The operations authority set: empty until one authority-signed update
+  // sets it, then carried non-empty by every update. While empty, operational
+  // commands verify against authority_addresses.
+  repeated string operations_authority_addresses = 21;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -277,6 +281,26 @@ message ConsensusParamsUpdate {
   // It joins the params digest only once set, so earlier digests are
   // unchanged.
   bool custody_frontier = 25;
+  // The operations authority set: the addresses that sign operational
+  // commands, which the leader signs automatically with its one online key
+  // (promotion including the settle re-send, cleanup including rejected-part
+  // cleanups, member lagging, verifier reselection, and payload-store
+  // ReleasePins). Lowercase 0x-prefixed Ethereum addresses, sorted and unique.
+  // Empty means never set: operational commands then verify against
+  // authority_addresses, as before the field existed. Once committed, every
+  // update must carry a non-empty set (there is no way back to one set),
+  // operational commands verify only against it, and governance commands
+  // only against authority_addresses. Every update that carries it must keep
+  // it disjoint from its own authority_addresses, so an online operations key
+  // never counts toward the governance threshold. Setting, changing and
+  // revoking it are ordinary consensus updates, authorized by the governance
+  // set under authority_threshold. There is no empty set after it is set: to
+  // stop all operational signing, set an address whose key nobody holds. It
+  // is never set at genesis. It changes Apply, so every voter, and every SNode
+  // that follows the committed authority set, must run a binary that knows
+  // the field before an update sets it. Absent from the params digest while
+  // empty, so earlier digests are unchanged.
+  repeated string operations_authority_addresses = 26;
 }
 
 // VoterEntry is one enrolled Raft voter. consent_sig is lowercase hex of the
@@ -355,6 +379,11 @@ message ProtocolInfo {
   // none is configured; read by the anchor finality activation gate, which
   // requires it to equal the key the voter's VoterEntry enrols.
   bytes voter_ed25519_pubkey = 5;
+  // The address of the authority key this voter signs operational commands
+  // with (its online key), empty when none is configured; read by the
+  // operations authority activation gate, which requires every voter's
+  // address to be in the operations set the activating update names.
+  string authority_signer_address = 6;
 }
 
 // ConsensusParamsState is a leader-barrier view used to prepare the next
