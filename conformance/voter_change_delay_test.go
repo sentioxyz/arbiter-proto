@@ -30,6 +30,7 @@ var voterChangeDelayFields = map[string][]*descriptorpb.FieldDescriptorProto{
 // older baseline comparisons see the message as it was before.
 func stripVoterChangeDelayFields(t *testing.T, d *descriptorpb.DescriptorProto) {
 	t.Helper()
+	stripCustodyAuditOnQuorumField(t, d)
 	want, ok := voterChangeDelayFields[d.GetName()]
 	if !ok {
 		return
@@ -75,8 +76,8 @@ func TestVoterChangeDelayFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.MessageKind || f.IsList() || f.Message().Name() != "PendingVoterChange" || f.ContainingOneof() != nil {
 				t.Fatalf("pending_voter_change field = %v, want PendingVoterChange number %d", f, tc.number)
 			}
-			if got := d.Fields().Len(); got != int(tc.number) {
-				t.Fatalf("field count = %d, want %d (pending_voter_change is the last field)", got, tc.number)
+			if got := d.Fields().Len(); got != int(tc.number)+1 {
+				t.Fatalf("field count = %d, want %d (only custody_audit_on_quorum follows pending_voter_change)", got, tc.number+1)
 			}
 		})
 	}
