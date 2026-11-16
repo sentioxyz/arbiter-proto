@@ -347,8 +347,12 @@ type ConsensusMutableParams struct {
 	AccountBudget *AccountBudgetParams `protobuf:"bytes,25,opt,name=account_budget,json=accountBudget,proto3" json:"account_budget,omitempty"`
 	// The pending voter change; see ConsensusParamsUpdate.pending_voter_change.
 	PendingVoterChange *PendingVoterChange `protobuf:"bytes,26,opt,name=pending_voter_change,json=pendingVoterChange,proto3" json:"pending_voter_change,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// Custody AUDIT on a latched quorum: false until one authority-signed
+	// update after custody_frontier sets it, then carried by every update and
+	// never lowered.
+	CustodyAuditOnQuorum bool `protobuf:"varint,27,opt,name=custody_audit_on_quorum,json=custodyAuditOnQuorum,proto3" json:"custody_audit_on_quorum,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *ConsensusMutableParams) Reset() {
@@ -561,6 +565,13 @@ func (x *ConsensusMutableParams) GetPendingVoterChange() *PendingVoterChange {
 		return x.PendingVoterChange
 	}
 	return nil
+}
+
+func (x *ConsensusMutableParams) GetCustodyAuditOnQuorum() bool {
+	if x != nil {
+		return x.CustodyAuditOnQuorum
+	}
+	return false
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -847,8 +858,23 @@ type ConsensusParamsUpdate struct {
 	// delay is activated. Absent from the params digest while unset, so
 	// earlier digests are unchanged.
 	PendingVoterChange *PendingVoterChange `protobuf:"bytes,31,opt,name=pending_voter_change,json=pendingVoterChange,proto3" json:"pending_voter_change,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// Custody AUDIT on a latched quorum: raise-only; once set every update must
+	// carry it. It needs custody_frontier (earlier or in the same update).
+	// Without it a sealed block reaches the AUDIT custody stage only once every
+	// verifier of its set has recorded both its attestation and its byte-side
+	// scan; but a block whose three-way quorum has latched is never dispatched
+	// again, so a block that latched on fewer than all of them never reaches
+	// AUDIT, keeps its REPLAY hold, and stops the history prune horizon. With it
+	// a safe, unrejected block whose quorum has latched also reaches AUDIT:
+	// after the latch nothing replays it (no re-selection, replay job or scan
+	// request), so its REPLAY hold has no remaining use. It changes which
+	// RecordCustodyProgressCmd marks Apply accepts, so every voter must run a
+	// binary that knows the field before an update sets it. No snapshot
+	// container changes. It joins the params digest only once set, so earlier
+	// digests are unchanged.
+	CustodyAuditOnQuorum bool `protobuf:"varint,32,opt,name=custody_audit_on_quorum,json=custodyAuditOnQuorum,proto3" json:"custody_audit_on_quorum,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *ConsensusParamsUpdate) Reset() {
@@ -1096,6 +1122,13 @@ func (x *ConsensusParamsUpdate) GetPendingVoterChange() *PendingVoterChange {
 		return x.PendingVoterChange
 	}
 	return nil
+}
+
+func (x *ConsensusParamsUpdate) GetCustodyAuditOnQuorum() bool {
+	if x != nil {
+		return x.CustodyAuditOnQuorum
+	}
+	return false
 }
 
 // VoterEntry is one enrolled Raft voter. consent_sig is lowercase hex of the
@@ -4176,7 +4209,7 @@ var File_consensus_proto protoreflect.FileDescriptor
 
 const file_consensus_proto_rawDesc = "" +
 	"\n" +
-	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\x96\f\n" +
+	"\x0fconsensus.proto\x12\aarbiter\x1a\x1bgoogle/protobuf/empty.proto\x1a\rarbiter.proto\x1a\freplay.proto\x1a\x14table_registry.proto\"\xcd\f\n" +
 	"\x16ConsensusMutableParams\x12/\n" +
 	"\x13authority_addresses\x18\x01 \x03(\tR\x12authorityAddresses\x12\x1f\n" +
 	"\vmax_writers\x18\x02 \x01(\x04R\n" +
@@ -4206,7 +4239,8 @@ const file_consensus_proto_rawDesc = "" +
 	" authority_change_delay_l2_blocks\x18\x17 \x01(\x04R\x1cauthorityChangeDelayL2Blocks\x12Y\n" +
 	"\x18pending_authority_change\x18\x18 \x01(\v2\x1f.arbiter.PendingAuthorityChangeR\x16pendingAuthorityChange\x12C\n" +
 	"\x0eaccount_budget\x18\x19 \x01(\v2\x1c.arbiter.AccountBudgetParamsR\raccountBudget\x12M\n" +
-	"\x14pending_voter_change\x18\x1a \x01(\v2\x1b.arbiter.PendingVoterChangeR\x12pendingVoterChange\"\xf7\r\n" +
+	"\x14pending_voter_change\x18\x1a \x01(\v2\x1b.arbiter.PendingVoterChangeR\x12pendingVoterChange\x125\n" +
+	"\x17custody_audit_on_quorum\x18\x1b \x01(\bR\x14custodyAuditOnQuorum\"\xae\x0e\n" +
 	"\x15ConsensusParamsUpdate\x12\x1d\n" +
 	"\n" +
 	"network_id\x18\x01 \x01(\tR\tnetworkId\x12.\n" +
@@ -4242,7 +4276,8 @@ const file_consensus_proto_rawDesc = "" +
 	" authority_change_delay_l2_blocks\x18\x1c \x01(\x04R\x1cauthorityChangeDelayL2Blocks\x12Y\n" +
 	"\x18pending_authority_change\x18\x1d \x01(\v2\x1f.arbiter.PendingAuthorityChangeR\x16pendingAuthorityChange\x12C\n" +
 	"\x0eaccount_budget\x18\x1e \x01(\v2\x1c.arbiter.AccountBudgetParamsR\raccountBudget\x12M\n" +
-	"\x14pending_voter_change\x18\x1f \x01(\v2\x1b.arbiter.PendingVoterChangeR\x12pendingVoterChange\"o\n" +
+	"\x14pending_voter_change\x18\x1f \x01(\v2\x1b.arbiter.PendingVoterChangeR\x12pendingVoterChange\x125\n" +
+	"\x17custody_audit_on_quorum\x18  \x01(\bR\x14custodyAuditOnQuorum\"o\n" +
 	"\n" +
 	"VoterEntry\x12\x19\n" +
 	"\bvoter_id\x18\x01 \x01(\tR\avoterId\x12%\n" +

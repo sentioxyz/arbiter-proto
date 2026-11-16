@@ -77,8 +77,8 @@ func TestAccountBudgetFieldNumbers(t *testing.T) {
 			if f == nil || f.Number() != tc.number || f.Kind() != protoreflect.MessageKind || f.IsList() || f.Message().Name() != "AccountBudgetParams" || f.ContainingOneof() != nil {
 				t.Fatalf("account_budget field = %v, want AccountBudgetParams number %d", f, tc.number)
 			}
-			if got := d.Fields().Len(); got != int(tc.number)+1 {
-				t.Fatalf("field count = %d, want %d (only pending_voter_change follows account_budget)", got, tc.number+1)
+			if got := d.Fields().Len(); got != int(tc.number)+2 {
+				t.Fatalf("field count = %d, want %d (only pending_voter_change and custody_audit_on_quorum follow account_budget)", got, tc.number+2)
 			}
 		})
 	}

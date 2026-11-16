@@ -97,6 +97,10 @@ message ConsensusMutableParams {
   AccountBudgetParams account_budget = 25;
   // The pending voter change; see ConsensusParamsUpdate.pending_voter_change.
   PendingVoterChange pending_voter_change = 26;
+  // Custody AUDIT on a latched quorum: false until one authority-signed
+  // update after custody_frontier sets it, then carried by every update and
+  // never lowered.
+  bool custody_audit_on_quorum = 27;
 }
 
 // ConsensusParamsUpdate is mirrored by arbiter-core's canonical signing type.
@@ -382,6 +386,21 @@ message ConsensusParamsUpdate {
   // delay is activated. Absent from the params digest while unset, so
   // earlier digests are unchanged.
   PendingVoterChange pending_voter_change = 31;
+  // Custody AUDIT on a latched quorum: raise-only; once set every update must
+  // carry it. It needs custody_frontier (earlier or in the same update).
+  // Without it a sealed block reaches the AUDIT custody stage only once every
+  // verifier of its set has recorded both its attestation and its byte-side
+  // scan; but a block whose three-way quorum has latched is never dispatched
+  // again, so a block that latched on fewer than all of them never reaches
+  // AUDIT, keeps its REPLAY hold, and stops the history prune horizon. With it
+  // a safe, unrejected block whose quorum has latched also reaches AUDIT:
+  // after the latch nothing replays it (no re-selection, replay job or scan
+  // request), so its REPLAY hold has no remaining use. It changes which
+  // RecordCustodyProgressCmd marks Apply accepts, so every voter must run a
+  // binary that knows the field before an update sets it. No snapshot
+  // container changes. It joins the params digest only once set, so earlier
+  // digests are unchanged.
+  bool custody_audit_on_quorum = 32;
 }
 
 // VoterEntry is one enrolled Raft voter. consent_sig is lowercase hex of the
